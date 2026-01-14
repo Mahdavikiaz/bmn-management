@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('device_name');
             $table->enum('device_type', ['PC', 'Laptop']);
             $table->string('gpu');
+            $table->string('ram_type');
             $table->year('procurement_year');
             $table->timestamps();
         });
