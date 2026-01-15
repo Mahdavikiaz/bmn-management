@@ -11,13 +11,39 @@ class UserController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    // public function index()
+    // {
+    //     $this->authorize('viewAny', User::class);
+
+    //     $users = User::all();
+    //     return view('admin.users.index', compact('users'));
+    // }
+
+    public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::all();
-        return view('admin.users.index', compact('users'));
+        $query = User::query();
+
+        // FILTER ROLE
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // DATA USER (HASIL FILTER)
+        $users = $query->orderBy('created_at', 'desc')->get();
+
+        // RECAP TOTAL (GLOBAL, BUKAN HASIL FILTER)
+        $totalAdmin = User::where('role', 'admin')->count();
+        $totalUser  = User::where('role', 'user')->count();
+
+        return view('admin.users.index', compact(
+            'users',
+            'totalAdmin',
+            'totalUser'
+        ));
     }
+
 
     public function create()
     {

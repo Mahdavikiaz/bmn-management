@@ -1,4 +1,4 @@
-<div class="topbar">
+<div class="topbar border-bottom">
 
     {{-- LEFT --}}
     <div class="d-flex align-items-center gap-3">
@@ -6,7 +6,7 @@
 
     {{-- RIGHT --}}
     <div class="dropdown">
-        <a href="#" class="d-flex align-items-center gap-2 text-white text-decoration-none"
+        <a href="#" class="d-flex align-items-center gap-2 text-dark text-decoration-none"
            data-bs-toggle="dropdown">
             <div class="avatar">
                 {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}

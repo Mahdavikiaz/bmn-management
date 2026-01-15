@@ -13,7 +13,7 @@
             <div class="card-body text-center">
                 <i class="bi bi-people fs-3 text-primary"></i>
                 <h6 class="mt-2">Total Administrator</h6>
-                <h4>{{ $users->where('role','admin')->count() }}</h4>
+                <h4>{{ $totalAdmin }}</h4>
             </div>
         </div>
     </div>
@@ -23,40 +23,45 @@
             <div class="card-body text-center">
                 <i class="bi bi-people fs-3 text-success"></i>
                 <h6 class="mt-2">Total User</h6>
-                <h4>{{ $users->where('role','user')->count() }}</h4>
+                <h4>{{ $totalUser }}</h4>
             </div>
         </div>
     </div>
 </div>
 
-{{-- ACTION BAR --}}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#filterBox">
-        Menu Filter
-    </button>
+{{-- ACTION BAR + FILTER --}}
+<div class="d-flex justify-content-between align-items-center gap-3 mb-3">
 
+    {{-- FILTER FORM --}}
+    <form method="GET" class="d-flex align-items-center gap-2">
+
+        <select name="role" class="form-select filter-select">
+            <option value="">Pilih peran...</option>
+            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>
+                Administrator
+            </option>
+            <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>
+                User
+            </option>
+        </select>
+
+        <button class="btn btn-primary">
+            Cari
+        </button>
+
+        <a href="{{ route('admin.users.index') }}" class="btn btn-danger">
+            Reset
+        </a>
+
+    </form>
+
+    {{-- TAMBAH DATA --}}
     <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
         + Tambah Data
     </a>
+
 </div>
 
-{{-- FILTER --}}
-<div class="collapse mb-3" id="filterBox">
-    <form method="GET" class="card card-body">
-        <div class="row g-2">
-            <div class="col-md-4">
-                <select name="role" class="form-select">
-                    <option value="">Pilih peran...</option>
-                    <option value="admin">Administrator</option>
-                    <option value="user">User</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary w-100">Cari</button>
-            </div>
-        </div>
-    </form>
-</div>
 
 {{-- TABLE --}}
 <div class="card shadow-sm">
@@ -79,7 +84,7 @@
                     <td>{{ $user->name }}</td>
                     <td>{{ $user->email }}</td>
                     <td>
-                        <span class="badge bg-{{ $user->role == 'admin' ? 'primary' : 'secondary' }}">
+                        <span class="badge bg-{{ $user->role == 'admin' ? 'primary' : 'success' }}">
                             {{ ucfirst($user->role) }}
                         </span>
                     </td>

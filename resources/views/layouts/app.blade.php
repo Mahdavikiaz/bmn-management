@@ -17,10 +17,12 @@
         .sidebar .nav-link i { font-size: 1.1rem; }
         .sidebar .nav-link.active { background-color: #eef2ff; color: #0d6efd !important; font-weight: 600; }
         .sidebar-section { font-size: 0.75rem; font-weight: 600; color: #9ca3af; margin-top: 20px; margin-bottom: 6px; padding-left: 12px; }
-        .topbar { background-color: #0d6efd; height: 64px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; color: #fff; }
+        .topbar { background-color: #fff; height: 64px; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; color: #fff; }
         .icon-btn { color: #fff; font-size: 1.2rem; cursor: pointer; }
         .avatar { width: 32px; height: 32px; border-radius: 50%; background-color: #fff; color: #6777ef; display: flex; align-items: center; justify-content: center; font-weight: 600; }
         .page-content { padding: 24px; min-height: calc(100vh - 64px); }
+        .filter-select { width: 220px; }
+        @media (max-width: 768px) { .filter-select { width: 100%;} }
     </style>
 </head>
 <body>
