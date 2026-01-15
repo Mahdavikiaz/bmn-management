@@ -20,4 +20,15 @@ class Asset extends Model
         'ram_type',
         'procurement_year',
     ];
+
+    public function specifications()
+    {
+        return $this->hasMany(AssetsSpecifications::class, 'id_asset', 'id_asset');
+    }
+
+    public function latestSpecification()
+    {
+        return $this->hasOne(AssetsSpecifications::class, 'id_asset', 'id_asset')
+            ->latestOfMany('datetime');
+    }
 }
