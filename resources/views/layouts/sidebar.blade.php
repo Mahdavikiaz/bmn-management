@@ -31,7 +31,8 @@
             <div class="sidebar-section">DATA MASTER</div>
 
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.assets.index') }}" 
+                    class="nav-link {{ request()->is('admin/assets*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-laptop"></i>
                     Data Asset
                 </a>

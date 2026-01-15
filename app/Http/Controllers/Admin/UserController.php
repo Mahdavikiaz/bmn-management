@@ -11,14 +11,6 @@ class UserController extends Controller
 {
     use AuthorizesRequests;
 
-    // public function index()
-    // {
-    //     $this->authorize('viewAny', User::class);
-
-    //     $users = User::all();
-    //     return view('admin.users.index', compact('users'));
-    // }
-
     public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
