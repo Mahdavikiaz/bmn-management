@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Login | Inventaris Barang Sekolah</title>
+    <title>Login | Inventaris Asset IT BPS Provinsi DKI Jakarta</title>
 
     {{-- Bootstrap 5 --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -66,7 +66,7 @@
         {{-- LEFT : LOGIN FORM --}}
         <div class="col-lg-4 d-flex align-items-center justify-content-center bg-white">
             <div class="login-left px-4">
-                <h4 class="fw-semibold mb-2">Aplikasi Inventaris Asset IT di BPS Provinsi DKI Jakarta</h4>
+                <h4 class="fw-semibold mb-2">Sistem Manajemen Inventaris di BPS Provinsi DKI Jakarta</h4>
                 <p class="text-muted mb-4">
                     Silakan login untuk mengakses sistem
                 </p>
@@ -95,7 +95,7 @@
                         <input type="password"
                                name="password"
                                class="form-control"
-                               placeholder="••••••••"
+                               placeholder="******"
                                required>
                     </div>
 
@@ -120,7 +120,7 @@
             <div class="h-100 d-flex align-items-end p-5">
                 <div class="login-right-content">
                     <h1 class="fw-semibold mb-2">Selamat Datang!</h1>
-                    <p class="mb-4">di Aplikasi Inventaris BMN</p>
+                    <p class="mb-4">di Sistem Manajemen Inventaris</p>
                 </div>
             </div>
         </div>

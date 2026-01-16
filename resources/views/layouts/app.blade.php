@@ -23,6 +23,50 @@
         .page-content { padding: 24px; min-height: calc(100vh - 64px); }
         .filter-select { width: 220px; }
         @media (max-width: 768px) { .filter-select { width: 100%;} }
+        /* ===== Custom Tabs (Bootstrap 5) ===== */
+        .nav-tabs .nav-link {
+            color: #000;                 /* non-aktif hitam */
+            font-weight: 600;
+            border: 1px solid transparent;
+            border-bottom: 0;
+            border-radius: 10px 10px 0 0;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: #0d6efd;              /* hover biru */
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd !important;   /* aktif biru */
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;  /* nyatu sama card */
+            position: relative;
+        }
+
+        /* Penanda ekstra biar jelas: garis biru di bawah tab aktif */
+        .nav-tabs .nav-link.active::after {
+            content: "";
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: -2px;
+            height: 3px;
+            background: #0d6efd;
+            border-radius: 2px;
+        }
+
+        /* Icon ikut warna tab */
+        .nav-tabs .nav-link i {
+            color: inherit;
+        }
+
+        .nav-tabs .nav-link:not(.active) {
+            background-color: #f8f9fa; /* abu tipis */
+        }
     </style>
 </head>
 <body>

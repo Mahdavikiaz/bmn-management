@@ -3,6 +3,41 @@
 @section('title', 'Daftar Asset')
 
 @section('content')
+
+    <style>
+        /* ===== TABLE MODERN ===== */
+        .table-modern thead th{
+            background:#f8f9fa;
+            font-weight:700;
+            border-bottom:1px solid #e9ecef;
+            white-space: nowrap;
+        }
+        .table-modern tbody tr:hover{ background:#f6f9ff; }
+
+        /* ===== ICON BUTTON ===== */
+        .btn-icon{
+            width:38px; height:38px;
+            display:inline-flex; align-items:center; justify-content:center;
+            border-radius:10px;
+        }
+
+        /* ===== Spec Modal KV UI ===== */
+        .spec-kv{
+            display:flex; gap:10px; align-items:flex-start;
+            padding:10px 0; border-bottom:1px dashed #e9ecef;
+        }
+        .spec-kv:last-child{ border-bottom:0; }
+        .spec-ic{
+            width:38px; height:38px; border-radius:10px;
+            display:flex; align-items:center; justify-content:center;
+            background:#eef2ff; color:#0d6efd; flex:0 0 auto;
+            font-size:1.1rem;
+        }
+        .spec-label{ color:#6c757d; font-size:.85rem; }
+        .spec-value{ font-weight:700; }
+        .spec-muted{ color:#6c757d; font-size:.85rem; }
+    </style>
+
     <h4 class="mb-4">Daftar Asset</h4>
 
     {{-- CARD RECAP --}}
@@ -76,35 +111,44 @@
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped mb-0 align-middle">
-                    <thead class="table-light">
+                <table class="table table-modern align-middle mb-0">
+                    <thead>
                     <tr>
                         <th style="width:60px;">#</th>
                         <th>Kode BMN</th>
                         <th>Nama Device</th>
-                        <th>Tipe</th>
+                        <th style="width:110px;">Tipe</th>
                         <th>GPU</th>
                         <th>RAM Type</th>
-                        <th>Tahun</th>
-                        <th>Spesifikasi</th>
-                        <th style="width:180px;">Aksi</th>
+                        <th style="width:90px;">Tahun Pengadaan</th>
+                        <th style="width:220px;">Spesifikasi</th>
+                        <th style="width:180px;" class="text-center">Aksi</th>
                     </tr>
                     </thead>
                     <tbody>
                     @forelse($assets as $asset)
                         @php
-                            // jika kamu sudah eager-load latestSpecification di controller:
                             $latest = $asset->latestSpecification ?? null;
+                            $modalId = 'specModal-'.$asset->id_asset;
                         @endphp
+
                         <tr>
-                            <td>{{ ($assets->currentPage() - 1) * $assets->perPage() + $loop->iteration }}</td>
+                            <td>{{ method_exists($assets,'currentPage') ? (($assets->currentPage() - 1) * $assets->perPage() + $loop->iteration) : $loop->iteration }}</td>
+
                             <td class="fw-semibold">{{ $asset->bmn_code }}</td>
-                            <td>{{ $asset->device_name }}</td>
+
                             <td>
-                                <span class="badge bg-{{ $asset->device_type == 'PC' ? 'success' : 'warning' }}">
-                                    {{ $asset->device_type }}
-                                </span>
+                                <div class="fw-semibold">{{ $asset->device_name }}</div>
                             </td>
+
+                            <td>
+                                @if($asset->device_type == 'PC')
+                                    <span class="badge rounded-pill text-bg-success">PC</span>
+                                @else
+                                    <span class="badge rounded-pill text-bg-warning">Laptop</span>
+                                @endif
+                            </td>
+
                             <td>{{ $asset->gpu }}</td>
                             <td>{{ $asset->ram_type }}</td>
                             <td>{{ $asset->procurement_year }}</td>
@@ -112,30 +156,141 @@
                             {{-- SPESIFIKASI --}}
                             <td>
                                 @if(!$latest)
-                                    <span class="text-muted fst-italic">Data spesifikasi belum diinputkan</span>
+                                    <span class="text-muted fst-italic">Spesifikasi belum diinputkan</span>
                                 @else
-                                    <span class="badge bg-primary mb-1">Ada</span>
-                                    <div class="small text-muted">
-                                        <div><strong>CPU:</strong> {{ $latest->processor }}</div>
-                                        <div><strong>RAM:</strong> {{ $latest->ram }} GB • <strong>Storage:</strong> {{ $latest->storage }} GB</div>
-                                        <div><strong>OS:</strong> {{ $latest->os_version }}</div>
+                                    <button type="button"
+                                            class="btn btn-outline-primary btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#{{ $modalId }}">
+                                        <i class="bi bi-eye"></i> Lihat Spesifikasi
+                                    </button>
+
+                                    <div class="spec-muted mt-1">
+                                        Terakhir update: {{ $latest->datetime?->format('d/m/Y H:i') ?? '-' }}
                                     </div>
+
+                                    {{-- MODAL --}}
+                                    <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                                            <div class="modal-content">
+
+                                                <div class="modal-header">
+                                                    <div>
+                                                        <h5 class="modal-title mb-0">Spesifikasi Asset</h5>
+                                                        <div class="text-muted small">
+                                                            {{ $asset->device_name }} ({{ $asset->device_type }}) •
+                                                            Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+
+                                                <div class="modal-body">
+                                                    @php
+                                                        $media = [];
+                                                        if($latest->is_hdd) $media[] = 'HDD';
+                                                        if($latest->is_ssd) $media[] = 'SSD';
+                                                        if($latest->is_nvme) $media[] = 'NVMe';
+                                                    @endphp
+
+                                                    <div class="row g-3">
+                                                        <div class="col-md-6">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-cpu"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">Processor</div>
+                                                                    <div class="spec-value">{{ $latest->processor ?: '-' }}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-memory"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">RAM</div>
+                                                                    <div class="spec-value">{{ $latest->ram }} GB</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-hdd-stack"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">Storage</div>
+                                                                    <div class="spec-value">{{ $latest->storage }} GB</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-windows"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">OS Version</div>
+                                                                    <div class="spec-value">{{ $latest->os_version ?: '-' }}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-device-hdd"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">Tipe Storage</div>
+                                                                    <div class="spec-value">
+                                                                        @if(count($media))
+                                                                            @foreach($media as $m)
+                                                                                <span class="badge rounded-pill text-bg-secondary me-1">{{ $m }}</span>
+                                                                            @endforeach
+                                                                        @else
+                                                                            -
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="text-muted small mt-3">
+                                                        <i class="bi bi-clock"></i>
+                                                        Terakhir diinput: <strong>{{ $latest->datetime?->format('d/m/Y H:i') ?? '-' }}</strong>
+                                                    </div>
+                                                </div>
+
+                                                <div class="modal-footer d-flex justify-content-between">
+                                                    <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
+                                                       class="btn btn-primary">
+                                                        <i class="bi bi-sliders"></i> Kelola Spesifikasi
+                                                    </a>
+
+                                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                        Tutup
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {{-- END MODAL --}}
                                 @endif
                             </td>
 
                             {{-- AKSI --}}
-                            <td>
-                                <div class="d-flex gap-2">
+                            <td class="text-center">
+                                <div class="d-inline-flex gap-2">
+
                                     {{-- Kelola Spesifikasi --}}
                                     <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
-                                       class="btn btn-sm btn-info text-white"
+                                       class="btn btn-info btn-icon text-white"
                                        title="Kelola Spesifikasi">
                                         <i class="bi bi-sliders"></i>
                                     </a>
 
                                     {{-- Edit Master --}}
                                     <a href="{{ route('admin.assets.edit', $asset->id_asset) }}"
-                                       class="btn btn-sm btn-warning"
+                                       class="btn btn-warning btn-icon"
                                        title="Edit Asset">
                                         <i class="bi bi-pencil"></i>
                                     </a>
@@ -143,16 +298,17 @@
                                     {{-- Delete --}}
                                     <form method="POST"
                                           action="{{ route('admin.assets.destroy', $asset->id_asset) }}"
-                                          class="d-inline">
+                                          class="d-inline"
+                                          onsubmit="return confirm('Yakin hapus asset ini?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                                class="btn btn-sm btn-danger"
-                                                title="Hapus"
-                                                onclick="return confirm('Yakin hapus asset ini?')">
+                                                class="btn btn-danger btn-icon text-white"
+                                                title="Hapus">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
+
                                 </div>
                             </td>
                         </tr>

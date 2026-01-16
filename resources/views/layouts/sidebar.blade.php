@@ -1,7 +1,7 @@
 <aside class="bg-white border-end vh-100 d-flex flex-column sidebar">
 
     <div class="p-3 fw-bold fs-5 text-center text-primary">
-        INVENBMN
+        SIMANIS
     </div>
 
     <div class="flex-grow-1 p-3">
