@@ -5,7 +5,6 @@
 @section('content')
 
     <style>
-        /* ===== TABLE MODERN ===== */
         .table-modern thead th{
             background:#f8f9fa;
             font-weight:700;
@@ -14,14 +13,12 @@
         }
         .table-modern tbody tr:hover{ background:#f6f9ff; }
 
-        /* ===== ICON BUTTON ===== */
         .btn-icon{
             width:38px; height:38px;
             display:inline-flex; align-items:center; justify-content:center;
             border-radius:10px;
         }
 
-        /* ===== Spec Modal KV UI ===== */
         .spec-kv{
             display:flex; gap:10px; align-items:flex-start;
             padding:10px 0; border-bottom:1px dashed #e9ecef;
@@ -73,7 +70,7 @@
         </div>
     </div>
 
-    {{-- ACTION BAR + FILTER (SEJAJAR) --}}
+    {{-- ACTION BAR + FILTER --}}
     <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
 
         {{-- FILTER FORM --}}
@@ -103,7 +100,7 @@
 
         {{-- TAMBAH DATA --}}
         <a href="{{ route('admin.assets.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Tambah Data
+            <i class="bi bi-plus-lg"></i> Tambah Asset
         </a>
     </div>
 
@@ -114,12 +111,12 @@
                 <table class="table table-modern align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width:60px;">#</th>
+                        <th style="width:60px;">No</th>
                         <th>Kode BMN</th>
                         <th>Nama Device</th>
-                        <th style="width:110px;">Tipe</th>
+                        <th style="width:110px;">Kategori</th>
                         <th>GPU</th>
-                        <th>RAM Type</th>
+                        <th>Tipe RAM</th>
                         <th style="width:90px;">Tahun Pengadaan</th>
                         <th style="width:220px;">Spesifikasi</th>
                         <th style="width:180px;" class="text-center">Aksi</th>
@@ -255,14 +252,14 @@
 
                                                     <div class="text-muted small mt-3">
                                                         <i class="bi bi-clock"></i>
-                                                        Terakhir diinput: <strong>{{ $latest->datetime?->format('d/m/Y H:i') ?? '-' }}</strong>
+                                                        Terakhir diupdate: <strong>{{ $latest->datetime?->format('d/m/Y H:i') ?? '-' }}</strong>
                                                     </div>
                                                 </div>
 
                                                 <div class="modal-footer d-flex justify-content-between">
                                                     <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
                                                        class="btn btn-primary">
-                                                        <i class="bi bi-sliders"></i> Kelola Spesifikasi
+                                                        <i class="bi bi-sliders me-1"></i> Kelola Spesifikasi
                                                     </a>
 
                                                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">

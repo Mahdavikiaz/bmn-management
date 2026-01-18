@@ -23,9 +23,9 @@
         .page-content { padding: 24px; min-height: calc(100vh - 64px); }
         .filter-select { width: 220px; }
         @media (max-width: 768px) { .filter-select { width: 100%;} }
-        /* ===== Custom Tabs (Bootstrap 5) ===== */
+        
         .nav-tabs .nav-link {
-            color: #000;                 /* non-aktif hitam */
+            color: #000;                 
             font-weight: 600;
             border: 1px solid transparent;
             border-bottom: 0;
@@ -37,17 +37,16 @@
         }
 
         .nav-tabs .nav-link:hover {
-            color: #0d6efd;              /* hover biru */
+            color: #0d6efd;              
         }
 
         .nav-tabs .nav-link.active {
-            color: #0d6efd !important;   /* aktif biru */
+            color: #0d6efd !important;  
             background-color: #fff;
-            border-color: #dee2e6 #dee2e6 #fff;  /* nyatu sama card */
+            border-color: #dee2e6 #dee2e6 #fff;  
             position: relative;
         }
 
-        /* Penanda ekstra biar jelas: garis biru di bawah tab aktif */
         .nav-tabs .nav-link.active::after {
             content: "";
             position: absolute;
@@ -65,8 +64,20 @@
         }
 
         .nav-tabs .nav-link:not(.active) {
-            background-color: #f8f9fa; /* abu tipis */
+            background-color: #f8f9fa; 
         }
+
+        
+        .form-control::placeholder {
+            font-weight: 400;      
+            opacity: 0.55;         
+        }
+
+        
+        .form-control::placeholder {
+            font-size: 0.90rem;
+        }
+
     </style>
 </head>
 <body>

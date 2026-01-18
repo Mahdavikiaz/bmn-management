@@ -93,16 +93,16 @@
         </div>
 
         <a href="{{ route('admin.assets.index') }}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Kembali
+            <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>
     </div>
 
     {{-- ALERTS --}}
-    @if(session('success'))
+    @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    @if($errors->any())
+    @if ($errors->any())
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
 
@@ -112,10 +112,10 @@
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="section-title">
-                        <i class="bi bi-cpu"></i> Spesifikasi Saat Ini
+                        <i class="bi bi-cpu me-1"></i> Spesifikasi Saat Ini
                     </div>
                     <div class="section-subtitle">
-                        Menampilkan spesifikasi terbaru yang tersimpan (history tidak mengubah versi lama).
+                        Menampilkan spesifikasi terbaru yang tersimpan (versi lama tersimpan sebagai history).
                     </div>
                 </div>
 
@@ -129,16 +129,16 @@
 
             <hr class="my-3">
 
-            @if(!$latestSpec)
+            @if (!$latestSpec)
                 <div class="text-muted fst-italic">
                     Data spesifikasi belum diinputkan.
                 </div>
             @else
                 @php
                     $storage_type = [];
-                    if($latestSpec->is_hdd) $storage_type[] = 'HDD';
-                    if($latestSpec->is_ssd) $storage_type[] = 'SSD';
-                    if($latestSpec->is_nvme) $storage_type[] = 'NVMe';
+                    if ($latestSpec->is_hdd) $storage_type[] = 'HDD';
+                    if ($latestSpec->is_ssd) $storage_type[] = 'SSD';
+                    if ($latestSpec->is_nvme) $storage_type[] = 'NVMe';
                 @endphp
 
                 <div class="spec-list">
@@ -179,8 +179,8 @@
                         <div>
                             <div class="spec-label">Tipe Storage</div>
                             <div class="spec-value">
-                                @if(count($storage_type))
-                                    @foreach($storage_type as $type)
+                                @if (count($storage_type))
+                                    @foreach ($storage_type as $type)
                                         <span class="badge rounded-pill badge-media me-1">{{ $type }}</span>
                                     @endforeach
                                 @else
@@ -191,8 +191,8 @@
                     </div>
 
                     <div class="mt-2 text-muted small">
-                        <i class="bi bi-calendar-event"></i>
-                        Terakhir diinput:
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Terakhir diupdate:
                         <strong>{{ $latestSpec->datetime?->format('d/m/Y H:i') ?? '-' }}</strong>
                     </div>
                 </div>
@@ -204,7 +204,7 @@
     <div class="card shadow-sm mb-3">
         <div class="card-body">
             <div class="section-title">
-                <i class="bi bi-plus-circle"></i> Form Update Spesifikasi
+                <i class="bi bi-plus-circle me-1"></i> Form Update Spesifikasi
             </div>
             <div class="section-subtitle mb-3">
                 Isi minimal 1 field untuk membuat versi baru. Versi lama tidak akan berubah (history).
@@ -216,46 +216,86 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">Processor</label>
-                        <input type="text" name="processor" class="form-control"
-                               value="{{ old('processor') }}" placeholder="Contoh: Intel i5-1235U">
+                        <input
+                            type="text"
+                            name="processor"
+                            class="form-control"
+                            value="{{ old('processor', $latestSpec->processor ?? '') }}"
+                            placeholder="Contoh: Intel i5-1235U"
+                        >
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label">RAM (GB)</label>
-                        <input type="number" name="ram" class="form-control"
-                               value="{{ old('ram') }}" min="0" placeholder="16">
+                        <input
+                            type="number"
+                            name="ram"
+                            class="form-control"
+                            value="{{ old('ram', $latestSpec->ram ?? '') }}"
+                            min="0"
+                            placeholder="16"
+                        >
                     </div>
 
                     <div class="col-md-3">
                         <label class="form-label">Storage (GB)</label>
-                        <input type="number" name="storage" class="form-control"
-                               value="{{ old('storage') }}" min="0" placeholder="512">
+                        <input
+                            type="number"
+                            name="storage"
+                            class="form-control"
+                            value="{{ old('storage', $latestSpec->storage ?? '') }}"
+                            min="0"
+                            placeholder="512"
+                        >
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label">OS Version</label>
-                        <input type="text" name="os_version" class="form-control"
-                               value="{{ old('os_version') }}" placeholder="Contoh: Windows 11 Pro">
+                        <input
+                            type="text"
+                            name="os_version"
+                            class="form-control"
+                            value="{{ old('os_version', $latestSpec->os_version ?? '') }}"
+                            placeholder="Contoh: Windows 11 Pro"
+                        >
                     </div>
 
                     <div class="col-md-6">
                         <label class="form-label d-block">Jenis Storage</label>
                         <div class="d-flex flex-wrap gap-3 mt-1">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="is_hdd" value="1" id="is_hdd"
-                                       {{ old('is_hdd') ? 'checked' : '' }}>
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="is_hdd"
+                                    value="1"
+                                    id="is_hdd"
+                                    {{ old('is_hdd', $latestSpec->is_hdd ?? false) ? 'checked' : '' }}
+                                >
                                 <label class="form-check-label" for="is_hdd">HDD</label>
                             </div>
 
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="is_ssd" value="1" id="is_ssd"
-                                       {{ old('is_ssd') ? 'checked' : '' }}>
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="is_ssd"
+                                    value="1"
+                                    id="is_ssd"
+                                    {{ old('is_ssd', $latestSpec->is_ssd ?? false) ? 'checked' : '' }}
+                                >
                                 <label class="form-check-label" for="is_ssd">SSD</label>
                             </div>
 
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="is_nvme" value="1" id="is_nvme"
-                                       {{ old('is_nvme') ? 'checked' : '' }}>
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="is_nvme"
+                                    value="1"
+                                    id="is_nvme"
+                                    {{ old('is_nvme', $latestSpec->is_nvme ?? false) ? 'checked' : '' }}
+                                >
                                 <label class="form-check-label" for="is_nvme">NVMe</label>
                             </div>
                         </div>
@@ -263,8 +303,8 @@
                 </div>
 
                 <div class="d-flex justify-content-end mt-4">
-                    <button class="btn btn-primary">
-                        <i class="bi bi-save"></i> Simpan Versi
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i> Update Versi
                     </button>
                 </div>
             </form>
@@ -275,65 +315,66 @@
     <div class="card shadow-sm">
         <div class="card-body">
             <div class="section-title mb-1">
-                <i class="bi bi-clock-history"></i> Riwayat Spesifikasi
+                <i class="bi bi-clock-history me-1"></i> Riwayat Spesifikasi
             </div>
             <div class="section-subtitle mb-3">
                 Daftar versi spesifikasi dari yang terbaru sampai terlama.
             </div>
 
-            @if($specs->isEmpty())
+            @if ($specs->isEmpty())
                 <div class="text-muted fst-italic">Belum ada riwayat spesifikasi.</div>
             @else
                 <div class="table-responsive">
                     <table class="table table-modern align-middle mb-0">
                         <thead>
-                        <tr>
-                            <th style="width:60px;">#</th>
-                            <th style="width:180px;">Datetime</th>
-                            <th>Processor</th>
-                            <th style="width:120px;">RAM</th>
-                            <th style="width:140px;">Storage</th>
-                            <th>OS</th>
-                            <th style="width:170px;">Tipe Storage</th>
-                            <th style="width:120px;">Versi</th>
-                        </tr>
+                            <tr>
+                                <th style="width:60px;">No</th>
+                                <th style="width:180px;">Datetime</th>
+                                <th>Processor</th>
+                                <th style="width:120px;">RAM</th>
+                                <th style="width:140px;">Storage</th>
+                                <th>OS</th>
+                                <th style="width:170px;">Tipe Storage</th>
+                                <th style="width:120px;">Versi</th>
+                            </tr>
                         </thead>
                         <tbody>
-                        @foreach($specs as $spec)
-                            @php
-                                $storage_type = [];
-                                if($spec->is_hdd) $storage_type[] = 'HDD';
-                                if($spec->is_ssd) $storage_type[] = 'SSD';
-                                if($spec->is_nvme) $storage_type[] = 'NVMe';
-                                $isLatest = $latestSpec && $spec->id_spec === $latestSpec->id_spec;
-                            @endphp
-                            <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $spec->datetime?->format('d/m/Y H:i') ?? '-' }}</td>
-                                <td>{{ $spec->processor ?: '-' }}</td>
-                                <td>{{ $spec->ram }} GB</td>
-                                <td>{{ $spec->storage }} GB</td>
-                                <td>{{ $spec->os_version ?: '-' }}</td>
-                                <td>
-                                    @if(count($storage_type))
-                                        @foreach($storage_type as $type)
-                                            <span class="badge rounded-pill badge-media me-1">{{ $type }}</span>
-                                        @endforeach
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($isLatest)
-                                        <span class="badge rounded-pill version-pill">
-                                            <i class="bi bi-star-fill"></i> Terbaru
-                                        </span>
-                                    @else
-                                        <span class="text-muted">—</span>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endforeach
+                            @foreach ($specs as $spec)
+                                @php
+                                    $storage_type = [];
+                                    if ($spec->is_hdd) $storage_type[] = 'HDD';
+                                    if ($spec->is_ssd) $storage_type[] = 'SSD';
+                                    if ($spec->is_nvme) $storage_type[] = 'NVMe';
+                                    $isLatest = $latestSpec && $spec->id_spec === $latestSpec->id_spec;
+                                @endphp
+
+                                <tr>
+                                    <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $spec->datetime?->format('d/m/Y H:i') ?? '-' }}</td>
+                                    <td>{{ $spec->processor ?: '-' }}</td>
+                                    <td>{{ $spec->ram }} GB</td>
+                                    <td>{{ $spec->storage }} GB</td>
+                                    <td>{{ $spec->os_version ?: '-' }}</td>
+                                    <td>
+                                        @if (count($storage_type))
+                                            @foreach ($storage_type as $type)
+                                                <span class="badge rounded-pill badge-media me-1">{{ $type }}</span>
+                                            @endforeach
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if ($isLatest)
+                                            <span class="badge rounded-pill version-pill">
+                                                <i class="bi bi-star-fill"></i> Terbaru
+                                            </span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

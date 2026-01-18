@@ -7,7 +7,10 @@
     {{-- Bootstrap 5 --}}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    {{-- Google Font (opsional, biar mirip modern UI) --}}
+    {{-- Bootstrap Icons --}}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    {{-- Google Font --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
@@ -56,6 +59,39 @@
             z-index: 2;
             color: #fff;
         }
+
+        .form-control::placeholder {
+            font-weight: 400 !important;
+            opacity: 0.55 !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Chrome/Safari */
+        .form-control::-webkit-input-placeholder {
+            font-weight: 400 !important;
+            opacity: 0.55 !important;
+            font-size: 0.95rem !important;
+        }
+
+        /* Firefox */
+        .form-control::-moz-placeholder {
+            font-weight: 400 !important;
+            opacity: 0.55 !important;
+            font-size: 0.95rem !important;
+        }
+
+        .input-group-text i {
+            color: #6c757d;
+        }
+
+        .input-group .btn {
+            border-left: 0;
+        }
+
+        .input-group .form-control:focus,
+        .input-group .btn:focus {
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -82,21 +118,42 @@
 
                     <div class="mb-3">
                         <label class="form-label">Email</label>
-                        <input type="email"
-                               name="email"
-                               class="form-control"
-                               value="{{ old('email') }}"
-                               placeholder="contoh@email.com"
-                               required autofocus>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-envelope"></i>
+                            </span>
+                            <input type="email"
+                                   name="email"
+                                   class="form-control"
+                                   value="{{ old('email') }}"
+                                   placeholder="contoh@email.com"
+                                   required autofocus>
+                        </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label">Password</label>
-                        <input type="password"
-                               name="password"
-                               class="form-control"
-                               placeholder="******"
-                               required>
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-lock"></i>
+                            </span>
+
+                            <input id="password"
+                                   type="password"
+                                   name="password"
+                                   class="form-control"
+                                   placeholder="Masukkan password"
+                                   required>
+                            <span class="input-group-text bg-white">
+                                <button class="btn"
+                                    type="button"
+                                    id="togglePassword"
+                                    aria-label="Tampilkan password">
+                                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                            </button>
+                            </span>
+                            
+                        </div>
                     </div>
 
                     <button class="btn btn-primary w-100">
@@ -127,6 +184,23 @@
 
     </div>
 </div>
+
+{{-- Bootstrap JS --}}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const passwordInput = document.getElementById('password');
+    const toggleBtn = document.getElementById('togglePassword');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+
+    toggleBtn.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+        passwordInput.type = isPassword ? 'text' : 'password';
+
+        toggleIcon.classList.toggle('bi-eye', !isPassword);
+        toggleIcon.classList.toggle('bi-eye-slash', isPassword);
+    });
+</script>
 
 </body>
 </html>

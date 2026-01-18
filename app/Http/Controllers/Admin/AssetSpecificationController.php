@@ -20,7 +20,7 @@ class AssetSpecificationController extends Controller
         $specs = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
             ->get();
-        
+
         // Spec terbaru bisa null
         $latestSpec = $specs->first();
 
@@ -32,7 +32,12 @@ class AssetSpecificationController extends Controller
     {
         $this->authorize('update', $asset);
 
-         $validated = $request->validate([
+        // Ambil versi terbaru (bisa null)
+        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
+            ->orderByDesc('datetime')
+            ->first();
+
+        $validated = $request->validate([
             'processor' => ['nullable', 'string', 'max:255'],
             'ram' => ['nullable', 'integer', 'min:0'],
             'storage' => ['nullable', 'integer', 'min:0'],
@@ -42,31 +47,75 @@ class AssetSpecificationController extends Controller
             'is_nvme' => ['nullable', 'boolean'],
         ]);
 
-        // Cegah insert spec kosong total
-        $hasAny =
-            !empty($validated['processor'] ?? null) ||
-            !is_null($validated['ram'] ?? null) ||
-            !is_null($validated['storage'] ?? null) ||
-            !empty($validated['os_version'] ?? null) ||
-            !empty($validated['is_hdd'] ?? null) ||
-            !empty($validated['is_ssd'] ?? null) ||
-            !empty($validated['is_nvme'] ?? null);
+        // Checkbox kalau ga dicentang field ga terkirim
+        $inputIsHdd  = $request->boolean('is_hdd');
+        $inputIsSsd  = $request->boolean('is_ssd');
+        $inputIsNvme = $request->boolean('is_nvme');
 
-        if (!$hasAny) {
-            return back()
-                ->withErrors(['spec' => 'Isi minimal 1 field spesifikasi sebelum menyimpan.'])
-                ->withInput();
+        // Kalau field kosong, ambil dari latestSpec (kalau ada aja)
+        $newProcessor = filled($validated['processor'] ?? null)
+            ? $validated['processor']
+            : ($latestSpec->processor ?? null);
+
+        // ram/storage bisa 0
+        $newRam = array_key_exists('ram', $validated) && $validated['ram'] !== null
+            ? (int)$validated['ram']
+            : ($latestSpec->ram ?? null);
+
+        $newStorage = array_key_exists('storage', $validated) && $validated['storage'] !== null
+            ? (int)$validated['storage']
+            : ($latestSpec->storage ?? null);
+
+        $newOs = filled($validated['os_version'] ?? null)
+            ? $validated['os_version']
+            : ($latestSpec->os_version ?? null);
+
+        // Checkbox karena form akan prefill (checked sesuai latest), ambil dari input aja
+        $newIsHdd  = $inputIsHdd;
+        $newIsSsd  = $inputIsSsd;
+        $newIsNvme = $inputIsNvme;
+
+        // Kalau belum ada latest, minimal harus isi 1 field (biar ga semua null)
+        if (!$latestSpec) {
+            $hasAny =
+                !is_null($newProcessor) ||
+                !is_null($newRam) ||
+                !is_null($newStorage) ||
+                !is_null($newOs) ||
+                $newIsHdd || $newIsSsd || $newIsNvme;
+
+            if (!$hasAny) {
+                return back()
+                    ->withErrors(['spec' => 'Isi minimal 1 field spesifikasi sebelum menyimpan.'])
+                    ->withInput();
+            }
+        } else {
+            // kalau udah ada latest, cek apakah ada perubahan dari latest
+            $isSame =
+                ($newProcessor ?? '') === ($latestSpec->processor ?? '') &&
+                (int)($newRam ?? 0) === (int)($latestSpec->ram ?? 0) &&
+                (int)($newStorage ?? 0) === (int)($latestSpec->storage ?? 0) &&
+                ($newOs ?? '') === ($latestSpec->os_version ?? '') &&
+                (bool)$newIsHdd === (bool)$latestSpec->is_hdd &&
+                (bool)$newIsSsd === (bool)$latestSpec->is_ssd &&
+                (bool)$newIsNvme === (bool)$latestSpec->is_nvme;
+
+            if ($isSame) {
+                return back()
+                    ->withErrors(['spec' => 'Tidak ada perubahan. Silakan ubah minimal 1 field sebelum menyimpan versi baru.'])
+                    ->withInput();
+            }
         }
 
         AssetsSpecifications::create([
             'id_asset' => $asset->id_asset,
-            'processor' => $validated['processor'] ?? '',
-            'ram' => $validated['ram'] ?? 0,
-            'storage' => $validated['storage'] ?? 0,
-            'os_version' => $validated['os_version'] ?? '',
-            'is_hdd' => (bool)($validated['is_hdd'] ?? false),
-            'is_ssd' => (bool)($validated['is_ssd'] ?? false),
-            'is_nvme' => (bool)($validated['is_nvme'] ?? false),
+            'processor' => $newProcessor ?? '',
+            'ram' => $newRam ?? 0,
+            'storage' => $newStorage ?? 0,
+            'os_version' => $newOs ?? '',
+            'is_hdd' => (bool)$newIsHdd,
+            'is_ssd' => (bool)$newIsSsd,
+            'is_nvme' => (bool)$newIsNvme,
             'datetime' => now(),
         ]);
 
