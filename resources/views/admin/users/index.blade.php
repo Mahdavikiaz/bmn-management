@@ -19,7 +19,7 @@
 
         .table-modern thead th{
             font-size: 1rem;
-            border-bottom: 2px solid #d0d7e2; 
+            border-bottom: 2px solid #d0d7e2;
         }
 
         .table-modern td,
@@ -35,8 +35,6 @@
         }
 
         .text-muted-sm{ color:#6c757d; font-size:.85rem; }
-
-        
         .filter-select{ min-width: 220px; }
     </style>
 
@@ -70,32 +68,21 @@
 
         {{-- FILTER FORM --}}
         <form method="GET" class="d-flex align-items-center gap-2">
-
             <select name="role" class="form-select filter-select">
                 <option value="">Pilih peran...</option>
-                <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>
-                    Administrator
-                </option>
-                <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>
-                    User
-                </option>
+                <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
+                <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
             </select>
 
-            <button class="btn btn-primary">
-                Cari
-            </button>
+            <button class="btn btn-primary">Cari</button>
 
-            <a href="{{ route('admin.users.index') }}" class="btn btn-danger">
-                Reset
-            </a>
-
+            <a href="{{ route('admin.users.index') }}" class="btn btn-danger">Reset</a>
         </form>
 
         {{-- TAMBAH DATA --}}
         <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Tambah Data
+            <i class="bi bi-plus-lg me-1"></i> Tambah Data
         </a>
-
     </div>
 
     {{-- TABLE --}}
@@ -104,71 +91,117 @@
             <div class="table-responsive">
                 <table class="table table-modern align-middle mb-0">
                     <thead>
-                    <tr>
-                        <th style="width:60px;" class="fw-semibold">No</th>
-                        <th class="fw-semibold">Nama Lengkap</th>
-                        <th class="fw-semibold">Email</th>
-                        <th style="width:140px;" class="fw-semibold">Peran</th>
-                        <th style="width:190px;" class="fw-semibold">Tanggal Ditambahkan</th>
-                        <th style="width:160px;" class="text-center fw-semibold">Aksi</th>
-                    </tr>
+                        <tr>
+                            <th style="width:60px;" class="fw-semibold">No</th>
+                            <th class="fw-semibold">Nama Lengkap</th>
+                            <th class="fw-semibold">Email</th>
+                            <th style="width:140px;" class="fw-semibold">Peran</th>
+                            <th style="width:190px;" class="fw-semibold">Tanggal Ditambahkan</th>
+                            <th style="width:160px;" class="text-center fw-semibold">Aksi</th>
+                        </tr>
                     </thead>
 
                     <tbody>
-                    @forelse($users as $user)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
+                        @forelse($users as $user)
+                            <tr>
+                                <td>{{ $loop->iteration }}</td>
 
-                            <td>
-                                <div class="fw-normal">{{ $user->name }}</div>
-                                @if(!empty($user->nip))
-                                    <div class="text-muted-sm">
-                                        <i class="bi bi-person-badge"></i> NIP: {{ $user->nip }}
+                                <td>
+                                    <div class="fw-normal">{{ $user->name }}</div>
+                                    @if(!empty($user->nip))
+                                        <div class="text-muted-sm">
+                                            <i class="bi bi-person-badge me-1"></i> NIP: {{ $user->nip }}
+                                        </div>
+                                    @endif
+                                </td>
+
+                                <td class="fw-normal">{{ $user->email }}</td>
+
+                                <td>
+                                    @if($user->role === 'admin')
+                                        <span class="badge rounded-pill text-bg-primary fw-semibold">Admin</span>
+                                    @else
+                                        <span class="badge rounded-pill text-bg-success fw-semibold">User</span>
+                                    @endif
+                                </td>
+
+                                <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
+
+                                <td class="text-center">
+                                    <div class="d-inline-flex gap-2">
+                                        <a href="{{ route('admin.users.edit',$user) }}"
+                                           class="btn btn-warning btn-icon"
+                                           title="Edit User">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+
+                                        <button class="btn btn-danger btn-icon text-white js-delete"
+                                                data-action="{{ route('admin.users.destroy', $user) }}"
+                                                data-title="Anda yakin ingin menghapus data ini?"
+                                                data-message="Data ini akan terhapus permanen.">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     </div>
-                                @endif
-                            </td>
-
-                            <td class="fw-normal">{{ $user->email }}</td>
-
-                            <td>
-                                @if($user->role === 'admin')
-                                    <span class="badge rounded-pill text-bg-primary fw-semibold">Admin</span>
-                                @else
-                                    <span class="badge rounded-pill text-bg-success fw-semibold">User</span>
-                                @endif
-                            </td>
-
-                            <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
-
-                            <td class="text-center">
-                                <div class="d-inline-flex gap-2">
-                                    <a href="{{ route('admin.users.edit',$user) }}"
-                                       class="btn btn-warning btn-icon"
-                                       title="Edit User">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-
-                                    <button class="btn btn-danger btn-icon text-white js-delete"
-                                            data-action="{{ route('admin.users.destroy', $user) }}"
-                                            data-title="Delete User?"
-                                            data-message="Data User akan terhapus permanen.">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted p-4">
-                                Belum ada data pengguna.
-                            </td>
-                        </tr>
-                    @endforelse
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center text-muted p-4">
+                                    Belum ada data pengguna.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    {{-- SUCCESS MODAL (POPUP) --}}
+    <div class="modal fade" id="globalSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 p-4 text-center">
+
+                {{-- ICON --}}
+                <div class="mx-auto mb-3">
+                    <div class="bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:72px; height:72px;">
+                        <i class="bi bi-check-circle-fill fs-2"></i>
+                    </div>
+                </div>
+
+                {{-- TITLE --}}
+                <h4 class="fw-semibold mb-2" id="successTitle">Berhasil</h4>
+
+                {{-- MESSAGE --}}
+                <p class="text-muted mb-4 px-3" id="successMessage">Data berhasil diproses.</p>
+
+                {{-- ACTIONS --}}
+                <div class="d-flex justify-content-center">
+                    <button type="button"
+                            class="btn btn-primary px-4 d-flex align-items-center gap-2"
+                            data-bs-dismiss="modal">
+                        Oke
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modalEl = document.getElementById('globalSuccessModal');
+                if (!modalEl) return;
+
+                const msgEl = document.getElementById('successMessage');
+                if (msgEl) msgEl.textContent = @json(session('success'));
+
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            });
+        </script>
+    @endif
 
 @endsection

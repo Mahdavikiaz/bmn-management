@@ -70,7 +70,7 @@
 
             {{-- Ukuran --}}
             <div class="mb-3">
-                <label class="form-label">Ukuran</label>
+                <label class="form-label">Ukuran (GB)</label>
                 <input type="number"
                        name="size"
                        class="form-control @error('size') is-invalid @enderror"

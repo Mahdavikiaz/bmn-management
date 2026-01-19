@@ -63,7 +63,9 @@ class UserController extends Controller
             'role' => $request->role
         ]);
 
-        return redirect()->route('admin.users.index');
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Pengguna berhasil ditambahkan.');
     }
 
     public function edit(User $user)
@@ -83,7 +85,9 @@ class UserController extends Controller
 
         $user->update($request->only('name', 'role'));
 
-        return redirect()->route('admin.users.index');
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Data pengguna berhasil diperbarui.');
     }
 
     public function destroy(User $user)
@@ -91,6 +95,8 @@ class UserController extends Controller
         $this->authorize('delete', $user);
         $user->delete();
 
-        return back();
+        return redirect()
+            ->route('admin.users.index')
+            ->with('success', 'Pengguna berhasil dihapus.');
     }
 }

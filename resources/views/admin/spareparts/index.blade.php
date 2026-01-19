@@ -119,9 +119,6 @@
                         {{-- NAME --}}
                         <td>
                             <div class="fw-normal">{{ $sparepart->sparepart_name }}</div>
-                            <div class="text-muted-sm">
-                                ID: {{ $sparepart->id_sparepart }}
-                            </div>
                         </td>
 
                         {{-- SIZE --}}
