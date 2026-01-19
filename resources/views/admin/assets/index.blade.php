@@ -111,15 +111,15 @@
                 <table class="table table-modern align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width:60px;">No</th>
-                        <th>Kode BMN</th>
-                        <th>Nama Device</th>
-                        <th style="width:110px;">Kategori</th>
-                        <th>GPU</th>
-                        <th>Tipe RAM</th>
-                        <th style="width:90px;">Tahun Pengadaan</th>
-                        <th style="width:220px;">Spesifikasi</th>
-                        <th style="width:180px;" class="text-center">Aksi</th>
+                        <th style="width:60px;" class="fw-semibold">No</th>
+                        <th class="fw-semibold">Kode BMN</th>
+                        <th class="fw-semibold">Nama Device</th>
+                        <th style="width:110px;" class="fw-semibold">Kategori</th>
+                        <th class="fw-semibold">GPU</th>
+                        <th class="fw-semibold">Tipe RAM</th>
+                        <th style="width:90px;" class="fw-semibold">Tahun Pengadaan</th>
+                        <th style="width:220px;" class="fw-semibold">Spesifikasi</th>
+                        <th style="width:180px;" class="text-center fw-semibold">Aksi</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -132,17 +132,17 @@
                         <tr>
                             <td>{{ method_exists($assets,'currentPage') ? (($assets->currentPage() - 1) * $assets->perPage() + $loop->iteration) : $loop->iteration }}</td>
 
-                            <td class="fw-semibold">{{ $asset->bmn_code }}</td>
+                            <td class="fw-normal">{{ $asset->bmn_code }}</td>
 
                             <td>
-                                <div class="fw-semibold">{{ $asset->device_name }}</div>
+                                <div class="fw-normal">{{ $asset->device_name }}</div>
                             </td>
 
                             <td>
                                 @if($asset->device_type == 'PC')
-                                    <span class="badge rounded-pill text-bg-success">PC</span>
+                                    <span class="badge rounded-pill text-bg-success fw-semibold">PC</span>
                                 @else
-                                    <span class="badge rounded-pill text-bg-warning">Laptop</span>
+                                    <span class="badge rounded-pill text-bg-warning fw-semibold">Laptop</span>
                                 @endif
                             </td>
 
@@ -196,7 +196,7 @@
                                                                 <div class="spec-ic"><i class="bi bi-cpu"></i></div>
                                                                 <div>
                                                                     <div class="spec-label">Processor</div>
-                                                                    <div class="spec-value">{{ $latest->processor ?: '-' }}</div>
+                                                                    <div class="spec-value fw-semibold">{{ $latest->processor ?: '-' }}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -206,7 +206,7 @@
                                                                 <div class="spec-ic"><i class="bi bi-memory"></i></div>
                                                                 <div>
                                                                     <div class="spec-label">RAM</div>
-                                                                    <div class="spec-value">{{ $latest->ram }} GB</div>
+                                                                    <div class="spec-value fw-semibold">{{ $latest->ram }} GB</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -216,7 +216,7 @@
                                                                 <div class="spec-ic"><i class="bi bi-hdd-stack"></i></div>
                                                                 <div>
                                                                     <div class="spec-label">Storage</div>
-                                                                    <div class="spec-value">{{ $latest->storage }} GB</div>
+                                                                    <div class="spec-value fw-semibold">{{ $latest->storage }} GB</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -226,7 +226,7 @@
                                                                 <div class="spec-ic"><i class="bi bi-windows"></i></div>
                                                                 <div>
                                                                     <div class="spec-label">OS Version</div>
-                                                                    <div class="spec-value">{{ $latest->os_version ?: '-' }}</div>
+                                                                    <div class="spec-value fw-semibold">{{ $latest->os_version ?: '-' }}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -239,7 +239,7 @@
                                                                     <div class="spec-value">
                                                                         @if(count($media))
                                                                             @foreach($media as $m)
-                                                                                <span class="badge rounded-pill text-bg-secondary me-1">{{ $m }}</span>
+                                                                                <span class="badge rounded-pill text-bg-secondary me-1 fw-semibold">{{ $m }}</span>
                                                                             @endforeach
                                                                         @else
                                                                             -
@@ -295,8 +295,8 @@
                                     {{-- Delete --}}
                                     <button class="btn btn-danger btn-icon text-white js-delete"
                                             data-action="{{ route('admin.assets.destroy', $asset) }}"
-                                            data-title="Delete Asset?"
-                                            data-message="Data Asset akan terhapus permanen.">
+                                            data-title="Anda yakin ingin menghapus data ini?"
+                                            data-message="Data ini akan terhapus permanen.">
                                         <i class="bi bi-trash"></i>
                                     </button>
 
@@ -322,4 +322,56 @@
             </div>
         @endif
     </div>
+
+    {{-- SUCCESS MODAL (POPUP) --}}
+    <div class="modal fade" id="globalSuccessModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 p-4 text-center">
+
+                {{-- ICON --}}
+                <div class="mx-auto mb-3">
+                    <div class="bg-success-subtle text-success rounded-circle d-flex align-items-center justify-content-center"
+                         style="width:72px; height:72px;">
+                        <i class="bi bi-check-circle-fill fs-2"></i>
+                    </div>
+                </div>
+
+                {{-- TITLE --}}
+                <h4 class="fw-semibold mb-2" id="successTitle">
+                    Berhasil
+                </h4>
+
+                {{-- MESSAGE --}}
+                <p class="text-muted mb-4 px-3" id="successMessage">
+                    Data berhasil ditambahkan.
+                </p>
+
+                {{-- ACTIONS --}}
+                <div class="d-flex justify-content-center gap-3">
+                    <button type="button"
+                            class="btn btn-primary px-4 d-flex align-items-center gap-2"
+                            data-bs-dismiss="modal">
+                        Oke
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const modalEl = document.getElementById('globalSuccessModal');
+                if (!modalEl) return;
+
+                const msgEl = document.getElementById('successMessage');
+                if (msgEl) msgEl.textContent = @json(session('success'));
+
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            });
+        </script>
+    @endif
+
 @endsection

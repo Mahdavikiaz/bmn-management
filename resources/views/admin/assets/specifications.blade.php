@@ -146,7 +146,7 @@
                         <div class="spec-icon"><i class="bi bi-cpu"></i></div>
                         <div>
                             <div class="spec-label">Processor</div>
-                            <div class="spec-value">{{ $latestSpec->processor ?: '-' }}</div>
+                            <div class="spec-value fw-semibold">{{ $latestSpec->processor ?: '-' }}</div>
                         </div>
                     </div>
 
@@ -154,7 +154,7 @@
                         <div class="spec-icon"><i class="bi bi-memory"></i></div>
                         <div>
                             <div class="spec-label">RAM</div>
-                            <div class="spec-value">{{ $latestSpec->ram }} GB</div>
+                            <div class="spec-value fw-semibold">{{ $latestSpec->ram }} GB</div>
                         </div>
                     </div>
 
@@ -162,7 +162,7 @@
                         <div class="spec-icon"><i class="bi bi-hdd-stack"></i></div>
                         <div>
                             <div class="spec-label">Storage</div>
-                            <div class="spec-value">{{ $latestSpec->storage }} GB</div>
+                            <div class="spec-value fw-semibold">{{ $latestSpec->storage }} GB</div>
                         </div>
                     </div>
 
@@ -170,7 +170,7 @@
                         <div class="spec-icon"><i class="bi bi-windows"></i></div>
                         <div>
                             <div class="spec-label">OS Version</div>
-                            <div class="spec-value">{{ $latestSpec->os_version ?: '-' }}</div>
+                            <div class="spec-value fw-semibold">{{ $latestSpec->os_version ?: '-' }}</div>
                         </div>
                     </div>
 
@@ -181,7 +181,7 @@
                             <div class="spec-value">
                                 @if (count($storage_type))
                                     @foreach ($storage_type as $type)
-                                        <span class="badge rounded-pill badge-media me-1">{{ $type }}</span>
+                                        <span class="badge rounded-pill badge-media me-1 fw-semibold">{{ $type }}</span>
                                     @endforeach
                                 @else
                                     -
@@ -382,8 +382,8 @@
                                                 type="button"
                                                 class="btn btn-sm btn-outline-danger js-delete"
                                                 data-action="{{ route('admin.assets.specifications.destroy', [$asset->id_asset, $spec->id_spec]) }}"
-                                                data-title="Delete Spesifikasi?"
-                                                data-message="Data Spesifikasi akan terhapus permanen.">
+                                                data-title="Anda yakin ingin menghapus data ini?"
+                                                data-message="Data ini akan terhapus permanen.">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         @else

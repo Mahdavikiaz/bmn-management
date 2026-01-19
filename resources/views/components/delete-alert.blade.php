@@ -35,7 +35,7 @@
                     <button type="submit"
                             class="btn btn-danger px-4 d-flex align-items-center gap-2">
                         <i class="bi bi-trash"></i>
-                        Yes, Delete
+                        Ya, Hapus
                     </button>
                 </form>
             </div>
