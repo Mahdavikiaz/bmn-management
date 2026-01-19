@@ -293,18 +293,12 @@
                                     </a>
 
                                     {{-- Delete --}}
-                                    <form method="POST"
-                                          action="{{ route('admin.assets.destroy', $asset->id_asset) }}"
-                                          class="d-inline"
-                                          onsubmit="return confirm('Yakin hapus asset ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="btn btn-danger btn-icon text-white"
-                                                title="Hapus">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button class="btn btn-danger btn-icon text-white js-delete"
+                                            data-action="{{ route('admin.assets.destroy', $asset) }}"
+                                            data-title="Delete Asset?"
+                                            data-message="Data Asset akan terhapus permanen.">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
 
                                 </div>
                             </td>

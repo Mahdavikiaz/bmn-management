@@ -155,6 +155,28 @@
             font-size: 0.90rem;
         }
     </style>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalElement = document.getElementById('globalDeleteModal');
+        if (!modalElement) return;
+
+        const modal = new bootstrap.Modal(modalElement);
+        const deleteForm = document.getElementById('deleteForm');
+        const title = document.getElementById('deleteTitle');
+        const message = document.getElementById('deleteMessage');
+
+        document.querySelectorAll('.js-delete').forEach(button => {
+            button.addEventListener('click', () => {
+                deleteForm.action = button.dataset.action;
+                title.textContent = button.dataset.title || 'Delete data?';
+                message.textContent = button.dataset.message || 'Are you sure?';
+                modal.show();
+            });
+        });
+    });
+    </script>
+
 </head>
 <body>
 
@@ -175,6 +197,12 @@
         <div class="page-content">
             @yield('content')
         </div>
+
+        {{-- Global Delete Alert --}}
+        <x-delete-alert />
+
+
+         @stack('scripts')
 
     </main>
 

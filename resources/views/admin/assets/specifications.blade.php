@@ -378,18 +378,14 @@
                                     {{-- HAPUS VERSI SPEC (tidak boleh hapus versi terbaru) --}}
                                     <td class="text-center">
                                         @if(!$isLatest)
-                                            <form
-                                                method="POST"
-                                                action="{{ route('admin.assets.specifications.destroy', [$asset->id_asset, $spec->id_spec]) }}"
-                                                class="d-inline"
-                                                onsubmit="return confirm('Yakin hapus versi spesifikasi ini?')"
-                                            >
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus versi">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-outline-danger js-delete"
+                                                data-action="{{ route('admin.assets.specifications.destroy', [$asset->id_asset, $spec->id_spec]) }}"
+                                                data-title="Delete Spesifikasi?"
+                                                data-message="Data Spesifikasi akan terhapus permanen.">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         @else
                                             <span class="text-muted">-</span>
                                         @endif

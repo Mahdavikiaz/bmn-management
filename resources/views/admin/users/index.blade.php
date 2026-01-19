@@ -135,18 +135,13 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
 
-                                    <form method="POST"
-                                          action="{{ route('admin.users.destroy',$user) }}"
-                                          class="d-inline"
-                                          onsubmit="return confirm('Yakin hapus user?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="btn btn-danger btn-icon text-white"
-                                                title="Hapus User">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button class="btn btn-danger btn-icon text-white js-delete"
+                                            data-action="{{ route('admin.users.destroy', $user) }}"
+                                            data-title="Delete User?"
+                                            data-message="Data User akan terhapus permanen.">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+
                                 </div>
                             </td>
                         </tr>
