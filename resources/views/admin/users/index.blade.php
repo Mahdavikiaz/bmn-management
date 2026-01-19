@@ -5,16 +5,29 @@
 @section('content')
 
     <style>
-        /* ===== TABLE MODERN (samakan dengan Asset) ===== */
         .table-modern thead th{
             background:#f8f9fa;
             font-weight:700;
-            border-bottom:1px solid #e9ecef;
             white-space: nowrap;
         }
         .table-modern tbody tr:hover{ background:#f6f9ff; }
 
-        /* ===== ICON BUTTON (samakan dengan Asset) ===== */
+        .table-modern tbody td{
+            font-size: 0.95rem;
+            border-top: 1px solid #eef2f7;
+        }
+
+        .table-modern thead th{
+            font-size: 1rem;
+            border-bottom: 2px solid #d0d7e2; 
+        }
+
+        .table-modern td,
+        .table-modern th{
+            padding-top: .65rem;
+            padding-bottom: .65rem;
+        }
+
         .btn-icon{
             width:38px; height:38px;
             display:inline-flex; align-items:center; justify-content:center;
@@ -23,7 +36,7 @@
 
         .text-muted-sm{ color:#6c757d; font-size:.85rem; }
 
-        /* optional: bikin select filter sedikit lebih enak */
+        
         .filter-select{ min-width: 220px; }
     </style>
 
@@ -92,12 +105,12 @@
                 <table class="table table-modern align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width:60px;">#</th>
-                        <th>Nama Lengkap</th>
-                        <th>Email</th>
-                        <th style="width:140px;">Peran</th>
-                        <th style="width:190px;">Tanggal Ditambahkan</th>
-                        <th style="width:160px;" class="text-center">Aksi</th>
+                        <th style="width:60px;" class="fw-semibold">No</th>
+                        <th class="fw-semibold">Nama Lengkap</th>
+                        <th class="fw-semibold">Email</th>
+                        <th style="width:140px;" class="fw-semibold">Peran</th>
+                        <th style="width:190px;" class="fw-semibold">Tanggal Ditambahkan</th>
+                        <th style="width:160px;" class="text-center fw-semibold">Aksi</th>
                     </tr>
                     </thead>
 
@@ -107,7 +120,7 @@
                             <td>{{ $loop->iteration }}</td>
 
                             <td>
-                                <div class="fw-semibold">{{ $user->name }}</div>
+                                <div class="fw-normal">{{ $user->name }}</div>
                                 @if(!empty($user->nip))
                                     <div class="text-muted-sm">
                                         <i class="bi bi-person-badge"></i> NIP: {{ $user->nip }}
@@ -115,13 +128,13 @@
                                 @endif
                             </td>
 
-                            <td>{{ $user->email }}</td>
+                            <td class="fw-normal">{{ $user->email }}</td>
 
                             <td>
                                 @if($user->role === 'admin')
-                                    <span class="badge rounded-pill text-bg-primary">Admin</span>
+                                    <span class="badge rounded-pill text-bg-primary fw-semibold">Admin</span>
                                 @else
-                                    <span class="badge rounded-pill text-bg-success">User</span>
+                                    <span class="badge rounded-pill text-bg-success fw-semibold">User</span>
                                 @endif
                             </td>
 
@@ -156,13 +169,6 @@
                 </table>
             </div>
         </div>
-
-        {{-- kalau nanti users jadi paginate, tinggal aktifkan ini --}}
-        {{-- @if(method_exists($users, 'links'))
-            <div class="card-footer bg-white">
-                {{ $users->links() }}
-            </div>
-        @endif --}}
     </div>
 
 @endsection

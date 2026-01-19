@@ -86,9 +86,9 @@
         <div>
             <h4 class="mb-1">Kelola Spesifikasi</h4>
             <div class="text-muted">
-                {{ $asset->device_name }} ({{ $asset->device_type }}) •
-                Kode BMN: <strong>{{ $asset->bmn_code }}</strong> •
-                Tahun: <strong>{{ $asset->procurement_year }}</strong>
+                {{ $asset->device_name }} ({{ $asset->device_type }}) |
+                Kode BMN: <strong>{{ $asset->bmn_code }}</strong> |
+                Tahun Pengadaan: <strong>{{ $asset->procurement_year }}</strong>
             </div>
         </div>
 

@@ -8,10 +8,25 @@
         .table-modern thead th{
             background:#f8f9fa;
             font-weight:700;
-            border-bottom:1px solid #e9ecef;
             white-space: nowrap;
         }
         .table-modern tbody tr:hover{ background:#f6f9ff; }
+
+        .table-modern tbody td{
+            font-size: 0.95rem;
+            border-top: 1px solid #eef2f7;
+        }
+
+        .table-modern thead th{
+            font-size: 1rem;
+            border-bottom: 2px solid #d0d7e2; 
+        }
+
+        .table-modern td,
+        .table-modern th{
+            padding-top: .65rem;
+            padding-bottom: .65rem;
+        }
 
         .btn-icon{
             width:38px; height:38px;
