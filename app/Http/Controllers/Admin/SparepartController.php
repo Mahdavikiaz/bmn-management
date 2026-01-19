@@ -10,7 +10,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class SparepartController extends Controller
 {
     use AuthorizesRequests;
-    
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', Sparepart::class);
@@ -36,7 +36,7 @@ class SparepartController extends Controller
         $spareparts = $query->orderByDesc('id_sparepart')
             ->paginate(10)
             ->withQueryString();
-        
+
         $categories = ['RAM', 'STORAGE'];
         $types = ['DDR3', 'DDR4', 'DDR5', 'SSD', 'HDD', 'NVME'];
 
@@ -74,7 +74,7 @@ class SparepartController extends Controller
 
     public function edit(Sparepart $sparepart)
     {
-        $this->authorize('update', Sparepart::class);
+        $this->authorize('update', $sparepart);
 
         $categories = ['RAM', 'STORAGE'];
         $types = ['DDR3', 'DDR4', 'DDR5', 'SSD', 'HDD', 'NVME'];
@@ -84,7 +84,7 @@ class SparepartController extends Controller
 
     public function update(Request $request, Sparepart $sparepart)
     {
-        $this->authorize('update', Sparepart::class);
+        $this->authorize('update', $sparepart);
 
         $validated = $request->validate([
             'category' => ['required', 'in:RAM,STORAGE'],

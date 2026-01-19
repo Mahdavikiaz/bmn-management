@@ -31,7 +31,7 @@
             <div class="sidebar-section">DATA MASTER</div>
 
             <li class="nav-item">
-                <a href="{{ route('admin.assets.index') }}" 
+                <a href="{{ route('admin.assets.index') }}"
                     class="nav-link {{ request()->is('admin/assets*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-laptop"></i>
                     Data Asset
@@ -53,7 +53,8 @@
             </li>
 
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.spareparts.index') }}"
+                class="nav-link {{ request()->is('admin/spareparts*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-hdd-stack"></i>
                     Data Sparepart
                 </a>
