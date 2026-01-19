@@ -177,10 +177,6 @@
                                         <i class="bi bi-eye"></i> Lihat Spesifikasi
                                     </button>
 
-                                    <div class="spec-muted mt-1">
-                                        Terakhir update: {{ $latest->datetime?->format('d/m/Y H:i') ?? '-' }}
-                                    </div>
-
                                     {{-- MODAL --}}
                                     <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog modal-lg modal-dialog-scrollable">
