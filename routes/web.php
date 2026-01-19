@@ -30,16 +30,14 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('can:viewAny,App\Models\Asset')->group(function () {
             Route::resource('assets', AssetController::class);
 
-            /**
-             * Kelola Spesifikasi (History)
-             * - GET  admin/assets/{asset}/specifications  -> form & history
-             * - POST admin/assets/{asset}/specifications  -> simpan spec versi baru (insert row)
-             */
             Route::get('assets/{asset}/specifications', [AssetSpecificationController::class, 'index'])
                 ->name('assets.specifications.index');
 
             Route::post('assets/{asset}/specifications', [AssetSpecificationController::class, 'store'])
                 ->name('assets.specifications.store');
+            
+            Route::delete('assets/{asset}/specifications/{spec}', [AssetSpecificationController::class, 'destroy'])
+                ->name('assets.specifications.destroy');
         });
     });
 

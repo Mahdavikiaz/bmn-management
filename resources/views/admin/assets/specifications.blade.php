@@ -336,6 +336,7 @@
                                 <th>OS</th>
                                 <th style="width:170px;">Tipe Storage</th>
                                 <th style="width:120px;">Versi</th>
+                                <th style="width:110px;" class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -370,7 +371,27 @@
                                                 <i class="bi bi-star-fill"></i> Terbaru
                                             </span>
                                         @else
-                                            <span class="text-muted">—</span>
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- HAPUS VERSI SPEC (tidak boleh hapus versi terbaru) --}}
+                                    <td class="text-center">
+                                        @if(!$isLatest)
+                                            <form
+                                                method="POST"
+                                                action="{{ route('admin.assets.specifications.destroy', [$asset->id_asset, $spec->id_spec]) }}"
+                                                class="d-inline"
+                                                onsubmit="return confirm('Yakin hapus versi spesifikasi ini?')"
+                                            >
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus versi">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-muted">-</span>
                                         @endif
                                     </td>
                                 </tr>

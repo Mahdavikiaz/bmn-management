@@ -123,4 +123,30 @@ class AssetSpecificationController extends Controller
             ->route('admin.assets.specifications.index', $asset->id_asset)
             ->with('success', 'Spesifikasi berhasil ditambahkan (versi baru).');
     }
+
+    // Hapus versi-versi spec lama
+    public function destroy(Asset $asset, AssetsSpecifications $spec)
+    {
+        $this->authorize('update', $asset);
+
+        // Validasi spec dengan assetnya
+        if ($spec->id_asset != $asset->id_asset) {
+            abort(404);
+        }
+
+        // Supaya versi terbaru ga sengaja keapus
+        $latest = AssetsSpecifications::where('id_asset', $asset->id_asset)
+            ->orderByDesc('datetime')
+            ->first();
+        
+        if ($latest && $spec->id_spec === $latest->id_spec) {
+            return back()->withErrors(['spec' => 'Versi terbaru tidak bisa dihapus. Buat versi baru terlebih dahulu, lalu hapus versi lama.']);
+        }
+
+        $spec->delete();
+
+        return redirect()
+            ->route('admin.assets.specifications.index', $asset->id_asset)
+            ->with('success', 'Versi spesifikasi berhasil dihapus.');
+    }
 }
