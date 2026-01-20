@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Asset;
+use App\Models\Recommendation;
 use App\Models\Sparepart;
 use App\Models\User;
 use App\Policies\AssetPolicy;
+use App\Policies\RecommendationPolicy;
 use App\Policies\SparepartPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +22,7 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Asset::class => AssetPolicy::class,
         Sparepart::class => SparepartPolicy::class,
+        Recommendation::class => RecommendationPolicy::class,
     ];
     
     public function register(): void

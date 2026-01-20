@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AssetController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\SparepartController;
+use App\Http\Controllers\Admin\RecommendationController;
 
 Route::get('/', [LoginController::class, 'showLoginForm'])
     ->name('login');
@@ -45,6 +46,12 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('can:viewAny,App\Models\Sparepart')->group(function () {
             Route::resource('spareparts', SparepartController::class)->except(['show']);
         });
+
+        // ===== RECOMMENDATIONS (Admin-only) =====
+        Route::middleware('can:viewAny,App\Models\Recommendation')->group(function () {
+            Route::resource('recommendations', RecommendationController::class)->except(['show']);
+        });
+
     });
 
 });
