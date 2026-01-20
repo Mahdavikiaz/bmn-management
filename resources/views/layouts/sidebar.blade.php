@@ -46,7 +46,8 @@
             </li>
 
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.recommendations.index') }}"
+                class="nav-link {{ request()->is('admin/recommendations*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-lightbulb"></i>
                     Data Rekomendasi
                 </a>

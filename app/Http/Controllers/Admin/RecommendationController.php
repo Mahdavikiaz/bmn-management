@@ -27,10 +27,10 @@ class RecommendationController extends Controller
 
         $recommendations = $query
             ->orderBy('priority_level', 'asc')
-            ->order_by('created_at', 'desc')
+            ->orderBy('created_at', 'desc')
             ->paginate(10)
             ->withQueryString();
-        
+
         $categories = ['RAM', 'STORAGE', 'CPU'];
         $priorities = [1,2,3,4,5];
 
@@ -61,7 +61,7 @@ class RecommendationController extends Controller
             'priority_level' => 'required|integer|min:1|max:5',
         ]);
 
-        Recommendation::class($validated);
+        Recommendation::create($validated);
 
         return redirect()
             ->route('admin.recommendations.index')
