@@ -5,7 +5,7 @@
 @section('content')
 
 <div class="mb-4">
-    <h4>Tambah User</h4>
+    <h4>Tambah Pengguna</h4>
     <p class="text-muted">Form untuk menambahkan pengguna baru</p>
 </div>
 

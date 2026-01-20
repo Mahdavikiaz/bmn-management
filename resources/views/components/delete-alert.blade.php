@@ -25,7 +25,7 @@
                 <button type="button"
                         class="btn btn-light px-4"
                         data-bs-dismiss="modal">
-                    Cancel
+                    Batal
                 </button>
 
                 <form id="deleteForm" method="POST">

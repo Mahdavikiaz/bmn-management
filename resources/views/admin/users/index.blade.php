@@ -81,7 +81,7 @@
 
         {{-- TAMBAH DATA --}}
         <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Data
+            <i class="bi bi-plus-lg me-1"></i> Tambah Pengguna
         </a>
     </div>
 
