@@ -113,11 +113,11 @@
 
                 <thead>
                 <tr>
-                    <th style="width:60px;">No</th>
-                    <th style="width:120px;">Kategori</th>
-                    <th>Deskripsi Recommendation</th>
-                    <th style="width:140px;">Priority</th>
-                    <th style="width:160px;" class="text-center">Aksi</th>
+                    <th style="width:60px;" class="fw-semibold">No</th>
+                    <th style="width:120px;" class="fw-semibold">Kategori</th>
+                    <th class="fw-semibold">Deskripsi Recommendation</th>
+                    <th style="width:140px;" class="fw-semibold">Priority</th>
+                    <th style="width:160px;" class="text-center fw-semibold">Aksi</th>
                 </tr>
                 </thead>
 
@@ -130,13 +130,22 @@
                             'CPU' => 'badge-cat-cpu',
                             default => 'text-bg-secondary',
                         };
+
+                        $priorityLabel = match($recommendation->priority_level) {
+                            1 => 'Sangat Rendah',
+                            2 => 'Rendah',
+                            3 => 'Sedang',
+                            4 => 'Tinggi',
+                            5 => 'Sangat Tinggi',
+                            default => '-',
+                        };
                     @endphp
 
                     <tr>
                         <td>{{ $recommendations->firstItem() + $loop->index }}</td>
 
                         <td>
-                            <span class="badge rounded-pill badge-cat {{ $catClass }}">
+                            <span class="badge rounded-pill badge-cat {{ $catClass }} fw-semibold">
                                 {{ $recommendation->category }}
                             </span>
                         </td>
@@ -144,20 +153,9 @@
                         <td>{{ $recommendation->description }}</td>
 
                         <td>
-                        @php
-                            $priorityLabel = match($recommendation->priority_level) {
-                                1 => 'Sangat Rendah',
-                                2 => 'Rendah',
-                                3 => 'Sedang',
-                                4 => 'Tinggi',
-                                5 => 'Sangat Tinggi',
-                                default => '-',
-                            };
-                        @endphp
-
-                        <span class="badge rounded-pill badge-priority">
-                            {{ $recommendation->priority_level }} - {{ $priorityLabel }}
-                        </span>
+                            <span class="badge rounded-pill badge-priority fw-semibold">
+                                {{ $recommendation->priority_level }} - {{ $priorityLabel }}
+                            </span>
                         </td>
 
                         <td class="text-center">
@@ -169,7 +167,7 @@
                                     <i class="bi bi-pencil"></i>
                                 </a>
 
-                                <button class="btn btn-danger btn-icon js-delete"
+                                <button class="btn btn-danger btn-icon text-white js-delete"
                                         data-action="{{ route('admin.recommendations.destroy', $recommendation) }}"
                                         data-title="Yakin ingin menghapus data ini?"
                                         data-message="Data recommendation akan terhapus permanen.">
@@ -197,20 +195,5 @@
 <div class="mt-3">
     {{ $recommendations->links() }}
 </div>
-
-{{-- SUCCESS MODAL --}}
-@if(session('success'))
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const modalEl = document.getElementById('globalSuccessModal');
-            if (!modalEl) return;
-
-            const msgEl = document.getElementById('successMessage');
-            if (msgEl) msgEl.textContent = @json(session('success'));
-
-            new bootstrap.Modal(modalEl).show();
-        });
-    </script>
-@endif
 
 @endsection

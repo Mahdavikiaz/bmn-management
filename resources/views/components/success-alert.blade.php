@@ -32,18 +32,3 @@
         </div>
     </div>
 </div>
-
-@if(session('success'))
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const modalEl = document.getElementById('globalSuccessModal');
-            if (!modalEl) return;
-
-            const msgEl = document.getElementById('successMessage');
-            if (msgEl) msgEl.textContent = @json(session('success'));
-
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-        });
-    </script>
-@endif

@@ -155,29 +155,8 @@
             font-size: 0.90rem;
         }
     </style>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const modalElement = document.getElementById('globalDeleteModal');
-        if (!modalElement) return;
-
-        const modal = new bootstrap.Modal(modalElement);
-        const deleteForm = document.getElementById('deleteForm');
-        const title = document.getElementById('deleteTitle');
-        const message = document.getElementById('deleteMessage');
-
-        document.querySelectorAll('.js-delete').forEach(button => {
-            button.addEventListener('click', () => {
-                deleteForm.action = button.dataset.action;
-                title.textContent = button.dataset.title || 'Delete data?';
-                message.textContent = button.dataset.message || 'Are you sure?';
-                modal.show();
-            });
-        });
-    });
-    </script>
-
 </head>
+
 <body>
 
     {{-- SIDEBAR --}}
@@ -201,11 +180,50 @@
         {{-- Global Delete Alert --}}
         <x-delete-alert />
 
+        {{-- Global Success Alert --}}
+        <x-success-alert />
 
-         @stack('scripts')
-
+        @stack('scripts')
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DELETE MODAL
+            const deleteModalEl = document.getElementById('globalDeleteModal');
+            if (deleteModalEl) {
+                const deleteModal = new bootstrap.Modal(deleteModalEl);
+                const deleteForm = document.getElementById('deleteForm');
+                const title = document.getElementById('deleteTitle');
+                const message = document.getElementById('deleteMessage');
+
+                // event delegation
+                document.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.js-delete');
+                    if (!btn) return;
+
+                    if (deleteForm) deleteForm.action = btn.dataset.action || '';
+                    if (title) title.textContent = btn.dataset.title || 'Delete data?';
+                    if (message) message.textContent = btn.dataset.message || 'Are you sure?';
+                    deleteModal.show();
+                });
+            }
+
+            // SUCCESS MODAL
+            const successModalEl = document.getElementById('globalSuccessModal');
+            if (successModalEl) {
+                const successText = @json(session('success'));
+                if (successText) {
+                    const msgEl = document.getElementById('successMessage');
+                    if (msgEl) msgEl.textContent = successText;
+
+                    new bootstrap.Modal(successModalEl).show();
+                }
+            }
+
+        });
+    </script>
+
 </body>
 </html>
