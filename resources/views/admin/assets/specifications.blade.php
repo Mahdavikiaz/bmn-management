@@ -167,15 +167,23 @@
                     </div>
 
                     <div class="spec-item">
-                        <div class="spec-icon"><i class="bi bi-windows"></i></div>
+                        <div class="spec-icon"><i class="bi bi-nvidia"></i></div>
                         <div>
-                            <div class="spec-label">OS Version</div>
-                            <div class="spec-value fw-semibold">{{ $latestSpec->os_version ?: '-' }}</div>
+                            <div class="spec-label">GPU</div>
+                            <div class="spec-value fw-semibold">{{ $asset->gpu }}</div>
                         </div>
                     </div>
 
                     <div class="spec-item">
                         <div class="spec-icon"><i class="bi bi-device-hdd"></i></div>
+                        <div>
+                            <div class="spec-label">Tipe RAM</div>
+                            <div class="spec-value fw-semibold">{{ $asset->ram_type }}</div>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <div class="spec-icon"><i class="bi bi-device-ssd"></i></div>
                         <div>
                             <div class="spec-label">Tipe Storage</div>
                             <div class="spec-value">
@@ -187,6 +195,14 @@
                                     -
                                 @endif
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="spec-item">
+                        <div class="spec-icon"><i class="bi bi-windows"></i></div>
+                        <div>
+                            <div class="spec-label">OS Version</div>
+                            <div class="spec-value fw-semibold">{{ $latestSpec->os_version ?: '-' }}</div>
                         </div>
                     </div>
 

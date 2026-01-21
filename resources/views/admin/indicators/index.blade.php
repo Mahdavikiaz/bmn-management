@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Indicator')
+@section('title', 'Daftar Indikator')
 
 @section('content')
 
@@ -56,7 +56,7 @@
     }
 </style>
 
-<h4 class="mb-4">Daftar Indicator</h4>
+<h4 class="mb-4">Daftar Indikator</h4>
 
 {{-- ACTION BAR --}}
 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
@@ -101,11 +101,11 @@
 
                 <thead>
                 <tr>
-                    <th style="width:60px;">No</th>
-                    <th style="width:120px;">Kategori</th>
-                    <th>Nama Indicator</th>
-                    <th>Pertanyaan</th>
-                    <th style="width:180px;" class="text-center">Aksi</th>
+                    <th style="width:60px;" class="fw-semibold">No</th>
+                    <th style="width:120px;" class="fw-semibold">Kategori</th>
+                    <th class="fw-semibold">Nama Indicator</th>
+                    <th class="fw-semibold">Pertanyaan</th>
+                    <th style="width:180px;" class="text-center fw-semibold">Aksi</th>
                 </tr>
                 </thead>
 
@@ -124,12 +124,12 @@
                         <td>{{ $indicators->firstItem() + $loop->index }}</td>
 
                         <td>
-                            <span class="badge rounded-pill badge-cat {{ $catClass }}">
+                            <span class="badge rounded-pill badge-cat {{ $catClass }} fw-semibold">
                                 {{ $indicator->category }}
                             </span>
                         </td>
 
-                        <td class="fw-semibold">
+                        <td class="fw-normal">
                             {{ $indicator->indicator_name }}
                         </td>
 
@@ -174,7 +174,7 @@
                                 {{-- HEADER --}}
                                 <div class="modal-header border-0 pb-0">
                                     <h5 class="modal-title fw-semibold">
-                                        Detail Indicator
+                                        Detail Indikator
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
@@ -184,11 +184,11 @@
 
                                     {{-- INFO --}}
                                     <div class="d-flex flex-wrap gap-3 mb-3">
-                                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                                        <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold">
                                             {{ $indicator->category }}
                                         </span>
 
-                                        <span class="fw-semibold">
+                                        <span class="fw-normal">
                                             {{ $indicator->indicator_name }}
                                         </span>
                                     </div>

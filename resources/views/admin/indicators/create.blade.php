@@ -6,9 +6,9 @@
 
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-        <h4 class="mb-1">Tambah Indicator</h4>
+        <h4 class="mb-1">Tambah Indikator</h4>
         <small class="text-muted">
-            Form untuk menambahkan indikator dan pertanyaan penilaian
+            Form untuk menambahkan indikator pertanyaan untuk penilaian perangkat.
         </small>
     </div>
 
@@ -26,7 +26,9 @@
 
             {{-- SECTION: INFO --}}
             <div class="mb-4">
-                <div class="section-title">Informasi Indicator</div>
+                <div class="section-title">
+                    <p class="fs-5">Informasi Indikator</p>
+                </div>
 
                 <div class="row g-3">
                     {{-- KATEGORI --}}
@@ -50,7 +52,7 @@
 
                     {{-- NAMA --}}
                     <div class="mb-3">
-                        <label class="form-label">Nama Indicator</label>
+                        <label class="form-label">Nama Indikator</label>
                         <input type="text"
                                name="indicator_name"
                                class="form-control @error('indicator_name') is-invalid @enderror"
@@ -65,7 +67,7 @@
             </div>
 
             {{-- PERTANYAAN --}}
-            <div class="mb-5">
+            <div class="mb-4">
                 <label class="form-label">Pertanyaan Penilaian</label>
                 <textarea name="question"
                           rows="3"
@@ -80,7 +82,7 @@
 
             {{-- SECTION: OPSI --}}
             <div class="mb-4">
-                <div class="section-title">Opsi Jawaban</div>
+                <div class="section-title fs-5">Opsi Jawaban</div>
 
                 @php
                     $labelNames = [
@@ -94,7 +96,7 @@
 
                 @foreach($labels as $label)
                     <div class="option-card mb-3">
-                        <div class="d-flex align-items-center gap-3 mb-2">
+                        <div class="d-flex align-items-center gap-3 mb-4">
                             <div class="option-label">{{ $label }}</div>
                             <div class="fw-semibold">
                                 {{ $labelNames[$label] ?? '' }}

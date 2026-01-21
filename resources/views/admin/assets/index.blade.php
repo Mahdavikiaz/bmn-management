@@ -202,7 +202,7 @@
                                                     @endphp
 
                                                     <div class="row g-3">
-                                                        <div class="col-md-6">
+                                                        <div class="col-md-3">
                                                             <div class="spec-kv">
                                                                 <div class="spec-ic"><i class="bi bi-cpu"></i></div>
                                                                 <div>
@@ -232,19 +232,29 @@
                                                             </div>
                                                         </div>
 
-                                                        <div class="col-md-6">
+                                                        <div class="col-md-3">
                                                             <div class="spec-kv">
-                                                                <div class="spec-ic"><i class="bi bi-windows"></i></div>
+                                                                <div class="spec-ic"><i class="bi bi-nvidia"></i></div>
                                                                 <div>
-                                                                    <div class="spec-label">OS Version</div>
-                                                                    <div class="spec-value fw-semibold">{{ $latest->os_version ?: '-' }}</div>
+                                                                    <div class="spec-label">GPU</div>
+                                                                    <div class="spec-value fw-semibold">{{ $asset->gpu ?: '-' }}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        <div class="col-md-6">
+                                                        <div class="col-md-3">
                                                             <div class="spec-kv">
                                                                 <div class="spec-ic"><i class="bi bi-device-hdd"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">Tipe RAM</div>
+                                                                    <div class="spec-value fw-semibold">{{ $asset->ram_type ?: '-' }}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-3">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-device-ssd"></i></div>
                                                                 <div>
                                                                     <div class="spec-label">Tipe Storage</div>
                                                                     <div class="spec-value">
@@ -259,6 +269,16 @@
                                                                 </div>
                                                             </div>
                                                         </div>
+
+                                                        <div class="col-md-3">
+                                                            <div class="spec-kv">
+                                                                <div class="spec-ic"><i class="bi bi-windows"></i></div>
+                                                                <div>
+                                                                    <div class="spec-label">OS Version</div>
+                                                                    <div class="spec-value fw-semibold">{{ $latest->os_version ?: '-' }}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>                                                        
                                                     </div>
 
                                                     <div class="text-muted small mt-3">
