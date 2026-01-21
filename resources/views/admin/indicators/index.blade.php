@@ -89,7 +89,7 @@
 
     {{-- TAMBAH --}}
     <a href="{{ route('admin.indicator-questions.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Indicator
+        <i class="bi bi-plus-lg me-1"></i> Tambah Indikator
     </a>
 </div>
 
@@ -173,7 +173,7 @@
 
                                 {{-- HEADER --}}
                                 <div class="modal-header border-0 pb-0">
-                                    <h5 class="modal-title fw-semibold">
+                                    <h5 class="modal-title fw-semibold mb-3">
                                         Detail Indikator
                                     </h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -183,7 +183,7 @@
                                 <div class="modal-body pt-2">
 
                                     {{-- INFO --}}
-                                    <div class="d-flex flex-wrap gap-3 mb-3">
+                                    <div class="d-flex flex-wrap gap-3 mb-4">
                                         <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold">
                                             {{ $indicator->category }}
                                         </span>
