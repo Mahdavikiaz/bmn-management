@@ -39,7 +39,8 @@
             </li>
 
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.indicator-questions.index') }}" 
+                    class="nav-link {{ request()->is('admin/indicator-questions*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-ui-checks-grid"></i>
                     Data Indikator
                 </a>

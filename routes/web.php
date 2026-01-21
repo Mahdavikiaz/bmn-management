@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\SparepartController;
 use App\Http\Controllers\Admin\RecommendationController;
+use App\Http\Controllers\Admin\IndicatorQuestionController;
 
 Route::get('/', [LoginController::class, 'showLoginForm'])
     ->name('login');
@@ -50,6 +51,11 @@ Route::middleware(['auth'])->group(function () {
         // ===== RECOMMENDATIONS (Admin-only) =====
         Route::middleware('can:viewAny,App\Models\Recommendation')->group(function () {
             Route::resource('recommendations', RecommendationController::class)->except(['show']);
+        });
+
+        // ===== INDICATOR QUESTIONS (Admin-only) =====
+        Route::middleware('can:viewAny,App\Models\IndicatorQuestion')->group(function () {
+            Route::resource('indicator-questions', IndicatorQuestionController::class)->except(['show']);
         });
 
     });
