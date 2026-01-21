@@ -46,16 +46,51 @@
     .badge-cat-storage{ background:#ffc107; color:#000; }
     .badge-cat-cpu{ background:#0d6efd; color:#fff; }
 
+    /* PRIORITY BADGE COLORS */
     .badge-priority{
-        background:#f1f3f5;
-        color:#212529;
-        border:1px solid #dee2e6;
         font-weight:700;
         padding:.35rem .7rem;
+        letter-spacing:.2px;
+        border:1px solid transparent;
+    }
+
+    /* 5 - Sangat Tinggi */
+    .badge-priority-5{
+        background:#ffe3e3;
+        color:#c92a2a;
+        border-color:#ffc9c9;
+    }
+
+    /* 4 - Tinggi */
+    .badge-priority-4{
+        background:#fff4e6;
+        color:#d9480f;
+        border-color:#ffd8a8;
+    }
+
+    /* 3 - Sedang */
+    .badge-priority-3{
+        background:#fff9db;
+        color:#e67700;
+        border-color:#ffe066;
+    }
+
+    /* 2 - Rendah */
+    .badge-priority-2{
+        background:#e6fcf5;
+        color:#087f5b;
+        border-color:#c3fae8;
+    }
+
+    /* 1 - Sangat Rendah */
+    .badge-priority-1{
+        background:#ebfbee;
+        color:#2b8a3e;
+        border-color:#b2f2bb;
     }
 </style>
 
-<h4 class="mb-4">Daftar Recommendation</h4>
+<h4 class="mb-4">Daftar Rekomendasi</h4>
 
 {{-- ACTION BAR + FILTER --}}
 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
@@ -101,7 +136,7 @@
 
     {{-- TAMBAH --}}
     <a href="{{ route('admin.recommendations.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Data
+        <i class="bi bi-plus-lg me-1"></i> Tambah Rekomendasi
     </a>
 </div>
 
@@ -139,6 +174,15 @@
                             5 => 'Sangat Tinggi',
                             default => '-',
                         };
+
+                        $priorityClass = match((int) $recommendation->priority_level) {
+                            1 => 'badge-priority-1',
+                            2 => 'badge-priority-2',
+                            3 => 'badge-priority-3',
+                            4 => 'badge-priority-4',
+                            5 => 'badge-priority-5',
+                            default => '',
+                        };
                     @endphp
 
                     <tr>
@@ -153,7 +197,7 @@
                         <td>{{ $recommendation->description }}</td>
 
                         <td>
-                            <span class="badge rounded-pill badge-priority fw-semibold">
+                            <span class="badge rounded-pill badge-priority {{ $priorityClass }} fw-semibold">
                                 {{ $recommendation->priority_level }} - {{ $priorityLabel }}
                             </span>
                         </td>

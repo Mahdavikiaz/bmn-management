@@ -99,7 +99,7 @@
 
     {{-- TAMBAH --}}
     <a href="{{ route('admin.spareparts.create') }}" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Data
+        <i class="bi bi-plus-lg me-1"></i> Tambah Sparepart
     </a>
 </div>
 

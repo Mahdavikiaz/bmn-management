@@ -5,8 +5,8 @@
 @section('content')
 
 <div class="mb-4">
-    <h4>Tambah Recommendation</h4>
-    <p class="text-muted">Form untuk menambahkan data recommendation baru</p>
+    <h4>Tambah Rekomendasi</h4>
+    <p class="text-muted">Form untuk menambahkan data rekomendasi baru</p>
 </div>
 
 <div class="card shadow-sm">
@@ -36,11 +36,11 @@
 
             {{-- Deskripsi Recommendation --}}
             <div class="mb-3">
-                <label class="form-label">Deskripsi Recommendation</label>
+                <label class="form-label">Deskripsi Rekomendasi</label>
                 <textarea name="description"
                           rows="4"
                           class="form-control @error('description') is-invalid @enderror"
-                          placeholder="Masukkan deskripsi recommendation"
+                          placeholder="Masukkan deskripsi rekomendasi"
                           required>{{ old('description') }}</textarea>
 
                 @error('description')
