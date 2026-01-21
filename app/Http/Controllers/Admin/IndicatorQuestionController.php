@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class IndicatorQuestionController extends Controller
 {
     use AuthorizesRequests;
-    
+
     private array $starMap = [
         'A' => 5,
         'B' => 4,
@@ -35,9 +35,9 @@ class IndicatorQuestionController extends Controller
 
         if ($request->filled('q')) {
             $q = $request->q;
-            $query->where(function($w) use ($q) {
+            $query->where(function ($w) use ($q) {
                 $w->where('indicator_name', 'like', "%{$q}%")
-                  ->orWhere('question', 'like', "%{$q}%");
+                    ->orWhere('question', 'like', "%{$q}%");
             });
         }
 
@@ -51,7 +51,6 @@ class IndicatorQuestionController extends Controller
         $this->authorize('create', IndicatorQuestion::class);
 
         $categories = ['RAM', 'STORAGE', 'CPU'];
-
         $labels = array_keys($this->starMap);
 
         return view('admin.indicators.create', compact('categories', 'labels'));
@@ -95,24 +94,30 @@ class IndicatorQuestionController extends Controller
             ->with('success', 'Indicator berhasil ditambahkan.');
     }
 
-    public function edit(IndicatorQuestion $indicator)
+    /**
+     * NOTE:
+     * Parameter harus bernama $indicator_question agar implicit binding match
+     * dengan route resource {indicator_question}.
+     */
+    public function edit(IndicatorQuestion $indicator_question)
     {
-        $this->authorize('update', $indicator);
+        $this->authorize('update', $indicator_question);
 
         $categories = ['RAM', 'STORAGE', 'CPU'];
-
         $labels = array_keys($this->starMap);
 
-        // ambil options, trs susun jadi array by label
-        $indicator->load('options');
-        $optionsByLabel = $indicator->options->keyBy('label');
+        $indicator_question->load('options');
+        $optionsByLabel = $indicator_question->options->keyBy('label');
+
+        // biar view tetap pakai variabel $indicator (seperti yang kamu buat)
+        $indicator = $indicator_question;
 
         return view('admin.indicators.edit', compact('indicator', 'categories', 'labels', 'optionsByLabel'));
     }
 
-    public function update(Request $request, IndicatorQuestion $indicator)
+    public function update(Request $request, IndicatorQuestion $indicator_question)
     {
-        $this->authorize('update', $indicator);
+        $this->authorize('update', $indicator_question);
 
         $request->validate([
             'category' => 'required|in:RAM,STORAGE,CPU',
@@ -126,8 +131,8 @@ class IndicatorQuestionController extends Controller
             'options.E' => 'required|string',
         ]);
 
-        DB::transaction(function () use ($request, $indicator) {
-            $indicator->update([
+        DB::transaction(function () use ($request, $indicator_question) {
+            $indicator_question->update([
                 'category' => $request->category,
                 'indicator_name' => $request->indicator_name,
                 'question' => $request->question,
@@ -136,7 +141,7 @@ class IndicatorQuestionController extends Controller
             foreach ($this->starMap as $label => $star) {
                 IndicatorOption::updateOrCreate(
                     [
-                        'id_question' => $indicator->id_question,
+                        'id_question' => $indicator_question->id_question,
                         'label' => $label,
                     ],
                     [
@@ -152,11 +157,11 @@ class IndicatorQuestionController extends Controller
             ->with('success', 'Indicator berhasil diperbarui.');
     }
 
-    public function destroy(IndicatorQuestion $indicator)
+    public function destroy(IndicatorQuestion $indicator_question)
     {
-        $this->authorize('delete', $indicator);
+        $this->authorize('delete', $indicator_question);
 
-        $indicator->delete();
+        $indicator_question->delete();
 
         return redirect()
             ->route('admin.indicator-questions.index')

@@ -154,6 +154,29 @@
             opacity: 0.55;
             font-size: 0.90rem;
         }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: .75rem;
+        }
+        .option-card {
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1rem;
+            background: #fafbfc;
+        }
+        .option-label {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-weight: 600;
+            background: #0d6efd;
+            color: #fff;
+        }
     </style>
 </head>
 
