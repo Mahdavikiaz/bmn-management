@@ -3,8 +3,11 @@
 @section('title', 'Edit Asset')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0">Edit Asset</h4>
+    <div class="d-flex justify-content-between align-items-center mb-0">
+        <div>
+            <h4 class="mb-2">Edit Asset</h4>
+            <p class="text-muted">Form untuk perbarui data asset</p>
+        </div>
         <a href="{{ route('admin.assets.index') }}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Kembali
         </a>

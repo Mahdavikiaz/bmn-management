@@ -4,9 +4,14 @@
 
 @section('content')
 
-<div class="mb-4">
-    <h4>Edit Sparepart</h4>
-    <p class="text-muted">Perbarui data sparepart</p>
+<div class="d-flex justify-content-between align-items-center mb-0">
+    <div>
+        <h4>Edit Sparepart</h4>
+        <p class="text-muted">Form untuk perbarui data sparepart</p>
+    </div>
+    <a href="{{ route('admin.spareparts.index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Kembali
+    </a>
 </div>
 
 <div class="card shadow-sm">
@@ -100,14 +105,15 @@
             </div>
 
             {{-- Action --}}
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-end gap-2 mt-4">
                 <a href="{{ route('admin.spareparts.index') }}"
                    class="btn btn-secondary">
-                    Kembali
+                    Batal
                 </a>
 
-                <button type="submit" class="btn btn-warning">
-                    Update
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i>
+                    Simpan Perubahan
                 </button>
             </div>
 

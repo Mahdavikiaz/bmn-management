@@ -150,7 +150,7 @@
                 <tr>
                     <th style="width:60px;" class="fw-semibold">No</th>
                     <th style="width:120px;" class="fw-semibold">Kategori</th>
-                    <th class="fw-semibold">Deskripsi Recommendation</th>
+                    <th class="fw-semibold">Deskripsi Rekomendasi</th>
                     <th style="width:140px;" class="fw-semibold">Priority</th>
                     <th style="width:160px;" class="text-center fw-semibold">Aksi</th>
                 </tr>
