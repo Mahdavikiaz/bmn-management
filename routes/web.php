@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Admin\SparepartController;
 use App\Http\Controllers\Admin\RecommendationController;
 use App\Http\Controllers\Admin\IndicatorQuestionController;
+use App\Http\Controllers\Admin\AssetCheckController;
 
 Route::get('/', [LoginController::class, 'showLoginForm'])
     ->name('login');
@@ -24,6 +25,7 @@ Route::post('/logout', [LoginController::class, 'logout'])
 Route::middleware(['auth'])->group(function () {
 
     Route::prefix('admin')->name('admin.')->group(function () {
+
         // ===== USERS (Admin-only) =====
         Route::middleware('can:viewAny,App\Models\User')->group(function () {
             Route::resource('users', UserController::class);
@@ -38,7 +40,7 @@ Route::middleware(['auth'])->group(function () {
 
             Route::post('assets/{asset}/specifications', [AssetSpecificationController::class, 'store'])
                 ->name('assets.specifications.store');
-            
+
             Route::delete('assets/{asset}/specifications/{spec}', [AssetSpecificationController::class, 'destroy'])
                 ->name('assets.specifications.destroy');
         });
@@ -58,9 +60,21 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('indicator-questions', IndicatorQuestionController::class)->except(['show']);
         });
 
+        // ===== ASSET CHECKS / PERFORMANCE REPORT (Admin-only) =====
+        Route::middleware('can:viewAny,App\Models\PerformanceReport')->group(function () {
+            Route::get('asset-checks', [AssetCheckController::class, 'index'])
+                ->name('asset-checks.index');
+
+            Route::get('asset-checks/{asset}/create', [AssetCheckController::class, 'create'])
+                ->name('asset-checks.create');
+
+            Route::post('asset-checks/{asset}', [AssetCheckController::class, 'store'])
+                ->name('asset-checks.store');
+
+            Route::get('asset-checks/{asset}/reports/{report}', [AssetCheckController::class, 'show'])
+                ->name('asset-checks.show');
+        });
+
     });
 
 });
-
-
-

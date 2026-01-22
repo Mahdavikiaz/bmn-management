@@ -103,7 +103,7 @@
                 <tr>
                     <th style="width:60px;" class="fw-semibold">No</th>
                     <th style="width:120px;" class="fw-semibold">Kategori</th>
-                    <th class="fw-semibold">Nama Indicator</th>
+                    <th class="fw-semibold">Nama Indikator</th>
                     <th class="fw-semibold">Pertanyaan</th>
                     <th style="width:180px;" class="text-center fw-semibold">Aksi</th>
                 </tr>

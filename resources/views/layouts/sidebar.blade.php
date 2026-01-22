@@ -14,8 +14,10 @@
                 </a>
             </li>
 
+            {{-- ✅ UPDATED: Asset Check --}}
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.asset-checks.index') }}"
+                   class="nav-link {{ request()->is('admin/asset-checks*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-clipboard-check"></i>
                     Pengecekan Asset
                 </a>
@@ -32,15 +34,15 @@
 
             <li class="nav-item">
                 <a href="{{ route('admin.assets.index') }}"
-                    class="nav-link {{ request()->is('admin/assets*') ? 'active' : 'text-dark' }}">
+                   class="nav-link {{ request()->is('admin/assets*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-laptop"></i>
                     Data Asset
                 </a>
             </li>
 
             <li class="nav-item">
-                <a href="{{ route('admin.indicator-questions.index') }}" 
-                    class="nav-link {{ request()->is('admin/indicator-questions*') ? 'active' : 'text-dark' }}">
+                <a href="{{ route('admin.indicator-questions.index') }}"
+                   class="nav-link {{ request()->is('admin/indicator-questions*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-ui-checks-grid"></i>
                     Data Indikator
                 </a>
@@ -48,7 +50,7 @@
 
             <li class="nav-item">
                 <a href="{{ route('admin.recommendations.index') }}"
-                class="nav-link {{ request()->is('admin/recommendations*') ? 'active' : 'text-dark' }}">
+                   class="nav-link {{ request()->is('admin/recommendations*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-lightbulb"></i>
                     Data Rekomendasi
                 </a>
@@ -56,7 +58,7 @@
 
             <li class="nav-item">
                 <a href="{{ route('admin.spareparts.index') }}"
-                class="nav-link {{ request()->is('admin/spareparts*') ? 'active' : 'text-dark' }}">
+                   class="nav-link {{ request()->is('admin/spareparts*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-hdd-stack"></i>
                     Data Sparepart
                 </a>

@@ -4,11 +4,13 @@ namespace App\Providers;
 
 use App\Models\Asset;
 use App\Models\IndicatorQuestion;
+use App\Models\PerformanceReport;
 use App\Models\Recommendation;
 use App\Models\Sparepart;
 use App\Models\User;
 use App\Policies\AssetPolicy;
 use App\Policies\IndicatorQuestionPolicy;
+use App\Policies\PerformanceReportPolicy;
 use App\Policies\RecommendationPolicy;
 use App\Policies\SparepartPolicy;
 use App\Policies\UserPolicy;
@@ -26,6 +28,7 @@ class AuthServiceProvider extends ServiceProvider
         Sparepart::class => SparepartPolicy::class,
         Recommendation::class => RecommendationPolicy::class,
         IndicatorQuestion::class => IndicatorQuestionPolicy::class,
+        PerformanceReport::class => PerformanceReportPolicy::class,
     ];
     
     public function register(): void
