@@ -94,11 +94,6 @@ class IndicatorQuestionController extends Controller
             ->with('success', 'Indicator berhasil ditambahkan.');
     }
 
-    /**
-     * NOTE:
-     * Parameter harus bernama $indicator_question agar implicit binding match
-     * dengan route resource {indicator_question}.
-     */
     public function edit(IndicatorQuestion $indicator_question)
     {
         $this->authorize('update', $indicator_question);
@@ -109,7 +104,6 @@ class IndicatorQuestionController extends Controller
         $indicator_question->load('options');
         $optionsByLabel = $indicator_question->options->keyBy('label');
 
-        // biar view tetap pakai variabel $indicator (seperti yang kamu buat)
         $indicator = $indicator_question;
 
         return view('admin.indicators.edit', compact('indicator', 'categories', 'labels', 'optionsByLabel'));
