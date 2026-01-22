@@ -186,8 +186,8 @@
                                                     <div>
                                                         <h5 class="modal-title mb-0">Spesifikasi Asset</h5>
                                                         <div class="text-muted small">
-                                                            {{ $asset->device_name }} ({{ $asset->device_type }}) •
-                                                            Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+                                                            {{ $asset->device_name }} ({{ $asset->device_type }}) |
+                                                            Kode BMN: <strong>{{ $asset->bmn_code }}</strong> | Tahun Pengadaan: {{ $asset->procurement_year }}
                                                         </div>
                                                     </div>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
