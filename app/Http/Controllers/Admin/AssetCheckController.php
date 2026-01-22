@@ -20,70 +20,109 @@ class AssetCheckController extends Controller
 {
     use AuthorizesRequests;
 
-    // Mapping label star
-    private array $starMap = [
-        'A' => 5,
-        'B' => 4,
-        'C' => 3,
-        'D' => 2,
-        'E' => 1,
-    ];
+    /**
+     * normalize helper untuk compare string
+     */
+    private function norm(?string $v): ?string
+    {
+        if ($v === null) return null;
+        $v = trim($v);
+        return $v === '' ? null : $v;
+    }
+
+    /**
+     * bikin payload spec dari request
+     */
+    private function buildSpecPayload(Request $request, Asset $asset): array
+    {
+        // storage type dari dropdown "category_storage" (HDD/SSD/NVME)
+        $storageType = $request->input('category_storage'); // nullable
+
+        return [
+            'id_asset'   => $asset->id_asset,
+            'processor'  => $this->norm($request->processor),
+            'ram'        => (int) $request->ram,
+            'storage'    => (int) $request->storage,
+            'os_version' => $this->norm($request->os_version),
+            'is_hdd'     => $storageType === 'HDD',
+            'is_ssd'     => $storageType === 'SSD',
+            'is_nvme'    => $storageType === 'NVME',
+        ];
+    }
+
+    /**
+     * cek apakah payload spec sama dengan latest spec
+     */
+    private function isSameSpec(?AssetsSpecifications $latest, array $payload): bool
+    {
+        if (!$latest) return false;
+
+        return (
+            $this->norm($latest->processor)  === $payload['processor'] &&
+            (int) $latest->ram              === (int) $payload['ram'] &&
+            (int) $latest->storage          === (int) $payload['storage'] &&
+            $this->norm($latest->os_version)=== $payload['os_version'] &&
+            (bool) $latest->is_hdd          === (bool) $payload['is_hdd'] &&
+            (bool) $latest->is_ssd          === (bool) $payload['is_ssd'] &&
+            (bool) $latest->is_nvme         === (bool) $payload['is_nvme']
+        );
+    }
 
     public function index()
     {
-        // Policy: hanya admin (viewAny)
         $this->authorize('viewAny', PerformanceReport::class);
 
-        $assets = Asset::query()->latest()->paginate(10);
+        // list asset + info apakah sudah pernah dicek
+        $assets = Asset::query()
+            ->with(['latestPerformanceReport'])   // biar bisa tampil icon/status
+            ->withCount('performanceReports')     // jumlah histori
+            ->latest()
+            ->paginate(10);
 
         return view('admin.asset_checks.index', compact('assets'));
     }
 
     public function create(Asset $asset)
     {
-        // Policy: create report (hanya admin)
         $this->authorize('create', PerformanceReport::class);
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
-            ->orderByDesc('datetime')
+            ->orderByDesc('datetime') // karena spec pakai kolom datetime
             ->first();
 
         $questions = IndicatorQuestion::with(['options' => function ($q) {
-                $q->orderBy('label');
-            }])
+            $q->orderBy('label');
+        }])
             ->orderBy('category')
             ->orderBy('id_question')
             ->get()
             ->groupBy('category');
 
         $categories = ['RAM', 'STORAGE', 'CPU'];
-        $labels = array_keys($this->starMap);
 
         return view('admin.asset_checks.create', compact(
-            'asset', 'latestSpec', 'questions', 'categories', 'labels'
+            'asset', 'latestSpec', 'questions', 'categories'
         ));
     }
 
     public function store(Request $request, Asset $asset)
     {
-        // Policy: create report (hanya admin)
         $this->authorize('create', PerformanceReport::class);
 
         $request->validate([
+            'category_storage' => 'nullable|in:HDD,SSD,NVME',
+
             // spec
             'processor' => 'required|string|max:255',
             'ram' => 'required|integer|min:0',
             'storage' => 'required|integer|min:0',
             'os_version' => 'nullable|string|max:255',
 
-            // storage type dari form
-            'category_storage' => 'nullable|in:HDD,SSD,NVME',
-
             // jawaban indikator
             'answers' => 'required|array|min:1',
         ]);
 
-        // 1) pastikan semua pertanyaan wajib dijawab
+        // validasi semua pertanyaan terjawab
         $allQuestions = IndicatorQuestion::select('id_question', 'category')->get();
         foreach ($allQuestions as $q) {
             if (!$request->filled("answers.{$q->id_question}")) {
@@ -93,110 +132,100 @@ class AssetCheckController extends Controller
             }
         }
 
-        // 2) Ambil option yang dipilih, termasuk relasi question
         $selectedOptionIds = array_values($request->input('answers', []));
         $selectedOptions = IndicatorOption::with('question')
             ->whereIn('id_option', $selectedOptionIds)
             ->get();
 
-        // validasi jumlah option harus sama
         if ($selectedOptions->count() !== count($selectedOptionIds)) {
             return back()
                 ->withErrors(['answers' => 'Ada jawaban yang tidak valid.'])
                 ->withInput();
         }
 
-        // 3) Pastikan option yang dipilih bener-bener milik question yang sama
-        // map: question_id => selected_option_id
+        // mapping jawaban harus cocok id_question => id_option
         $mapAnswers = $request->input('answers', []);
-
         foreach ($selectedOptions as $opt) {
-            $qid = (int) $opt->id_question;
-
-            if (!isset($mapAnswers[$qid])) {
-                return back()
-                    ->withErrors(['answers' => 'Ada jawaban yang tidak cocok dengan pertanyaan.'])
-                    ->withInput();
-            }
-
-            if ((int) $mapAnswers[$qid] !== (int) $opt->id_option) {
+            $qid = $opt->id_question;
+            if (!isset($mapAnswers[$qid]) || (int)$mapAnswers[$qid] !== (int)$opt->id_option) {
                 return back()
                     ->withErrors(['answers' => 'Ada jawaban yang tidak cocok dengan pertanyaan.'])
                     ->withInput();
             }
         }
 
-        $now = now();
+        // hitung rata-rata per kategori
+        $avgByCat = $selectedOptions
+            ->groupBy(fn($o) => $o->question->category)
+            ->map(fn($items) => round($items->avg('star_value'), 2));
 
-        $report = DB::transaction(function () use ($request, $asset, $selectedOptions, $now) {
+        $prior = function (?float $avg): int {
+            if ($avg === null) return 5;
+            $p = (int) ceil((5 - $avg) + 1);
+            return max(1, min(5, $p));
+        };
 
-            // 4) Simpan spesifikasi sebagai record baru (biar ada histori)
-            $spec = AssetsSpecifications::create([
-                'id_asset' => $asset->id_asset,
-                'processor' => $request->processor,
-                'ram' => $request->ram,
-                'storage' => $request->storage,
-                'os_version' => $request->os_version,
-                'is_hdd' => $request->category_storage === 'HDD',
-                'is_ssd' => $request->category_storage === 'SSD',
-                'is_nvme' => $request->category_storage === 'NVME',
-                'datetime' => $now,
-            ]);
+        $priorRam     = $prior($avgByCat['RAM'] ?? null);
+        $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
+        $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
-            // 5) Simpan jawaban ke indicator_answers
-            foreach ($selectedOptions as $opt) {
-                IndicatorAnswer::create([
-                    'id_option' => $opt->id_option,
-                    'id_spec' => $spec->id_spec,
-                    'star_rating' => $opt->star_value,
+        $getRecommendationText = function (string $cat, int $priorLevel): string {
+            $rows = Recommendation::where('category', $cat)
+                ->where('priority_level', $priorLevel)
+                ->orderBy('id_recommendation')
+                ->pluck('description')
+                ->all();
+
+            if (!count($rows)) return '-';
+            return "• " . implode("\n• ", $rows);
+        };
+
+        $recRam     = $getRecommendationText('RAM', $priorRam);
+        $recStorage = $getRecommendationText('STORAGE', $priorStorage);
+        $recCpu     = $getRecommendationText('CPU', $priorCpu);
+
+        // ===== FIX UTAMA: SPEC HANYA CREATE JIKA BERUBAH =====
+        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
+            ->orderByDesc('datetime')
+            ->first();
+
+        $specPayload = $this->buildSpecPayload($request, $asset);
+
+        $report = DB::transaction(function () use (
+            $asset,
+            $request,
+            $latestSpec,
+            $specPayload,
+            $selectedOptions,
+            $priorRam,
+            $priorStorage,
+            $priorCpu,
+            $recRam,
+            $recStorage,
+            $recCpu
+        ) {
+            $now = now();
+
+            // pakai spec lama kalau sama persis
+            if ($this->isSameSpec($latestSpec, $specPayload)) {
+                $spec = $latestSpec;
+            } else {
+                // create histori spec baru
+                $spec = AssetsSpecifications::create(array_merge($specPayload, [
                     'datetime' => $now,
-                ]);
+                ]));
             }
 
-            // 6) Hitung rata-rata per kategori
-            $avgByCat = $selectedOptions
-                ->groupBy(fn ($o) => $o->question->category)
-                ->map(fn ($items) => round($items->avg('star_value'), 2));
-
-            // 7) Konversi avg -> prior (rumus: (5 - avg) + 1)
-            $prior = function (?float $avg): int {
-                if ($avg === null) return 5;
-                $p = (int) ceil((5 - $avg) + 1);
-                return max(1, min(5, $p));
-            };
-
-            $priorRam     = $prior($avgByCat['RAM'] ?? null);
-            $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
-            $priorCpu     = $prior($avgByCat['CPU'] ?? null);
-
-            // 8) Ambil rekomendasi text dari tabel recommendations
-            $getRecommendationText = function (string $cat, int $priorLevel): string {
-                $rows = Recommendation::where('category', $cat)
-                    ->where('priority_level', $priorLevel)
-                    ->orderBy('id_recommendation')
-                    ->pluck('description')
-                    ->all();
-
-                if (!count($rows)) return '-';
-
-                return "• " . implode("\n• ", $rows);
-            };
-
-            $recRam     = $getRecommendationText('RAM', $priorRam);
-            $recStorage = $getRecommendationText('STORAGE', $priorStorage);
-            $recCpu     = $getRecommendationText('CPU', $priorCpu);
-
-            // 9) Ambil estimasi harga upgrade (contoh aturan: prior >= 4)
+            // estimasi harga upgrade (nullable kalau tidak ketemu / tidak perlu)
             $upgradeRamPrice = null;
             if ($priorRam >= 4) {
                 $upgradeRamPrice = Sparepart::where('category', 'RAM')
-                    ->where('sparepart_type', $asset->ram_type) // dari tabel assets
+                    ->where('sparepart_type', $asset->ram_type)
                     ->orderBy('price')
                     ->value('price');
             }
 
             $storageType = $spec->is_nvme ? 'NVME' : ($spec->is_ssd ? 'SSD' : ($spec->is_hdd ? 'HDD' : null));
-
             $upgradeStoragePrice = null;
             if ($priorStorage >= 4 && $storageType) {
                 $upgradeStoragePrice = Sparepart::where('category', 'STORAGE')
@@ -205,8 +234,8 @@ class AssetCheckController extends Controller
                     ->value('price');
             }
 
-            // 10) Simpan performance_report
-            return PerformanceReport::create([
+            // simpan report (historis)
+            $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
                 'id_spec' => $spec->id_spec,
@@ -218,29 +247,82 @@ class AssetCheckController extends Controller
                 'recommendation_processor' => $recCpu,
                 'upgrade_ram_price' => $upgradeRamPrice,
                 'upgrade_storage_price' => $upgradeStoragePrice,
+                // jangan pakai `datetime` karena migration report pakai timestamps
             ]);
+
+            // simpan jawaban indikator (kalau table kamu masih pakai id_spec, tetap jalan)
+            foreach ($selectedOptions as $opt) {
+                IndicatorAnswer::create([
+                    'id_option' => $opt->id_option,
+                    'id_spec' => $spec->id_spec,
+                    'star_rating' => $opt->star_value,
+                    'datetime' => $now,
+                ]);
+            }
+
+            return $report;
         });
 
         return redirect()
-            ->route('admin.asset-checks.show', [
-                'asset' => $asset->id_asset,
-                'report' => $report->id_report,
-            ])
+            ->route('admin.asset-checks.show', [$asset->id_asset, $report->id_report])
             ->with('success', 'Pengecekan asset berhasil diproses.');
     }
 
+    /**
+     * Show report tertentu, sekaligus tampilkan history
+     */
     public function show(Asset $asset, PerformanceReport $report)
     {
-        // Policy: view report (admin / atau rules lain kalau kamu ubah)
         $this->authorize('view', $report);
 
-        // safety: pastiin report milik asset yg sama
-        if ((int) $report->id_asset !== (int) $asset->id_asset) {
+        if ((int)$report->id_asset !== (int)$asset->id_asset) {
             abort(404);
         }
 
-        $report->load(['asset', 'spec']);
+        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
+            ->orderByDesc('datetime')
+            ->first();
 
-        return view('admin.asset_checks.show', compact('asset', 'report'));
+        $report->load(['asset', 'spec', 'user']);
+
+        $history = PerformanceReport::where('id_asset', $asset->id_asset)
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.asset_checks.show', compact('asset', 'report', 'latestSpec', 'history'));
+    }
+
+    /**
+     * Hapus report histori (seperti spec histori)
+     */
+    public function destroyReport(Asset $asset, PerformanceReport $report)
+    {
+        $this->authorize('delete', $report);
+
+        if ((int)$report->id_asset !== (int)$asset->id_asset) {
+            abort(404);
+        }
+
+        $report->delete();
+
+        return redirect()
+            ->route('admin.asset-checks.history', $asset->id_asset)
+            ->with('success', 'Report pengecekan berhasil dihapus.');
+    }
+
+    /**
+     * Halaman khusus history + latest status
+     */
+    public function history(Asset $asset)
+    {
+        $this->authorize('viewAny', PerformanceReport::class);
+
+        $latest = PerformanceReport::where('id_asset', $asset->id_asset)->latest()->first();
+
+        $history = PerformanceReport::where('id_asset', $asset->id_asset)
+            ->latest()
+            ->paginate(10);
+
+        return view('admin.asset_checks.history', compact('asset', 'latest', 'history'));
     }
 }

@@ -40,5 +40,10 @@ class PerformanceReport extends Model
     {
         return $this->belongsTo(AssetsSpecifications::class, 'id_spec', 'id_spec');
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
+    }
     
 }

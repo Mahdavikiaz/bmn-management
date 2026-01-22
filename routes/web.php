@@ -10,17 +10,10 @@ use App\Http\Controllers\Admin\RecommendationController;
 use App\Http\Controllers\Admin\IndicatorQuestionController;
 use App\Http\Controllers\Admin\AssetCheckController;
 
-Route::get('/', [LoginController::class, 'showLoginForm'])
-    ->name('login');
-
-Route::get('/login', [LoginController::class, 'showLoginForm'])
-    ->name('login');
-
-Route::post('/login', [LoginController::class, 'login'])
-    ->name('login.submit');
-
-Route::post('/logout', [LoginController::class, 'logout'])
-    ->name('logout');
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
@@ -62,17 +55,32 @@ Route::middleware(['auth'])->group(function () {
 
         // ===== ASSET CHECKS / PERFORMANCE REPORT (Admin-only) =====
         Route::middleware('can:viewAny,App\Models\PerformanceReport')->group(function () {
+
+            // list asset + status latest check
             Route::get('asset-checks', [AssetCheckController::class, 'index'])
                 ->name('asset-checks.index');
 
+            // form pengecekan (buat report baru)
             Route::get('asset-checks/{asset}/create', [AssetCheckController::class, 'create'])
+                ->middleware('can:create,App\Models\PerformanceReport')
                 ->name('asset-checks.create');
 
+            // submit pengecekan (create report baru)
             Route::post('asset-checks/{asset}', [AssetCheckController::class, 'store'])
+                ->middleware('can:create,App\Models\PerformanceReport')
                 ->name('asset-checks.store');
 
+            // lihat report tertentu
             Route::get('asset-checks/{asset}/reports/{report}', [AssetCheckController::class, 'show'])
                 ->name('asset-checks.show');
+
+            // halaman history report per asset
+            Route::get('asset-checks/{asset}/history', [AssetCheckController::class, 'history'])
+                ->name('asset-checks.history');
+
+            // hapus report historis
+            Route::delete('asset-checks/{asset}/reports/{report}', [AssetCheckController::class, 'destroyReport'])
+                ->name('asset-checks.reports.destroy');
         });
 
     });

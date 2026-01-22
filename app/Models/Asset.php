@@ -31,4 +31,14 @@ class Asset extends Model
         return $this->hasOne(AssetsSpecifications::class, 'id_asset', 'id_asset')
             ->latestOfMany('datetime');
     }
+
+    public function performanceReports()
+    {
+        return $this->hasMany(PerformanceReport::class, 'id_asset', 'id_asset');
+    }
+
+    public function latestPerformanceReport()
+    {
+        return $this->hasOne(PerformanceReport::class, 'id_asset', 'id_asset')->latestOfMany('id_report');
+    }
 }
