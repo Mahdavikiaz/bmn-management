@@ -212,41 +212,44 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // DELETE MODAL
-            const deleteModalEl = document.getElementById('globalDeleteModal');
-            if (deleteModalEl) {
-                const deleteModal = new bootstrap.Modal(deleteModalEl);
-                const deleteForm = document.getElementById('deleteForm');
-                const title = document.getElementById('deleteTitle');
-                const message = document.getElementById('deleteMessage');
+    document.addEventListener('DOMContentLoaded', () => {
+        // DELETE MODAL
+        const deleteModalEl = document.getElementById('globalDeleteModal');
+        
+        if (deleteModalEl) {
+            const deleteModal = new bootstrap.Modal(deleteModalEl);
+            const deleteForm = document.getElementById('deleteForm');
+            const title = document.getElementById('deleteTitle');
+            const message = document.getElementById('deleteMessage');
 
-                // event delegation
-                document.addEventListener('click', (e) => {
-                    const btn = e.target.closest('.js-delete');
-                    if (!btn) return;
+            document.addEventListener('click', (e) => {
+                const trigger = e.target.closest('.js-delete');
+            if (!trigger) return;
 
-                    if (deleteForm) deleteForm.action = btn.dataset.action || '';
-                    if (title) title.textContent = btn.dataset.title || 'Delete data?';
-                    if (message) message.textContent = btn.dataset.message || 'Are you sure?';
-                    deleteModal.show();
-                });
+            const action = trigger.dataset.action || trigger.getAttribute('action') || '';
+            if (!action || !deleteForm) return;
+
+            deleteForm.action = action;
+            if (title) title.textContent = trigger.dataset.title || 'Hapus data?';
+            if (message) message.textContent = trigger.dataset.message || 'Data akan terhapus permanen.';
+            deleteModal.show();
+            });
+        }
+
+        // SUCCESS MODAL
+        const successModalEl = document.getElementById('globalSuccessModal');
+        if (successModalEl) {
+            const successText = @json(session('success'));
+            if (successText) {
+                const msgEl = document.getElementById('successMessage');
+                if (msgEl) msgEl.textContent = successText;
+
+                new bootstrap.Modal(successModalEl).show();
             }
-
-            // SUCCESS MODAL
-            const successModalEl = document.getElementById('globalSuccessModal');
-            if (successModalEl) {
-                const successText = @json(session('success'));
-                if (successText) {
-                    const msgEl = document.getElementById('successMessage');
-                    if (msgEl) msgEl.textContent = successText;
-
-                    new bootstrap.Modal(successModalEl).show();
-                }
-            }
-
-        });
+        }
+    });
     </script>
+
 
 </body>
 </html>

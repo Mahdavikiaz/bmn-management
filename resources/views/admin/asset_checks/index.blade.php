@@ -25,12 +25,36 @@
         padding-top: .65rem;
         padding-bottom: .65rem;
     }
+
+    .text-muted-sm{ color:#6c757d; font-size:.85rem; }
+
+    .aksi-wrap{
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        gap:.5rem;
+        flex-wrap:nowrap;
+        white-space:nowrap;
+    }
+
     .btn-icon{
         width:38px; height:38px;
         display:inline-flex; align-items:center; justify-content:center;
         border-radius:10px;
+        padding:0;
     }
-    .text-muted-sm{ color:#6c757d; font-size:.85rem; }
+
+    .btn-action{
+        height:38px;
+        border-radius:10px;
+        display:inline-flex;
+        align-items:center;
+        gap:.5rem;
+        padding:0 .9rem;
+        white-space:nowrap;
+    }
+
+    .col-aksi{ min-width: 240px; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -48,7 +72,7 @@
                         <th class="fw-semibold">Nama Device</th>
                         <th style="width:110px;" class="fw-semibold">Kategori</th>
                         <th style="width:260px;" class="fw-semibold">Hasil Terakhir</th>
-                        <th style="width:220px;" class="text-center fw-semibold">Aksi</th>
+                        <th class="text-center fw-semibold col-aksi">Aksi</th>
                     </tr>
                 </thead>
 
@@ -71,9 +95,6 @@
 
                             <td>
                                 <div class="fw-normal">{{ $asset->device_name }}</div>
-                                <div class="text-muted-sm">
-                                    GPU: {{ $asset->gpu }} • RAM Type: {{ $asset->ram_type }}
-                                </div>
                             </td>
 
                             <td>
@@ -90,12 +111,12 @@
                                         {{ optional($lastReport->created_at)->format('d/m/Y H:i') }}
                                     </div>
                                     <div class="text-muted-sm">
-                                        Prior: RAM {{ $lastReport->prior_ram }},
+                                        Priority Level : RAM {{ $lastReport->prior_ram }},
                                         Storage {{ $lastReport->prior_storage }},
                                         CPU {{ $lastReport->prior_processor }}
                                     </div>
                                     <div class="text-muted-sm">
-                                        History: <strong>{{ $historyCount }}</strong> kali
+                                        History : Sudah <strong>{{ $historyCount }}x</strong> pengecekan
                                     </div>
                                 @else
                                     <span class="text-muted fst-italic">Belum pernah dicek</span>
@@ -103,16 +124,16 @@
                             </td>
 
                             <td class="text-center">
-                                <div class="d-inline-flex gap-2 flex-wrap justify-content-center">
+                                <div class="aksi-wrap">
 
-                                    {{-- Lakukan pengecekan --}}
+                                    {{-- pengecekan --}}
                                     <a href="{{ route('admin.asset-checks.create', $asset->id_asset) }}"
-                                       class="btn btn-primary btn-sm d-inline-flex align-items-center gap-2">
+                                       class="btn btn-primary btn-action">
                                         <i class="bi bi-clipboard-check"></i>
-                                        Pengecekan
+                                        Cek Performa Asset
                                     </a>
 
-                                    {{-- Lihat hasil terakhir --}}
+                                    {{-- hasil terakhir --}}
                                     @if($lastReport)
                                         <a href="{{ route('admin.asset-checks.show', [$asset->id_asset, $lastReport->id_report]) }}"
                                            class="btn btn-info btn-icon text-white"
@@ -130,7 +151,6 @@
                                         <button class="btn btn-outline-secondary btn-icon" disabled title="Belum ada hasil">
                                             <i class="bi bi-eye"></i>
                                         </button>
-
                                         <button class="btn btn-outline-secondary btn-icon" disabled title="Belum ada history">
                                             <i class="bi bi-clock-history"></i>
                                         </button>

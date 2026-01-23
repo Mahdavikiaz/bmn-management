@@ -20,9 +20,7 @@ class AssetCheckController extends Controller
 {
     use AuthorizesRequests;
 
-    /**
-     * normalize helper untuk compare string
-     */
+    // normalize helper buat compare string
     private function norm(?string $v): ?string
     {
         if ($v === null) return null;
@@ -30,13 +28,11 @@ class AssetCheckController extends Controller
         return $v === '' ? null : $v;
     }
 
-    /**
-     * bikin payload spec dari request
-     */
+    // bikin payload spec dari request
     private function buildSpecPayload(Request $request, Asset $asset): array
     {
-        // storage type dari dropdown "category_storage" (HDD/SSD/NVME)
-        $storageType = $request->input('category_storage'); // nullable
+        // storage type dari dropdown
+        $storageType = $request->input('category_storage');
 
         return [
             'id_asset'   => $asset->id_asset,
@@ -50,9 +46,7 @@ class AssetCheckController extends Controller
         ];
     }
 
-    /**
-     * cek apakah payload spec sama dengan latest spec
-     */
+    // cek apakah payload spec sama dengan latest spec
     private function isSameSpec(?AssetsSpecifications $latest, array $payload): bool
     {
         if (!$latest) return false;
@@ -74,8 +68,8 @@ class AssetCheckController extends Controller
 
         // list asset + info apakah sudah pernah dicek
         $assets = Asset::query()
-            ->with(['latestPerformanceReport'])   // biar bisa tampil icon/status
-            ->withCount('performanceReports')     // jumlah histori
+            ->with(['latestPerformanceReport'])
+            ->withCount('performanceReports')
             ->latest()
             ->paginate(10);
 
@@ -87,7 +81,7 @@ class AssetCheckController extends Controller
         $this->authorize('create', PerformanceReport::class);
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
-            ->orderByDesc('datetime') // karena spec pakai kolom datetime
+            ->orderByDesc('datetime')
             ->first();
 
         $questions = IndicatorQuestion::with(['options' => function ($q) {
@@ -143,7 +137,7 @@ class AssetCheckController extends Controller
                 ->withInput();
         }
 
-        // mapping jawaban harus cocok id_question => id_option
+        // mapping jawaban, harus match antara question sm optionnya
         $mapAnswers = $request->input('answers', []);
         foreach ($selectedOptions as $opt) {
             $qid = $opt->id_question;
@@ -184,7 +178,7 @@ class AssetCheckController extends Controller
         $recStorage = $getRecommendationText('STORAGE', $priorStorage);
         $recCpu     = $getRecommendationText('CPU', $priorCpu);
 
-        // ===== FIX UTAMA: SPEC HANYA CREATE JIKA BERUBAH =====
+        // SPEC HANYA CREATE JIKA BERUBAH
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
             ->first();
@@ -206,11 +200,11 @@ class AssetCheckController extends Controller
         ) {
             $now = now();
 
-            // pakai spec lama kalau sama persis
+            // pakai spec lama kalau sama persis di form
             if ($this->isSameSpec($latestSpec, $specPayload)) {
                 $spec = $latestSpec;
             } else {
-                // create histori spec baru
+                // create history spec baru
                 $spec = AssetsSpecifications::create(array_merge($specPayload, [
                     'datetime' => $now,
                 ]));
@@ -234,7 +228,7 @@ class AssetCheckController extends Controller
                     ->value('price');
             }
 
-            // simpan report (historis)
+            // simpen report (historis)
             $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
@@ -247,10 +241,11 @@ class AssetCheckController extends Controller
                 'recommendation_processor' => $recCpu,
                 'upgrade_ram_price' => $upgradeRamPrice,
                 'upgrade_storage_price' => $upgradeStoragePrice,
-                // jangan pakai `datetime` karena migration report pakai timestamps
+                'created_at' => $now,
+                'updated_at' => $now,
             ]);
 
-            // simpan jawaban indikator (kalau table kamu masih pakai id_spec, tetap jalan)
+            // simpen jawaban indikator
             foreach ($selectedOptions as $opt) {
                 IndicatorAnswer::create([
                     'id_option' => $opt->id_option,
@@ -268,9 +263,7 @@ class AssetCheckController extends Controller
             ->with('success', 'Pengecekan asset berhasil diproses.');
     }
 
-    /**
-     * Show report tertentu, sekaligus tampilkan history
-     */
+    // Show report tertentu, sekaligus history
     public function show(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('view', $report);
@@ -292,9 +285,7 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.show', compact('asset', 'report', 'latestSpec', 'history'));
     }
 
-    /**
-     * Hapus report histori (seperti spec histori)
-     */
+    // Hapus report history (kayak spec history)
     public function destroyReport(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('delete', $report);
@@ -310,9 +301,7 @@ class AssetCheckController extends Controller
             ->with('success', 'Report pengecekan berhasil dihapus.');
     }
 
-    /**
-     * Halaman khusus history + latest status
-     */
+    // Halaman khusus history + latest status
     public function history(Asset $asset)
     {
         $this->authorize('viewAny', PerformanceReport::class);

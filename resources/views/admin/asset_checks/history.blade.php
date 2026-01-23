@@ -43,15 +43,15 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
-        <h4 class="mb-0">History Pengecekan</h4>
+        <h4 class="mb-2">History Pengecekan</h4>
         <div class="text-muted">
-            {{ $asset->device_name }} • Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+            {{ $asset->device_name }} ({{ $asset->device_type }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
         </div>
 
         <div class="mt-1">
             @if($latest)
                 <span class="text-muted-sm">
-                    Hasil terakhir: <strong>{{ optional($latest->created_at)->format('d/m/Y H:i') }}</strong>
+                    Pengecekan Terakhir : <strong>{{ optional($latest->created_at)->format('d/m/Y H:i') }}</strong>
                 </span>
             @else
                 <span class="text-muted-sm fst-italic">Belum ada hasil pengecekan.</span>
@@ -76,16 +76,46 @@
             <table class="table table-modern mb-0">
                 <thead>
                     <tr>
-                        <th style="width:60px;">No</th>
-                        <th style="width:200px;">Tanggal</th>
-                        <th style="width:260px;">Priority</th>
-                        <th>Ringkasan</th>
-                        <th style="width:170px;" class="text-center">Aksi</th>
+                        <th style="width:60px;" class="fw-semibold">No</th>
+                        <th style="width:200px;" class="fw-semibold">Tanggal</th>
+                        <th style="width:260px;" class="fw-semibold">Priority</th>
+                        <th class="fw-semibold">Ringkasan</th>
+                        <th style="width:170px;" class="text-center fw-semibold">Aksi</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($history as $report)
+                        @php
+                            // Hanya report terbaru yang boleh dilihat detail
+                            $isLatest = $latest && ((int)$latest->id_report === (int)$report->id_report);
+
+                            // Ringkasan dari rekomendasi baris pertama per kategori
+                            $pick = function($txt) {
+                                if (!$txt) return null;
+                                $t = trim($txt);
+                                if ($t === '-' || $t === '') return null;
+
+                                $t = preg_split("/\r\n|\n|\r/", $t)[0] ?? $t;
+                                $t = str_replace('•', '', $t);
+                                $t = preg_replace('/\s+/', ' ', $t);
+
+                                return trim($t) ?: null;
+                            };
+
+                            $ramLine = $pick($report->recommendation_ram);
+                            $stLine  = $pick($report->recommendation_storage);
+                            $cpuLine = $pick($report->recommendation_processor);
+
+                            $parts = array_filter([
+                                $ramLine ? "RAM: {$ramLine}" : null,
+                                $stLine  ? "Storage: {$stLine}" : null,
+                                $cpuLine ? "CPU: {$cpuLine}" : null,
+                            ]);
+
+                            $summary = count($parts) ? implode(' | ', $parts) : '-';
+                        @endphp
+
                         <tr>
                             <td>
                                 {{ method_exists($history,'currentPage')
@@ -96,7 +126,6 @@
 
                             <td>
                                 <div class="fw-semibold">{{ optional($report->created_at)->format('d/m/Y H:i') }}</div>
-                                <div class="text-muted-sm">Report ID: {{ $report->id_report }}</div>
                             </td>
 
                             <td>
@@ -106,30 +135,33 @@
                             </td>
 
                             <td class="text-muted-sm">
-                                @php
-                                    $notes = trim(
-                                        ($report->recommendation_ram ?? '') . ' ' .
-                                        ($report->recommendation_storage ?? '') . ' ' .
-                                        ($report->recommendation_processor ?? '')
-                                    );
-                                @endphp
-                                {{ $notes ? \Illuminate\Support\Str::limit($notes, 100) : '-' }}
+                                <span title="{{ $summary }}">
+                                    {{ $summary !== '-' ? \Illuminate\Support\Str::limit($summary, 140) : '-' }}
+                                </span>
+                                @if($isLatest)
+                                    <span class="ms-2 badge rounded-pill text-bg-primary">
+                                        <i class="bi bi-star-fill me-1"></i> Terbaru
+                                    </span>
+                                @endif
                             </td>
 
                             <td class="text-center">
                                 <div class="d-inline-flex gap-2">
-                                    <a href="{{ route('admin.asset-checks.show', [$asset->id_asset, $report->id_report]) }}"
-                                       class="btn btn-info btn-icon text-white"
-                                       title="Lihat detail">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-
-                                    <button class="btn btn-danger btn-icon text-white js-delete"
+                                    @if($isLatest)
+                                        <a href="{{ route('admin.asset-checks.show', [$asset->id_asset, $report->id_report]) }}"
+                                           class="btn btn-info btn-icon text-white"
+                                           title="Lihat detail (terbaru)">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    @else
+                                    <button type="button"
+                                            class="btn btn-danger btn-icon text-white js-delete"
                                             data-action="{{ route('admin.asset-checks.reports.destroy', [$asset->id_asset, $report->id_report]) }}"
                                             data-title="Hapus report ini?"
                                             data-message="Report pengecekan ini akan terhapus permanen.">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

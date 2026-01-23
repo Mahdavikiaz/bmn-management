@@ -39,6 +39,6 @@ class Asset extends Model
 
     public function latestPerformanceReport()
     {
-        return $this->hasOne(PerformanceReport::class, 'id_asset', 'id_asset')->latestOfMany('id_report');
+        return $this->hasOne(PerformanceReport::class, 'id_asset', 'id_asset')->latestOfMany('created_at');
     }
 }

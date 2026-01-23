@@ -7,7 +7,7 @@
     <div>
         <h4 class="mb-1">Lakukan Pengecekan</h4>
         <div class="text-muted">
-            {{ $asset->device_name }} • Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+            {{ $asset->device_name }} | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
         </div>
     </div>
 
@@ -143,9 +143,8 @@
                                                        required>
                                                 <div>
                                                     <div class="fw-semibold">
-                                                        {{ $label }} <span class="text-muted">({{ $opt->star_value ?? '-' }}⭐)</span>
+                                                        {{ $label }}. {{ $opt->option ?? '-' }}</span>
                                                     </div>
-                                                    <div class="text-muted">{{ $opt->option ?? '-' }}</div>
                                                 </div>
                                             </label>
                                         </div>

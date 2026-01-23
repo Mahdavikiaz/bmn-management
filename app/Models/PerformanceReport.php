@@ -8,7 +8,7 @@ class PerformanceReport extends Model
 {
     protected $table = 'performance_reports';
     protected $primaryKey = 'id_report';
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'id_user',
