@@ -12,26 +12,63 @@
         border-radius: 14px;
     }
 
-    .spec-row{
-        display:flex;
-        gap:14px;
-        align-items:center;
-        padding: 14px 0;
-        border-top: 1px dashed #eef2f7;
+    /* ===== SPEC (samakan dengan halaman Kelola Spesifikasi) ===== */
+    .section-title{
+        font-weight:700;
+        margin-bottom:.25rem;
     }
-    .spec-row:first-child{ border-top: 0; padding-top: 0; }
-    .spec-icon{
-        width:44px; height:44px;
-        border-radius:12px;
-        display:flex; align-items:center; justify-content:center;
-        background:#eef4ff;
-        color:#0d6efd;
-        flex: 0 0 auto;
+    .section-subtitle{
+        color:#6c757d;
+        font-size:.9rem;
     }
-    .spec-label{ font-size:.9rem; color:#6c757d; }
-    .spec-value{ font-weight:700; font-size:1.05rem; }
 
-    .prio-pill{
+    .spec-list .spec-item{
+        display:flex;
+        gap:10px;
+        align-items:flex-start;
+        padding:10px 0;
+        border-bottom:1px dashed #e9ecef;
+    }
+    .spec-list .spec-item:last-child{ border-bottom:0; }
+
+    .spec-icon{
+        width:36px;
+        height:36px;
+        border-radius:10px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:#eef2ff;
+        color:#0d6efd;
+        flex:0 0 auto;
+        font-size:1.1rem;
+    }
+
+    .spec-label{
+        color:#6c757d;
+        font-size:.85rem;
+    }
+
+    .spec-value{
+        font-weight:700;
+    }
+
+    .badge-soft{
+        background:#eef2ff;
+        color:#0d6efd;
+        border:1px solid #dfe7ff;
+        font-weight:600;
+    }
+
+    .badge-media{
+        background:#f1f3f5;
+        color:#343a40;
+        border:1px solid #e9ecef;
+        font-weight:600;
+    }
+
+    /* ==== Priority badge soft ==== */
+    .prio-badge{
         display:inline-flex;
         align-items:center;
         justify-content:center;
@@ -40,8 +77,25 @@
         padding: 0 12px;
         border-radius: 999px;
         font-weight: 800;
-        border: 1px solid #e9ecef;
-        background: #f8f9fa;
+        border: 1px solid transparent;
+    }
+    .prio-nd{
+        background:#f1f3f5;
+        border-color:#e9ecef;
+        color:#6c757d;
+        font-weight:700;
+    }
+    .prio-1{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; } /* green */
+    .prio-2{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; } /* green */
+    .prio-3{ background:#fff3cd; border-color:#ffecb5; color:#664d03; } /* yellow */
+    .prio-4{ background:#ffe5d0; border-color:#ffd3b0; color:#7a3e00; } /* orange soft */
+    .prio-5{ background:#f8d7da; border-color:#f5c2c7; color:#842029; } /* red */
+
+    .prio-desc{
+        margin-top: .5rem;
+        font-size: .85rem;
+        color:#6c757d;
+        line-height: 1.25rem;
     }
 
     .rec-box{
@@ -76,13 +130,46 @@
     // spec terkini
     $spec = $latestSpec ?? null;
 
-    $storageType = $spec
-        ? ($spec->is_nvme ? 'NVMe' : ($spec->is_ssd ? 'SSD' : ($spec->is_hdd ? 'HDD' : '-')))
-        : '-';
+    // tipe storage
+    $storage_type = [];
+    if ($spec?->is_hdd)  $storage_type[] = 'HDD';
+    if ($spec?->is_ssd)  $storage_type[] = 'SSD';
+    if ($spec?->is_nvme) $storage_type[] = 'NVMe';
 
     $isLatest = function($row) use ($report) {
         return (int)$row->id_report === (int)$report->id_report;
     };
+
+    // PRIORITY
+    $prioMeta = function($p){
+        if ($p === null) {
+            return [
+                'badgeClass' => 'prio-badge prio-nd',
+                'label'      => 'Belum dinilai',
+                'desc'       => 'Belum ada penilaian untuk kategori ini (pertanyaan indikator belum tersedia).',
+                'value'      => '-',
+            ];
+        }
+
+        $map = [
+            1 => ['prio-badge prio-1', 'Rendah',       'Tidak perlu tindakan apa-apa.'],
+            2 => ['prio-badge prio-2', 'Cukup rendah', 'Pantau saja, belum perlu tindakan.'],
+            3 => ['prio-badge prio-3', 'Sedang',       'Perlu dipertimbangkan untuk ditindaklanjuti.'],
+            4 => ['prio-badge prio-4', 'Tinggi',       'Perlu tindakan (disarankan upgrade/penanganan).'],
+            5 => ['prio-badge prio-5', 'Sangat tinggi','Harus segera ditindaklanjuti.'],
+        ];
+
+        return [
+            'badgeClass' => $map[$p][0],
+            'label'      => $map[$p][1],
+            'desc'       => $map[$p][2],
+            'value'      => (string)$p,
+        ];
+    };
+
+    $mRam = $prioMeta($report->prior_ram);
+    $mSto = $prioMeta($report->prior_storage);
+    $mCpu = $prioMeta($report->prior_processor);
 @endphp
 
 {{-- HEADER --}}
@@ -102,43 +189,47 @@
     </div>
 </div>
 
-{{-- STACK LAYOUT --}}
 <div class="row g-3">
 
-    {{-- SPEC TERKINI --}}
+    {{-- ===== SPEC TERKINI (UPDATED: sama seperti halaman Kelola Spesifikasi) ===== --}}
     <div class="col-12">
         <div class="card card-soft shadow-sm">
             <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
-                        <div class="fw-semibold d-flex align-items-center gap-2 mb-2">
-                            <i class="bi bi-cpu"></i> Spesifikasi Saat Ini
+                        <div class="section-title">
+                            <i class="bi bi-cpu me-1"></i> Spesifikasi Saat Ini
                         </div>
-                        <div class="text-muted-sm">
-                            Terakhir update:
-                            <strong>{{ $spec?->datetime ? \Carbon\Carbon::parse($spec->datetime)->format('d/m/Y H:i') : '-' }}</strong>
+                        <div class="section-subtitle">
+                            Menampilkan spesifikasi terbaru yang tersimpan (versi lama tersimpan sebagai history).
                         </div>
                     </div>
 
-                    <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
-                       class="btn btn-outline-primary btn-sm">
-                        Kelola Spesifikasi
-                    </a>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
+                           class="btn btn-outline-primary btn-sm">
+                            Kelola Spesifikasi
+                        </a>
+                    </div>
                 </div>
 
-                <hr>
+                <hr class="my-3">
 
-                @if($spec)
-                    <div class="mt-3">
-                        <div class="spec-row">
+                @if(!$spec)
+                    <div class="text-muted fst-italic">
+                        Data spesifikasi belum diinputkan.
+                    </div>
+                @else
+                    <div class="spec-list">
+                        <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-cpu"></i></div>
                             <div>
                                 <div class="spec-label">Processor</div>
-                                <div class="spec-value fw-semibold">{{ $spec->processor }}</div>
+                                <div class="spec-value fw-semibold">{{ $spec->processor ?: '-' }}</div>
                             </div>
                         </div>
 
-                        <div class="spec-row">
+                        <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-memory"></i></div>
                             <div>
                                 <div class="spec-label">RAM</div>
@@ -146,7 +237,7 @@
                             </div>
                         </div>
 
-                        <div class="spec-row">
+                        <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-hdd-stack"></i></div>
                             <div>
                                 <div class="spec-label">Storage</div>
@@ -154,7 +245,7 @@
                             </div>
                         </div>
 
-                        <div class="spec-row">
+                        <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-nvidia"></i></div>
                             <div>
                                 <div class="spec-label">GPU</div>
@@ -162,7 +253,7 @@
                             </div>
                         </div>
 
-                        <div class="spec-row">
+                        <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-device-hdd"></i></div>
                             <div>
                                 <div class="spec-label">Tipe RAM</div>
@@ -170,25 +261,35 @@
                             </div>
                         </div>
 
-                        <div class="spec-row">
-                            <div class="spec-icon"><i class="bi bi-device-hdd"></i></div>
+                        <div class="spec-item">
+                            <div class="spec-icon"><i class="bi bi-device-ssd"></i></div>
                             <div>
                                 <div class="spec-label">Tipe Storage</div>
-                                <div class="spec-value fw-semibold">{{ $storageType }}</div>
+                                <div class="spec-value">
+                                    @if(count($storage_type))
+                                        @foreach($storage_type as $type)
+                                            <span class="badge rounded-pill badge-media me-1 fw-semibold">{{ $type }}</span>
+                                        @endforeach
+                                    @else
+                                        -
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
-                        <div class="spec-row">
+                        <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-windows"></i></div>
                             <div>
                                 <div class="spec-label">OS Version</div>
-                                <div class="spec-value fw-semibold">{{ $spec->os_version ?? '-' }}</div>
+                                <div class="spec-value fw-semibold">{{ $spec->os_version ?: '-' }}</div>
                             </div>
                         </div>
-                    </div>
-                @else
-                    <div class="text-muted fst-italic mt-3">
-                        Belum ada spesifikasi tersimpan.
+
+                        <div class="mt-2 text-muted small">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            Terakhir diupdate:
+                            <strong>{{ $spec->datetime?->format('d/m/Y H:i') ?? '-' }}</strong>
+                        </div>
                     </div>
                 @endif
             </div>
@@ -201,10 +302,10 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
-                        <div class="fw-semibold d-flex align-items-center gap-2 mb-2">
+                        <div class="section-title d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-clipboard-check"></i> Hasil Pengecekan Terbaru
                         </div>
-                        <div class="text-muted-sm">
+                        <div class="section-subtitle text-muted-sm">
                             Dibuat:
                             <strong>{{ optional($report->created_at)->format('d/m/Y H:i') }}</strong>
                         </div>
@@ -215,36 +316,54 @@
 
                 {{-- PRIORITIES --}}
                 <div class="row g-3">
+                    {{-- RAM --}}
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
-                            <div class="text-muted-sm mb-2">Priority Level RAM</div>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span class="prio-pill">{{ $report->prior_ram }}</span>
+                            <div class="text-muted-sm mb-4">Priority Level RAM</div>
+                            <div class="d-flex align-items-center justify-content mb-4">
+                                <span class="{{ $mRam['badgeClass'] }} me-2">{{ $mRam['value'] }}</span>
+                                <span class="text-muted-sm"><strong>{{ $mRam['label'] }}</strong> - {{ $mRam['desc'] }}</span>
+                            </div>
+                            <div class="prio-desc">
                                 <span class="text-muted-sm">
-                                    Estimasi Harga : {{ $report->upgrade_ram_price ? 'Rp '.number_format($report->upgrade_ram_price,0,',','.') : '-' }}
+                                    Estimasi Harga Upgrade :
+                                    {{ ($report->prior_ram !== null && $report->upgrade_ram_price)
+                                        ? 'Rp '.number_format($report->upgrade_ram_price,0,',','.')
+                                        : '-' }}
                                 </span>
                             </div>
                         </div>
                     </div>
 
+                    {{-- STORAGE --}}
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
-                            <div class="text-muted-sm mb-2">Priority Level Storage</div>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span class="prio-pill">{{ $report->prior_storage }}</span>
+                            <div class="text-muted-sm mb-4">Priority Level Storage</div>
+                            <div class="d-flex align-items-center justify-content mb-4">
+                                <span class="{{ $mSto['badgeClass'] }} me-2">{{ $mSto['value'] }}</span>
+                                <span class="text-muted-sm"><strong>{{ $mSto['label'] }}</strong> - {{ $mSto['desc'] }}</span>
+                            </div>
+                            <div class="prio-desc">
                                 <span class="text-muted-sm">
-                                    Estimasi Harga : {{ $report->upgrade_storage_price ? 'Rp '.number_format($report->upgrade_storage_price,0,',','.') : '-' }}
+                                    Estimasi Harga Upgrade :
+                                    {{ ($report->prior_storage !== null && $report->upgrade_storage_price)
+                                        ? 'Rp '.number_format($report->upgrade_storage_price,0,',','.')
+                                        : '-' }}
                                 </span>
                             </div>
                         </div>
                     </div>
 
+                    {{-- CPU --}}
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
-                            <div class="text-muted-sm mb-2">Priority CPU</div>
-                            <div class="d-flex align-items-center justify-content-between">
-                                <span class="prio-pill">{{ $report->prior_processor }}</span>
-                                <span class="text-muted-sm">Estimasi Harga : -</span>
+                            <div class="text-muted-sm mb-4">Priority Level CPU</div>
+                            <div class="d-flex align-items-center justify-content mb-4">
+                                <span class="{{ $mCpu['badgeClass'] }} me-2">{{ $mCpu['value'] }}</span>
+                                <span class="text-muted-sm"><strong>{{ $mCpu['label'] }}</strong> - {{ $mCpu['desc'] }}</span>
+                            </div>
+                            <div class="prio-desc">
+                                <span class="text-muted-sm">Estimasi Harga Upgrade : -</span>
                             </div>
                         </div>
                     </div>
@@ -285,10 +404,10 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
             <div>
-                <div class="fw-semibold d-flex align-items-center gap-2 mb-2">
+                <div class="section-title d-flex align-items-center gap-2 mb-2">
                     <i class="bi bi-clock-history"></i> Riwayat Pengecekan
                 </div>
-                <div class="text-muted-sm">
+                <div class="section-subtitle text-muted-sm">
                     Menampilkan report terbaru sampai terlama (versi lama bisa dihapus).
                 </div>
             </div>
@@ -308,13 +427,11 @@
                 <tbody>
                 @forelse($history as $i => $row)
                     @php
-                        // ringkasan dari 1 point/kalimat pertama per kategori
                         $pick = function($txt) {
                             if (!$txt) return null;
                             $t = trim($txt);
                             if ($t === '-' || $t === '') return null;
 
-                            // ambil baris pertama aja
                             $t = preg_split("/\r\n|\n|\r/", $t)[0] ?? $t;
                             $t = str_replace('•', '', $t);
                             $t = preg_replace('/\s+/', ' ', $t);
@@ -328,6 +445,10 @@
                         ]);
 
                         $summary = count($parts) ? implode(' | ', $parts) : '-';
+
+                        $pr = $row->prior_ram === null ? 'Belum dinilai' : $row->prior_ram;
+                        $ps = $row->prior_storage === null ? 'Belum dinilai' : $row->prior_storage;
+                        $pc = $row->prior_processor === null ? 'Belum dinilai' : $row->prior_processor;
                     @endphp
 
                     <tr>
@@ -336,9 +457,9 @@
                             {{ optional($row->created_at)->format('d/m/Y H:i') }}
                         </td>
                         <td>
-                            <span class="badge rounded-pill text-bg-light border">RAM : {{ $row->prior_ram }}</span>
-                            <span class="badge rounded-pill text-bg-light border">STORAGE : {{ $row->prior_storage }}</span>
-                            <span class="badge rounded-pill text-bg-light border">CPU : {{ $row->prior_processor }}</span>
+                            <span class="badge rounded-pill text-bg-light border">RAM : {{ $pr }}</span>
+                            <span class="badge rounded-pill text-bg-light border">STORAGE : {{ $ps }}</span>
+                            <span class="badge rounded-pill text-bg-light border">CPU : {{ $pc }}</span>
                         </td>
 
                         <td class="text-muted-sm">
@@ -350,18 +471,19 @@
                         <td class="text-center">
                             <div class="d-inline-flex gap-2 justify-content-center">
                                 @if(!$isLatest($row))
-                                    <button type="button" 
-                                        class="btn btn-danger d-inline-flex align-items-center gap-2 js-delete" 
-                                        data-action="{{ route('admin.asset-checks.reports.destroy', [$asset->id_asset, $report->id_report]) }}"
+                                    <button type="button"
+                                        class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-2 js-delete"
+                                        data-action="{{ route('admin.asset-checks.reports.destroy', [$asset->id_asset, $row->id_report]) }}"
                                         data-title="Hapus report ini?"
-                                        data-message="Report pengecekan ini akan terhapus permanen."><i class="bi bi-trash"></i> Hapus
+                                        data-message="Report pengecekan ini akan terhapus permanen.">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 @else
-                                <div class="mt-0">
-                                    <span class="badge rounded-pill text-bg-primary fw-semibold">
-                                        <i class="bi bi-star-fill me-1"></i> Terbaru
-                                    </span>
-                                </div>
+                                    <div class="mt-0">
+                                        <span class="badge rounded-pill text-bg-primary fw-semibold">
+                                            <i class="bi bi-star-fill me-1"></i> Terbaru
+                                        </span>
+                                    </div>
                                 @endif
                             </div>
                         </td>

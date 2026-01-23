@@ -155,7 +155,7 @@
                                         </a>
                                     @else
                                     <button type="button"
-                                            class="btn btn-danger btn-icon text-white js-delete"
+                                            class="btn btn-sm btn-outline-danger js-delete"
                                             data-action="{{ route('admin.asset-checks.reports.destroy', [$asset->id_asset, $report->id_report]) }}"
                                             data-title="Hapus report ini?"
                                             data-message="Report pengecekan ini akan terhapus permanen.">

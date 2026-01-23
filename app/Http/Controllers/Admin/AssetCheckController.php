@@ -53,12 +53,12 @@ class AssetCheckController extends Controller
 
         return (
             $this->norm($latest->processor)  === $payload['processor'] &&
-            (int) $latest->ram              === (int) $payload['ram'] &&
-            (int) $latest->storage          === (int) $payload['storage'] &&
-            $this->norm($latest->os_version)=== $payload['os_version'] &&
-            (bool) $latest->is_hdd          === (bool) $payload['is_hdd'] &&
-            (bool) $latest->is_ssd          === (bool) $payload['is_ssd'] &&
-            (bool) $latest->is_nvme         === (bool) $payload['is_nvme']
+            (int) $latest->ram               === (int) $payload['ram'] &&
+            (int) $latest->storage           === (int) $payload['storage'] &&
+            $this->norm($latest->os_version) === $payload['os_version'] &&
+            (bool) $latest->is_hdd           === (bool) $payload['is_hdd'] &&
+            (bool) $latest->is_ssd           === (bool) $payload['is_ssd'] &&
+            (bool) $latest->is_nvme          === (bool) $payload['is_nvme']
         );
     }
 
