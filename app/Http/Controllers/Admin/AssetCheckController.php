@@ -154,7 +154,8 @@ class AssetCheckController extends Controller
             ->map(fn($items) => round($items->avg('star_value'), 2));
 
         $prior = function (?float $avg): int {
-            if ($avg === null) return 5;
+            if ($avg === null) return 0;
+
             $p = (int) ceil((5 - $avg) + 1);
             return max(1, min(5, $p));
         };

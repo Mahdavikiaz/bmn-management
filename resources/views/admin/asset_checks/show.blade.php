@@ -142,16 +142,8 @@
 
     // PRIORITY
     $prioMeta = function($p){
-        if ($p === null) {
-            return [
-                'badgeClass' => 'prio-badge prio-nd',
-                'label'      => 'Belum dinilai',
-                'desc'       => 'Belum ada penilaian untuk kategori ini (pertanyaan indikator belum tersedia).',
-                'value'      => '-',
-            ];
-        }
-
         $map = [
+            0 => ['prio-badge prio-nd', 'Belum dinilai', 'Belum ada penilaian untuk kategori ini (pertanyaan indikator belum tersedia).'],
             1 => ['prio-badge prio-1', 'Rendah',       'Tidak perlu tindakan apa-apa.'],
             2 => ['prio-badge prio-2', 'Cukup rendah', 'Pantau saja, belum perlu tindakan.'],
             3 => ['prio-badge prio-3', 'Sedang',       'Perlu dipertimbangkan untuk ditindaklanjuti.'],
@@ -175,9 +167,9 @@
 {{-- HEADER --}}
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
     <div>
-        <h4 class="mb-1">Hasil Pengecekan Asset</h4>
-        <div class="text-muted-sm">
-            {{ $asset->device_name }} | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+        <h4 class="mb-2">Hasil Pengecekan Asset</h4>
+        <div class="text-muted">
+            {{ $asset->device_name }} ({{ $asset->device_type }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
         </div>
     </div>
 
