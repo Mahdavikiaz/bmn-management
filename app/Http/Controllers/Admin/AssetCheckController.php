@@ -62,11 +62,58 @@ class AssetCheckController extends Controller
         );
     }
 
+    // Ambil multiplier dari teks rekomendasi
+    private function parseMultiplier(?string $text): ?int
+    {
+        if (!$text) return null;
+
+        $t = strtolower($text);
+
+        // pastikan emang rekomendasinya upgrade
+        if (!str_contains($t, 'upgrade')) {
+            return null;
+        }
+
+        // cari pola xN
+        if (preg_match('/x\s*(\d+)/i', $text, $m)) {
+            $n = (int) $m[1];
+            return $n >= 2 ? $n : null;
+        }
+
+        return null;
+    }
+
+    // Convert storage flags di spec
+    private function getStorageTypeFromSpec(AssetsSpecifications $spec): ?string
+    {
+        if ($spec->is_nvme) return 'NVME';
+        if ($spec->is_ssd)  return 'SSD';
+        if ($spec->is_hdd)  return 'HDD';
+        return null;
+    }
+
+    // Cari harga sparepart sesuai category + type + size.
+    private function findSparepartPrice(string $category, string $type, int $size): ?float
+    {
+        $price = Sparepart::where('category', $category)
+            ->where('sparepart_type', $type)
+            ->where('size', $size)
+            ->orderBy('price')
+            ->value('price');
+
+        if ($price === null) return null;
+        return (float) $price;
+    }
+
+    private function priceOrZero(?float $price): float
+    {
+        return $price === null ? 0.0 : $price;
+    }
+
     public function index()
     {
         $this->authorize('viewAny', PerformanceReport::class);
 
-        // list asset + info apakah sudah pernah dicek
         $assets = Asset::query()
             ->with(['latestPerformanceReport'])
             ->withCount('performanceReports')
@@ -188,7 +235,6 @@ class AssetCheckController extends Controller
 
         $report = DB::transaction(function () use (
             $asset,
-            $request,
             $latestSpec,
             $specPayload,
             $selectedOptions,
@@ -211,22 +257,35 @@ class AssetCheckController extends Controller
                 ]));
             }
 
-            // estimasi harga upgrade (nullable kalau tidak ketemu / tidak perlu)
+            // RAM
             $upgradeRamPrice = null;
-            if ($priorRam >= 4) {
-                $upgradeRamPrice = Sparepart::where('category', 'RAM')
-                    ->where('sparepart_type', $asset->ram_type)
-                    ->orderBy('price')
-                    ->value('price');
+            $ramMult = $this->parseMultiplier($recRam);
+
+            if ($ramMult) {
+                $currentRam = (int) $spec->ram;
+                $targetRam = $currentRam * $ramMult;
+
+                // tipe RAM dari asset
+                $ramType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
+
+                if ($ramType && $targetRam > 0) {
+                    $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramType, $targetRam);
+                }
             }
 
-            $storageType = $spec->is_nvme ? 'NVME' : ($spec->is_ssd ? 'SSD' : ($spec->is_hdd ? 'HDD' : null));
+            // STORAGE 
             $upgradeStoragePrice = null;
-            if ($priorStorage >= 4 && $storageType) {
-                $upgradeStoragePrice = Sparepart::where('category', 'STORAGE')
-                    ->where('sparepart_type', $storageType)
-                    ->orderBy('price')
-                    ->value('price');
+            $storageMult = $this->parseMultiplier($recStorage);
+
+            if ($storageMult) {
+                $currentStorage = (int) $spec->storage;
+                $targetStorage = $currentStorage * $storageMult;
+
+                $storageType = $this->getStorageTypeFromSpec($spec);
+
+                if ($storageType && $targetStorage > 0) {
+                    $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $storageType, $targetStorage);
+                }
             }
 
             // simpen report (historis)
@@ -234,14 +293,18 @@ class AssetCheckController extends Controller
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
                 'id_spec' => $spec->id_spec,
+
                 'prior_ram' => $priorRam,
                 'prior_storage' => $priorStorage,
                 'prior_processor' => $priorCpu,
+
                 'recommendation_ram' => $recRam,
                 'recommendation_storage' => $recStorage,
                 'recommendation_processor' => $recCpu,
-                'upgrade_ram_price' => $upgradeRamPrice,
-                'upgrade_storage_price' => $upgradeStoragePrice,
+
+                'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
+                'upgrade_storage_price' => $this->priceOrZero($upgradeStoragePrice),
+
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -286,7 +349,7 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.show', compact('asset', 'report', 'latestSpec', 'history'));
     }
 
-    // Hapus report history (kayak spec history)
+    // Hapus report history
     public function destroyReport(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('delete', $report);

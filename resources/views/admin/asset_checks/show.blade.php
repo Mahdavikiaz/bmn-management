@@ -12,7 +12,6 @@
         border-radius: 14px;
     }
 
-    /* ===== SPEC (samakan dengan halaman Kelola Spesifikasi) ===== */
     .section-title{
         font-weight:700;
         margin-bottom:.25rem;
@@ -67,7 +66,6 @@
         font-weight:600;
     }
 
-    /* ==== Priority badge soft ==== */
     .prio-badge{
         display:inline-flex;
         align-items:center;
@@ -85,11 +83,11 @@
         color:#6c757d;
         font-weight:700;
     }
-    .prio-1{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; } /* green */
-    .prio-2{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; } /* green */
-    .prio-3{ background:#fff3cd; border-color:#ffecb5; color:#664d03; } /* yellow */
-    .prio-4{ background:#ffe5d0; border-color:#ffd3b0; color:#7a3e00; } /* orange soft */
-    .prio-5{ background:#f8d7da; border-color:#f5c2c7; color:#842029; } /* red */
+    .prio-1{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; }
+    .prio-2{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; } 
+    .prio-3{ background:#fff3cd; border-color:#ffecb5; color:#664d03; } 
+    .prio-4{ background:#ffe5d0; border-color:#ffd3b0; color:#7a3e00; } 
+    .prio-5{ background:#f8d7da; border-color:#f5c2c7; color:#842029; }
 
     .prio-desc{
         margin-top: .5rem;
@@ -159,6 +157,25 @@
         ];
     };
 
+    // cek apakah rekomendasi mengandung upgrade
+    $hasUpgrade = function (?string $txt): bool {
+        if (!$txt) return false;
+        $t = strtolower($txt);
+        if (!str_contains($t, 'upgrade')) return false;
+        return preg_match('/x\s*\d+/i', $txt) === 1;
+    };
+
+    $showPrice = function (?string $rec, $price) use ($hasUpgrade): string {
+        // kalau tidak ada upgrade
+        if (!$hasUpgrade($rec)) return '-';
+
+        // price bisa decimal string, int, float
+        $p = (float) $price;
+        if ($p <= 0) return '-';
+
+        return 'Rp ' . number_format($p, 0, ',', '.');
+    };
+
     $mRam = $prioMeta($report->prior_ram);
     $mSto = $prioMeta($report->prior_storage);
     $mCpu = $prioMeta($report->prior_processor);
@@ -182,8 +199,7 @@
 </div>
 
 <div class="row g-3">
-
-    {{-- ===== SPEC TERKINI (UPDATED: sama seperti halaman Kelola Spesifikasi) ===== --}}
+    {{-- SPEC TERKINI --}}
     <div class="col-12">
         <div class="card card-soft shadow-sm">
             <div class="card-body">
@@ -319,9 +335,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{ ($report->prior_ram !== null && $report->upgrade_ram_price)
-                                        ? 'Rp '.number_format($report->upgrade_ram_price,0,',','.')
-                                        : '-' }}
+                                    {{ $showPrice($report->recommendation_ram, $report->upgrade_ram_price) }}
                                 </span>
                             </div>
                         </div>
@@ -338,9 +352,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{ ($report->prior_storage !== null && $report->upgrade_storage_price)
-                                        ? 'Rp '.number_format($report->upgrade_storage_price,0,',','.')
-                                        : '-' }}
+                                    {{ $showPrice($report->recommendation_storage, $report->upgrade_storage_price) }}
                                 </span>
                             </div>
                         </div>
