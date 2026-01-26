@@ -84,9 +84,9 @@
         font-weight:700;
     }
     .prio-1{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; }
-    .prio-2{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; } 
-    .prio-3{ background:#fff3cd; border-color:#ffecb5; color:#664d03; } 
-    .prio-4{ background:#ffe5d0; border-color:#ffd3b0; color:#7a3e00; } 
+    .prio-2{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; }
+    .prio-3{ background:#fff3cd; border-color:#ffecb5; color:#664d03; }
+    .prio-4{ background:#ffe5d0; border-color:#ffd3b0; color:#7a3e00; }
     .prio-5{ background:#f8d7da; border-color:#f5c2c7; color:#842029; }
 
     .prio-desc{
@@ -157,24 +157,28 @@
         ];
     };
 
-    // cek apakah rekomendasi mengandung upgrade
-    $hasUpgrade = function (?string $txt): bool {
-        if (!$txt) return false;
-        $t = strtolower($txt);
-        if (!str_contains($t, 'upgrade')) return false;
-        return preg_match('/x\s*\d+/i', $txt) === 1;
-    };
-
-    $showPrice = function (?string $rec, $price) use ($hasUpgrade): string {
-        // kalau tidak ada upgrade
-        if (!$hasUpgrade($rec)) return '-';
-
-        // price bisa decimal string, int, float
+    // Formatter harga
+    $fmtPrice = function ($price): string {
         $p = (float) $price;
         if ($p <= 0) return '-';
-
         return 'Rp ' . number_format($p, 0, ',', '.');
     };
+
+    // Kapan harga ditampilkan
+    $shouldShowPrice = function (?string $rec): bool {
+        if (!$rec) return false;
+        $t = strtolower(trim($rec));
+
+        // RAM add (prior 3-5)
+        if (str_contains($t, 'tambahkan ram sebesar')) return true;
+
+        // Storage ganti SSD / upgrade x2
+        if (str_contains($t, 'ganti jadi ssd')) return true;
+        if (str_contains($t, 'upgrade storage x2')) return true;
+
+        return false;
+    };
+
 
     $mRam = $prioMeta($report->prior_ram);
     $mSto = $prioMeta($report->prior_storage);
@@ -335,7 +339,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{ $showPrice($report->recommendation_ram, $report->upgrade_ram_price) }}
+                                    {{ $shouldShowPrice($report->recommendation_ram) ? $fmtPrice($report->upgrade_ram_price) : '-' }}
                                 </span>
                             </div>
                         </div>
@@ -352,7 +356,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{ $showPrice($report->recommendation_storage, $report->upgrade_storage_price) }}
+                                    {{ $shouldShowPrice($report->recommendation_storage) ? $fmtPrice($report->upgrade_storage_price) : '-' }}
                                 </span>
                             </div>
                         </div>

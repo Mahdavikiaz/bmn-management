@@ -128,9 +128,9 @@
 
                                     {{-- pengecekan --}}
                                     <a href="{{ route('admin.asset-checks.create', $asset->id_asset) }}"
-                                       class="btn btn-primary btn-action">
+                                       class="btn btn-primary btn-action"
+                                       title="Lakukan pengecekan asset">
                                         <i class="bi bi-clipboard-check"></i>
-                                        Cek Performa Asset
                                     </a>
 
                                     {{-- hasil terakhir --}}
