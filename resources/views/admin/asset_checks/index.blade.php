@@ -61,6 +61,35 @@
     <h4 class="mb-0">Pengecekan Asset</h4>
 </div>
 
+{{-- FILTER BAR --}}
+<form method="GET" class="d-flex gap-2 align-items-center flex-wrap mb-3">
+
+    <input type="text"
+           name="q"
+           class="form-control"
+           style="max-width: 360px;"
+           placeholder="Cari Kode BMN / Nama Device..."
+           value="{{ request('q') }}">
+
+    <select name="id_type" class="form-select" style="max-width: 280px;">
+        <option value="">Semua Kategori</option>
+        @foreach($types as $t)
+            <option value="{{ $t->id_type }}" {{ (string)request('id_type') === (string)$t->id_type ? 'selected' : '' }}>
+                {{ $t->type_name }}
+            </option>
+        @endforeach
+    </select>
+
+    <button class="btn btn-primary">
+        <i class="bi bi-search me-1"></i> Search
+    </button>
+
+    <a href="{{ route('admin.asset-checks.index') }}" class="btn btn-danger">
+        Reset
+    </a>
+</form>
+
+
 <div class="card shadow-sm">
     <div class="card-body p-0">
         <div class="table-responsive">
