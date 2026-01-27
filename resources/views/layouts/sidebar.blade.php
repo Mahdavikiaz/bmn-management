@@ -33,6 +33,14 @@
             <div class="sidebar-section">DATA MASTER</div>
 
             <li class="nav-item">
+                <a href="{{ route('admin.asset-types.index') }}"
+                   class="nav-link {{ request()->is('admin/asset-types*') ? 'active' : 'text-dark' }}">
+                    <i class="bi bi-collection"></i>
+                    Data Tipe Asset
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a href="{{ route('admin.assets.index') }}"
                    class="nav-link {{ request()->is('admin/assets*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-laptop"></i>

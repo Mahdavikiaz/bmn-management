@@ -6,20 +6,31 @@ use App\Http\Controllers\Controller;
 use App\Models\AssetType;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Request as FacadesRequest;
 
 class AssetTypeController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        $this->authorize('viewAny', AssetType::class);
+    // ambil daftar nama tipe (unik & dinamis)
+        $typeNames = AssetType::orderBy('type_name')
+            ->pluck('type_name')
+            ->unique();
 
-        $types = AssetType::query()
-            ->latest()
-            ->paginate(10);
-        
-        return view('admin.asset_types.index', compact('types'));
+        $query = AssetType::query();
+
+        // filter berdasarkan type_name
+        if ($request->filled('type_name')) {
+            $query->where('type_name', $request->type_name);
+        }
+
+        $types = $query->orderByDesc('id_type')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('admin.asset_types.index', compact('types', 'typeNames'));
     }
 
     public function create()
@@ -41,7 +52,7 @@ class AssetTypeController extends Controller
         AssetType::create($validated);
 
         return redirect()
-            ->route('admin.asset_types.index')
+            ->route('admin.asset-types.index')
             ->with('success', 'Tipe Asset berhasil ditambahkan.');
     }
 
@@ -49,7 +60,7 @@ class AssetTypeController extends Controller
     {
         $this->authorize('update', $assetType);
 
-        return view('admin.asset_types.edit');
+        return view('admin.asset_types.edit', compact('assetType'));
     }
 
     public function update(Request $request, AssetType $assetType)
@@ -57,25 +68,25 @@ class AssetTypeController extends Controller
         $this->authorize('update', $assetType);
 
         $validated = $request->validate([
-            'type_code' => 'required|string|max:50|unique:asset_types,type_code',
-            'type_name' => 'required|string|max:100|unique:asset_types,type_name',
+            'type_code' => 'required|string|max:50',
+            'type_name' => 'required|string|max:100',
         ]);
 
         $assetType->update($validated);
 
         return redirect()
-            ->route('admin.asset_types.index')
+            ->route('admin.asset-types.index')
             ->with('success', 'Tipe Asset berhasil diperbarui.');
     }
 
     public function destroy(AssetType $assetType)
     {
         $this->authorize('delete', $assetType);
-        
+
         $assetType->delete();
 
         return redirect()
-            ->route('admin.asset_types.index')
+            ->route('admin.asset-types.index')
             ->with('success', 'Tipe Asset berhasil dihapus.');
     }
 }
