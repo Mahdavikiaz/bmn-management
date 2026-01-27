@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\SparepartController;
 use App\Http\Controllers\Admin\RecommendationController;
 use App\Http\Controllers\Admin\IndicatorQuestionController;
 use App\Http\Controllers\Admin\AssetCheckController;
+use App\Http\Controllers\Admin\AssetTypeController;
 
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -36,6 +37,11 @@ Route::middleware(['auth'])->group(function () {
 
             Route::delete('assets/{asset}/specifications/{spec}', [AssetSpecificationController::class, 'destroy'])
                 ->name('assets.specifications.destroy');
+        });
+
+        // ===== ASSET TYPES (Admin-only) =====
+        Route::middleware('can:viewAny,App\Models\AssetType')->group(function () {
+            Route::resource('asset-types', AssetTypeController::class)->except(['show']);
         });
 
         // ===== SPAREPARTS (Admin-only) =====

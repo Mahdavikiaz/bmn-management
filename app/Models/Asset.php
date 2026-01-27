@@ -41,4 +41,9 @@ class Asset extends Model
     {
         return $this->hasOne(PerformanceReport::class, 'id_asset', 'id_asset')->latestOfMany('created_at');
     }
+
+    public function type()
+    {
+        return $this->belongsTo(AssetType::class, 'id_type', 'id_type');
+    }
 }
