@@ -97,12 +97,8 @@
                                 <div class="fw-normal">{{ $asset->device_name }}</div>
                             </td>
 
-                            <td>
-                                @if($asset->device_type == 'PC')
-                                    <span class="badge rounded-pill text-bg-success fw-semibold">PC</span>
-                                @else
-                                    <span class="badge rounded-pill text-bg-warning fw-semibold">Laptop</span>
-                                @endif
+                            <td class="fw-normal">
+                                {{ $asset->type?->type_name ?? '-' }}
                             </td>
 
                             <td>

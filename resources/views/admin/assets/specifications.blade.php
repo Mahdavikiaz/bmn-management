@@ -86,7 +86,7 @@
         <div>
             <h4 class="mb-1">Kelola Spesifikasi</h4>
             <div class="text-muted">
-                {{ $asset->device_name }} ({{ $asset->device_type }}) |
+                {{ $asset->device_name }} ({{ $asset->type?->type_name }}) |
                 Kode BMN: <strong>{{ $asset->bmn_code }}</strong> |
                 Tahun Pengadaan: <strong>{{ $asset->procurement_year }}</strong>
             </div>
@@ -142,6 +142,13 @@
                 @endphp
 
                 <div class="spec-list">
+                    <div class="spec-item">
+                        <div class="spec-icon"><i class="bi bi-person"></i></div>
+                        <div>
+                            <div class="spec-label">Pemegang Asset</div>
+                            <div class="spec-value fw-semibold">{{ $latestSpec->owner_asset ?: '-' }}</div>
+                        </div>
+                    </div>
                     <div class="spec-item">
                         <div class="spec-icon"><i class="bi bi-cpu"></i></div>
                         <div>
@@ -230,6 +237,16 @@
                 @csrf
 
                 <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Pemegang Asset</label>
+                        <input
+                            type="text"
+                            name="owner_asset"
+                            class="form-control"
+                            value="{{ old('owner_asset', $latestSpec->owner_asset ?? '') }}"
+                            placeholder="Contoh: Zidan"
+                        >
+                    </div>
                     <div class="col-md-6">
                         <label class="form-label">Processor</label>
                         <input

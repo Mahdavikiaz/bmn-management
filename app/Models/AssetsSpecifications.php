@@ -16,6 +16,7 @@ class AssetsSpecifications extends Model
 
     protected $fillable = [
         'id_asset',
+        'owner_asset',
         'processor',
         'ram',
         'storage',

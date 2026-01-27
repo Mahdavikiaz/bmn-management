@@ -32,14 +32,15 @@ class AssetCheckController extends Controller
         $storageType = $request->input('category_storage');
 
         return [
-            'id_asset'   => $asset->id_asset,
-            'processor'  => $this->norm($request->processor),
-            'ram'        => (int) $request->ram,
-            'storage'    => (int) $request->storage,
-            'os_version' => $this->norm($request->os_version),
-            'is_hdd'     => $storageType === 'HDD',
-            'is_ssd'     => $storageType === 'SSD',
-            'is_nvme'    => $storageType === 'NVME',
+            'id_asset'    => $asset->id_asset,
+            'owner_asset' => $this->norm($request->owner_asset),
+            'processor'   => $this->norm($request->processor),
+            'ram'         => (int) $request->ram,
+            'storage'     => (int) $request->storage,
+            'os_version'  => $this->norm($request->os_version),
+            'is_hdd'      => $storageType === 'HDD',
+            'is_ssd'      => $storageType === 'SSD',
+            'is_nvme'     => $storageType === 'NVME',
         ];
     }
 
@@ -48,13 +49,14 @@ class AssetCheckController extends Controller
         if (!$latest) return false;
 
         return (
-            $this->norm($latest->processor)  === $payload['processor'] &&
-            (int) $latest->ram               === (int) $payload['ram'] &&
-            (int) $latest->storage           === (int) $payload['storage'] &&
-            $this->norm($latest->os_version) === $payload['os_version'] &&
-            (bool) $latest->is_hdd           === (bool) $payload['is_hdd'] &&
-            (bool) $latest->is_ssd           === (bool) $payload['is_ssd'] &&
-            (bool) $latest->is_nvme          === (bool) $payload['is_nvme']
+            $this->norm($latest->owner_asset)  === $payload['owner_asset'] &&
+            $this->norm($latest->processor)    === $payload['processor'] &&
+            (int) $latest->ram                 === (int) $payload['ram'] &&
+            (int) $latest->storage             === (int) $payload['storage'] &&
+            $this->norm($latest->os_version)   === $payload['os_version'] &&
+            (bool) $latest->is_hdd             === (bool) $payload['is_hdd'] &&
+            (bool) $latest->is_ssd             === (bool) $payload['is_ssd'] &&
+            (bool) $latest->is_nvme            === (bool) $payload['is_nvme']
         );
     }
 
@@ -66,6 +68,7 @@ class AssetCheckController extends Controller
         return null;
     }
 
+    // Cari harga sparepart sesuai category + type + size.
     private function findSparepartPrice(string $category, string $type, int $size): ?float
     {
         $price = Sparepart::where('category', $category)
@@ -96,27 +99,40 @@ class AssetCheckController extends Controller
         return "• " . implode("\n• ", $lines);
     }
 
-    private function ramRecommendationByPriority(int $prior): array
+    // Ambil rekomendasi dari tabel recommendations:
+    private function getRecommendationText(string $cat, int $priorLevel): string
     {
-        if ($prior <= 0) {
-            return ['text' => '-', 'add_size' => 0];
-        }
+        if ($priorLevel <= 0) return '-';
 
-        if ($prior === 5) {
-            return ['text' => 'Tambahkan RAM sebesar 16 GB (apabila slot masih tersedia)', 'add_size' => 16];
-        }
+        $rows = Recommendation::where('category', $cat)
+            ->where('priority_level', $priorLevel)
+            ->orderBy('id_recommendation')
+            ->pluck('description')
+            ->all();
 
-        if ($prior === 4) {
-            return ['text' => 'Tambahkan RAM sebesar 8 GB (apabila slot masih tersedia)', 'add_size' => 8];
-        }
+        if (!count($rows)) return '-';
 
-        if ($prior === 3) {
-            return ['text' => 'Tambahkan RAM sebesar 4 GB (apabila slot masih tersedia)', 'add_size' => 4];
-        }
-
-        return ['text' => 'Pastikan Task Manager terjaga stabil', 'add_size' => 0];
+        return implode("\n", $rows);
     }
 
+    // Parse ukuran RAM dari teks rekomendasi (untuk estimasi harga).
+    private function parseRamAddSizeGb(?string $rec): int
+    {
+        if (!$rec) return 0;
+        $t = strtolower($rec);
+
+        if (preg_match('/(\d+)\s*\+?\s*gb\b/i', $t, $m)) {
+            return (int) $m[1];
+        }
+
+        if (preg_match('/sebesar\s*(\d+)\b/i', $t, $m)) {
+            return (int) $m[1];
+        }
+
+        return 0;
+    }
+
+    // STORAGE
     private function storageRecommendationMeta(int $priorStorage, ?string $storageType, int $currentStorageGb): array
     {
         $meta = [
@@ -129,6 +145,7 @@ class AssetCheckController extends Controller
             return $meta;
         }
 
+        // prior 4-5 => x2
         if ($priorStorage >= 4) {
             $target = $currentStorageGb * 2;
 
@@ -138,6 +155,7 @@ class AssetCheckController extends Controller
             }
 
             if ($storageType === 'HDD') {
+                // HDD => ganti SSD + upgrade x2
                 $meta['text'] = "Ganti jadi SSD\nUpgrade Storage x2";
                 $meta['target_type'] = 'SSD';
                 $meta['target_size'] = $target;
@@ -150,6 +168,7 @@ class AssetCheckController extends Controller
             return $meta;
         }
 
+        // prior 1-3
         if ($storageType === 'HDD') {
             $meta['text'] = 'Ganti jadi SSD';
             $meta['target_type'] = 'SSD';
@@ -209,13 +228,15 @@ class AssetCheckController extends Controller
 
         $request->validate([
             'category_storage' => 'nullable|in:HDD,SSD,NVME',
-            'processor' => 'required|string|max:255',
-            'ram' => 'required|integer|min:0',
-            'storage' => 'required|integer|min:0',
-            'os_version' => 'nullable|string|max:255',
-            'answers' => 'required|array|min:1',
+            'owner_asset'      => 'required|string|max:255',
+            'processor'        => 'required|string|max:255',
+            'ram'              => 'required|integer|min:0',
+            'storage'          => 'required|integer|min:0',
+            'os_version'       => 'nullable|string|max:255',
+            'answers'          => 'required|array|min:1',
         ]);
 
+        // validasi semua pertanyaan terjawab
         $allQuestions = IndicatorQuestion::select('id_question', 'category')->get();
         foreach ($allQuestions as $q) {
             if (!$request->filled("answers.{$q->id_question}")) {
@@ -236,6 +257,7 @@ class AssetCheckController extends Controller
                 ->withInput();
         }
 
+        // mapping jawaban harus match question-option
         $mapAnswers = $request->input('answers', []);
         foreach ($selectedOptions as $opt) {
             $qid = $opt->id_question;
@@ -246,6 +268,7 @@ class AssetCheckController extends Controller
             }
         }
 
+        // hitung rata-rata per kategori
         $avgByCat = $selectedOptions
             ->groupBy(fn($o) => $o->question->category)
             ->map(fn($items) => round($items->avg('star_value'), 2));
@@ -261,26 +284,14 @@ class AssetCheckController extends Controller
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
         // RAM
-        $ramMeta = $this->ramRecommendationByPriority($priorRam);
-        $recRam = $this->asBullets($ramMeta['text']);
+        $recRamRaw = $this->getRecommendationText('RAM', $priorRam);
+        $recRam    = $this->asBullets($recRamRaw);
 
-        // CPU
-        $getRecommendationText = function (string $cat, int $priorLevel): string {
-            if ($priorLevel <= 0) return '-';
+        // CPU dari DB
+        $recCpuRaw = $this->getRecommendationText('CPU', $priorCpu);
+        $recCpu    = $this->asBullets($recCpuRaw);
 
-            $rows = Recommendation::where('category', $cat)
-                ->where('priority_level', $priorLevel)
-                ->orderBy('id_recommendation')
-                ->pluck('description')
-                ->all();
-
-            if (!count($rows)) return '-';
-
-            return implode("\n", $rows);
-        };
-
-        $recCpu = $this->asBullets($getRecommendationText('CPU', $priorCpu));
-
+        // spec latest
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
             ->first();
@@ -297,10 +308,11 @@ class AssetCheckController extends Controller
             $priorCpu,
             $recRam,
             $recCpu,
-            $ramMeta
+            $recRamRaw // buat parse harga RAM
         ) {
             $now = now();
 
+            // pakai spec lama kalau sama persis
             if ($this->isSameSpec($latestSpec, $specPayload)) {
                 $spec = $latestSpec;
             } else {
@@ -309,7 +321,7 @@ class AssetCheckController extends Controller
                 ]));
             }
 
-            // STORAGE
+            // STORAGE meta
             $storageType = $this->getStorageTypeFromSpec($spec);
             $currentStorageGb = (int) $spec->storage;
 
@@ -321,17 +333,19 @@ class AssetCheckController extends Controller
 
             $recStorage = $this->asBullets($storageMeta['text']);
 
-            // HARGA RAM
+            // HITUNG HARGA RAM (parse dari teks DB)
             $upgradeRamPrice = null;
             $ramType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
-            $ramAddSize = (int) ($ramMeta['add_size'] ?? 0);
+
+            $ramAddSize = $this->parseRamAddSizeGb($recRamRaw);
 
             if ($priorRam > 0 && $ramAddSize > 0 && $ramType) {
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramType, $ramAddSize);
             }
 
-            // HARGA STORAGE
+            // HITUNG HARGA STORAGE
             $upgradeStoragePrice = null;
+
             $targetType = $storageMeta['target_type'] ?? null;
             $targetSize = (int) ($storageMeta['target_size'] ?? 0);
 
@@ -339,6 +353,7 @@ class AssetCheckController extends Controller
                 $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $targetType, $targetSize);
             }
 
+            // simpan report
             $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
@@ -359,6 +374,7 @@ class AssetCheckController extends Controller
                 'updated_at' => $now,
             ]);
 
+            // simpan jawaban indikator
             foreach ($selectedOptions as $opt) {
                 IndicatorAnswer::create([
                     'id_option' => $opt->id_option,

@@ -190,7 +190,7 @@
     <div>
         <h4 class="mb-2">Hasil Pengecekan Asset</h4>
         <div class="text-muted">
-            {{ $asset->device_name }} ({{ $asset->device_type }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+            {{ $asset->device_name }} ({{ $asset->type?->type_name }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
         </div>
     </div>
 
@@ -233,6 +233,14 @@
                     </div>
                 @else
                     <div class="spec-list">
+                        <div class="spec-item">
+                            <div class="spec-icon"><i class="bi bi-person"></i></div>
+                            <div>
+                                <div class="spec-label">Pemegang Asset</div>
+                                <div class="spec-value fw-semibold">{{ $spec->owner_asset ?: '-' }}</div>
+                            </div>
+                        </div>
+
                         <div class="spec-item">
                             <div class="spec-icon"><i class="bi bi-cpu"></i></div>
                             <div>

@@ -48,24 +48,31 @@
                         <div class="row g-3">
 
                             <div class="col-12">
-                                <label class="form-label">Kode BMN</label>
-                                <input type="text" name="bmn_code" class="form-control"
-                                       value="{{ old('bmn_code') }}" required>
+                                <label class="form-label">Kode NUP</label>
+                                <input type="text" name="nup" class="form-control"
+                                       value="{{ old('nup') }}" required>
+                                <div class="form-text">
+                                    Kode BMN akan digenerate otomatis dari <strong>Kode Tipe Asset</strong> + <strong>NUP</strong>.
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Tipe Asset</label>
+                                <select name="id_type" class="form-select" required>
+                                    <option value="" disabled {{ old('id_type') ? '' : 'selected' }}>Pilih tipe asset</option>
+                                    @foreach($types as $t)
+                                        <option value="{{ $t->id_type }}"
+                                            {{ (string)old('id_type') === (string)$t->id_type ? 'selected' : '' }}>
+                                            {{ $t->type_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div class="col-12">
                                 <label class="form-label">Nama Device</label>
                                 <input type="text" name="device_name" class="form-control"
                                        value="{{ old('device_name') }}" required>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label">Tipe Device</label>
-                                <select name="device_type" class="form-select" required>
-                                    <option value="">Pilih tipe...</option>
-                                    <option value="PC" {{ old('device_type')=='PC' ? 'selected' : '' }}>PC</option>
-                                    <option value="Laptop" {{ old('device_type')=='Laptop' ? 'selected' : '' }}>Laptop</option>
-                                </select>
                             </div>
 
                             <div class="col-12">
@@ -105,6 +112,12 @@
 
                         <div class="row g-3">
                             <div class="col-12">
+                                <label class="form-label">Nama Pemegang Asset</label>
+                                <input type="text" name="owner_asset" class="form-control"
+                                       value="{{ old('owner_asset') }}" placeholder="Masukkan nama pemegang asset saat ini.">
+                            </div>
+
+                            <div class="col-12">
                                 <label class="form-label">Processor</label>
                                 <input type="text" name="processor" class="form-control"
                                        value="{{ old('processor') }}" placeholder="Contoh: Intel i5-1235U">
@@ -128,28 +141,34 @@
                                        value="{{ old('os_version') }}" placeholder="Contoh: Windows 11 Pro">
                             </div>
 
+                            {{-- RADIO biar cuma bisa pilih satu --}}
                             <div class="col-12">
                                 <label class="form-label d-block">Jenis Storage</label>
                                 <div class="d-flex flex-wrap gap-3">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="is_hdd" value="1"
-                                               id="is_hdd" {{ old('is_hdd') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_hdd">HDD</label>
+                                        <input class="form-check-input" type="radio" name="storage_kind" value="HDD"
+                                               id="storage_hdd" {{ old('storage_kind') === 'HDD' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="storage_hdd">HDD</label>
                                     </div>
 
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="is_ssd" value="1"
-                                               id="is_ssd" {{ old('is_ssd') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_ssd">SSD</label>
+                                        <input class="form-check-input" type="radio" name="storage_kind" value="SSD"
+                                               id="storage_ssd" {{ old('storage_kind') === 'SSD' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="storage_ssd">SSD</label>
                                     </div>
 
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="is_nvme" value="1"
-                                               id="is_nvme" {{ old('is_nvme') ? 'checked' : '' }}>
-                                        <label class="form-check-label" for="is_nvme">NVMe</label>
+                                        <input class="form-check-input" type="radio" name="storage_kind" value="NVME"
+                                               id="storage_nvme" {{ old('storage_kind') === 'NVME' ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="storage_nvme">NVMe</label>
                                     </div>
                                 </div>
                             </div>
+
+                            <input type="hidden" name="is_hdd" id="is_hdd" value="0">
+                            <input type="hidden" name="is_ssd" id="is_ssd" value="0">
+                            <input type="hidden" name="is_nvme" id="is_nvme" value="0">
+
                         </div>
 
                         {{-- ACTIONS --}}
@@ -165,4 +184,21 @@
             </div>
         </div>
     </form>
+
+    <script>
+        // Mapping radio storage_kind -> hidden boolean flags
+        function syncStorageFlags() {
+            const picked = document.querySelector('input[name="storage_kind"]:checked')?.value || '';
+            document.getElementById('is_hdd').value  = (picked === 'HDD') ? '1' : '0';
+            document.getElementById('is_ssd').value  = (picked === 'SSD') ? '1' : '0';
+            document.getElementById('is_nvme').value = (picked === 'NVME') ? '1' : '0';
+        }
+
+        document.querySelectorAll('input[name="storage_kind"]').forEach(el => {
+            el.addEventListener('change', syncStorageFlags);
+        });
+
+        // initial sync (biar old() kebaca)
+        syncStorageFlags();
+    </script>
 @endsection

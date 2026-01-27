@@ -53,6 +53,12 @@
                 </div>
 
                 <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Pemegang Asset</label>
+                        <input type="text" name="owner_asset" class="form-control"
+                               value="{{ old('owner_asset', $latestSpec->owner_asset ?? '') }}"
+                               required>
+                    </div>
 
                     <div class="col-12">
                         <label class="form-label">Processor</label>

@@ -13,9 +13,10 @@ class Asset extends Model
     protected $primaryKey = 'id_asset';
 
     protected $fillable = [
+        'id_type',
+        'nup',
         'bmn_code',
         'device_name',
-        'device_type',
         'gpu',
         'ram_type',
         'procurement_year',

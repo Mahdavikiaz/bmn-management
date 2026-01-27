@@ -45,7 +45,7 @@
     <div>
         <h4 class="mb-2">History Pengecekan</h4>
         <div class="text-muted">
-            {{ $asset->device_name }} ({{ $asset->device_type }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+            {{ $asset->device_name }} ({{ $asset->type?->type_name }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
         </div>
 
         <div class="mt-1">

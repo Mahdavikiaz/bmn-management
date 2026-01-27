@@ -44,9 +44,9 @@
                     <div class="tab-pane fade show active" id="pane-master" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label">Kode BMN</label>
-                                <input type="text" name="bmn_code" class="form-control"
-                                       value="{{ old('bmn_code', $asset->bmn_code) }}" required>
+                                <label class="form-label">Kode Nup</label>
+                                <input type="text" name="nup" class="form-control"
+                                       value="{{ old('nup', $asset->nup) }}" required>
                             </div>
 
                             <div class="col-12">
@@ -57,10 +57,14 @@
 
                             <div class="col-12">
                                 <label class="form-label">Tipe Device</label>
-                                <select name="device_type" class="form-select" required>
-                                    <option value="">Pilih tipe...</option>
-                                    <option value="PC" {{ old('device_type', $asset->device_type)=='PC' ? 'selected' : '' }}>PC</option>
-                                    <option value="Laptop" {{ old('device_type', $asset->device_type)=='Laptop' ? 'selected' : '' }}>Laptop</option>
+                                <select name="id_type" class="form-select" required>
+                                    <option value="" disabled {{ old('id_type') ? 'selected' : '' }}>Pilih tipe asset</option>
+                                    @foreach($types as $t)
+                                        <option value="{{ $t->id_type }}"
+                                            {{ (string)old('id_type') === (string)$t->id_type ? 'selected' : '' }}>
+                                            {{ $t->type_name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
 
