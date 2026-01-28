@@ -14,7 +14,6 @@
                 </a>
             </li>
 
-            {{-- ✅ UPDATED: Asset Check --}}
             <li class="nav-item">
                 <a href="{{ route('admin.asset-checks.index') }}"
                    class="nav-link {{ request()->is('admin/asset-checks*') ? 'active' : 'text-dark' }}">
@@ -24,7 +23,8 @@
             </li>
 
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.reports.index') }}" 
+                class="nav-link {{ request()->is('admin/reports*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-file-earmark-text"></i>
                     Report
                 </a>

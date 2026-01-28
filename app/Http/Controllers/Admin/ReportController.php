@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Exports\AssetReportsExport;
+use App\Exports\AssetsReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\PerformanceReport;
@@ -96,6 +96,6 @@ class ReportController extends Controller
             ->latest('id_asset')
             ->get();
 
-        return Excel::download(new AssetReportsExport($assets), 'Reports_All_Assets.xlsx');
+        return Excel::download(new AssetsReportExport($assets), 'Reports_All_Assets.xlsx');
     }
 }

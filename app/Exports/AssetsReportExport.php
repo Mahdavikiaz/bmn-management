@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 
-class AssetReportsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize
+class AssetsReportExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize
 {
     /** @var \Illuminate\Support\Collection<int,\App\Models\Asset> */
     protected Collection $assets;
