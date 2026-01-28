@@ -364,8 +364,20 @@
 
     {{-- PAGINATION --}}
     @if(method_exists($assets, 'links'))
-        <div class="card-footer bg-white">
-            {{ $assets->links() }}
+        <div class="d-flex flex-column align-items-center mt-4 gap-2">
+
+            {{-- Text info --}}
+            <div class="text-muted small">
+                Showing {{ $assets->firstItem() }}
+                to {{ $assets->lastItem() }}
+                of {{ $assets->total() }} results
+            </div>
+
+            {{-- Pagination --}}
+            <div class="mt-2">
+                {{ $assets->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
+            </div>
+
         </div>
     @endif
 </div>

@@ -136,11 +136,21 @@
 
         </div>
     </div>
-</div>
+    {{-- PAGINATION --}}
+<div class="d-flex flex-column align-items-center mt-4 gap-2">
 
-{{-- PAGINATION --}}
-<div class="mt-3">
-    {{ $types->links() }}
+    <div class="text-muted small">
+        Showing {{ $types->firstItem() }}
+        to {{ $types->lastItem() }}
+        of {{ $types->total() }} results
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-2">
+        {{ $types->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
+    </div>
+
+</div>
 </div>
 
 @endsection

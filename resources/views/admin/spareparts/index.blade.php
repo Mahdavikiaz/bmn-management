@@ -195,11 +195,21 @@
             </table>
         </div>
     </div>
-</div>
+    {{-- PAGINATION --}}
+<div class="d-flex flex-column align-items-center mt-4 gap-2">
 
-{{-- PAGINATION --}}
-<div class="mt-3">
-    {{ $spareparts->links() }}
+    <div class="text-muted small">
+        Showing {{ $spareparts->firstItem() }}
+        to {{ $spareparts->lastItem() }}
+        of {{ $spareparts->total() }} results
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-2">
+        {{ $spareparts->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
+    </div>
+
+</div>
 </div>
 
 @endsection

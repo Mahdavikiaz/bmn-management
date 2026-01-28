@@ -233,11 +233,21 @@
             </table>
         </div>
     </div>
-</div>
+    {{-- PAGINATION --}}
+<div class="d-flex flex-column align-items-center mt-4 gap-2">
 
-{{-- PAGINATION --}}
-<div class="mt-3">
-    {{ $recommendations->links() }}
+    <div class="text-muted small">
+        Showing {{ $recommendations->firstItem() }}
+        to {{ $recommendations->lastItem() }}
+        of {{ $recommendations->total() }} results
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-2">
+        {{ $recommendations->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
+    </div>
+
+</div>
 </div>
 
 @endsection

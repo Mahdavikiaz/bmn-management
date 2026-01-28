@@ -251,11 +251,25 @@
             </table>
         </div>
     </div>
+
+    {{-- PAGINATION --}}
+@if(method_exists($indicators, 'links'))
+<div class="d-flex flex-column align-items-center mt-4 gap-2">
+
+    <div class="text-muted small">
+        Showing {{ $indicators->firstItem() }}
+        to {{ $indicators->lastItem() }}
+        of {{ $indicators->total() }} results
+    </div>
+
+    {{-- Pagination --}}
+    <div class="mt-2">
+        {{ $indicators->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
+    </div>
+
+</div>
+@endif
 </div>
 
-{{-- PAGINATION --}}
-<div class="mt-3">
-    {{ $indicators->links() }}
-</div>
 
 @endsection

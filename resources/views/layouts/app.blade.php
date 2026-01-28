@@ -177,6 +177,22 @@
             background: #0d6efd;
             color: #fff;
         }
+        .pagination {
+            gap: 6px;
+        }
+
+        .pagination .page-item .page-link {
+            border-radius: 10px;
+            font-weight: 600;
+            min-width: 38px;
+            text-align: center;
+        }
+
+        .pagination .active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+
     </style>
 </head>
 
@@ -215,7 +231,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         // DELETE MODAL
         const deleteModalEl = document.getElementById('globalDeleteModal');
-        
+
         if (deleteModalEl) {
             const deleteModal = new bootstrap.Modal(deleteModalEl);
             const deleteForm = document.getElementById('deleteForm');
