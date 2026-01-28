@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\RecommendationController;
 use App\Http\Controllers\Admin\IndicatorQuestionController;
 use App\Http\Controllers\Admin\AssetCheckController;
 use App\Http\Controllers\Admin\AssetTypeController;
+use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -89,6 +90,18 @@ Route::middleware(['auth'])->group(function () {
                 ->name('asset-checks.reports.destroy');
         });
 
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+
+        // Export per asset (PDF)
+        Route::get('/reports/{asset}/pdf', [ReportController::class, 'exportAssetPdf'])
+            ->name('reports.export.asset.pdf');
+
+        // Export semua asset yg punya report
+        Route::get('/reports/export/all/pdf', [ReportController::class, 'exportAllPdf'])
+            ->name('reports.export.all.pdf');
+
+        Route::get('/reports/export/all/excel', [ReportController::class, 'exportAllExcel'])
+            ->name('reports.export.all.excel');
     });
 
 });
