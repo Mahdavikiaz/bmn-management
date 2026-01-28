@@ -96,6 +96,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/reports/{asset}/pdf', [ReportController::class, 'exportAssetPdf'])
             ->name('reports.export.asset.pdf');
 
+        Route::get('/reports/{asset}/excel', [ReportController::class, 'exportAssetExcel'])
+            ->name('reports.export.asset.excel');
+
         // Export semua asset yg punya report
         Route::get('/reports/export/all/pdf', [ReportController::class, 'exportAllPdf'])
             ->name('reports.export.all.pdf');

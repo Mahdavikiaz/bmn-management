@@ -61,6 +61,27 @@ class ReportController extends Controller
         return $pdf->download($fileName);
     }
 
+    public function exportAssetExcel(Asset $asset)
+    {
+        $this->authorize('viewAny', PerformanceReport::class);
+
+        $asset->load([
+            'type',
+            'latestPerformanceReport.spec',
+            'latestPerformanceReport.user',
+        ]);
+
+        $report = $asset->latestPerformanceReport;
+
+        if (!$report) {
+            abort(404, 'Asset ini belum memiliki report.');
+        }
+
+        $fileName = 'Report_' . ($asset->bmn_code ?? ('asset_' . $asset->id_asset)) . '.xlsx';
+
+        return Excel::download(new AssetsReportExport($report), $fileName);
+    }
+
     public function exportAllPdf(Request $request)
     {
         $this->authorize('viewAny', PerformanceReport::class);

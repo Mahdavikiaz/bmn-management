@@ -66,13 +66,20 @@
 
                         <td>
                             <span class="badge text-bg-light border">RAM: {{ $r?->prior_ram ?? '-' }}</span>
-                            <span class="badge text-bg-light border">STO: {{ $r?->prior_storage ?? '-' }}</span>
+                            <span class="badge text-bg-light border">STORAGE: {{ $r?->prior_storage ?? '-' }}</span>
                             <span class="badge text-bg-light border">CPU: {{ $r?->prior_processor ?? '-' }}</span>
                         </td>
 
                         <td>
                             <div class="text-muted small">RAM: <strong>{{ $fmtPrice($r?->upgrade_ram_price) }}</strong></div>
                             <div class="text-muted small">Storage: <strong>{{ $fmtPrice($r?->upgrade_storage_price) }}</strong></div>
+                        </td>
+
+                        <td class="text-center">
+                            <a href="{{ route('admin.reports.export.asset.excel', $asset->id_asset) }}"
+                               class="btn btn-sm btn-success">
+                                <i class="bi bi-file-earmark-pdf"></i> EXCEL
+                            </a>
                         </td>
 
                         <td class="text-center">
