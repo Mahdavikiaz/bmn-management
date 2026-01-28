@@ -38,6 +38,7 @@ class AssetSpecificationController extends Controller
             ->first();
 
         $validated = $request->validate([
+            'owner_asset' => ['nullable', 'string', 'max:255'],
             'processor' => ['nullable', 'string', 'max:255'],
             'ram' => ['nullable', 'integer', 'min:0'],
             'storage' => ['nullable', 'integer', 'min:0'],
@@ -53,6 +54,10 @@ class AssetSpecificationController extends Controller
         $inputIsNvme = $request->boolean('is_nvme');
 
         // Kalau field kosong, ambil dari latestSpec (kalau ada aja)
+        $newOwnerAsset = filled($validated['owner_asset'] ?? null)
+            ? $validated['owner_asset']
+            : ($latestSpec->processor ?? null);
+
         $newProcessor = filled($validated['processor'] ?? null)
             ? $validated['processor']
             : ($latestSpec->processor ?? null);
@@ -78,6 +83,7 @@ class AssetSpecificationController extends Controller
         // Kalau belum ada latest, minimal harus isi 1 field (biar ga semua null)
         if (!$latestSpec) {
             $hasAny =
+                !is_null($newOwnerAsset) ||
                 !is_null($newProcessor) ||
                 !is_null($newRam) ||
                 !is_null($newStorage) ||
@@ -92,6 +98,7 @@ class AssetSpecificationController extends Controller
         } else {
             // kalau udah ada latest, cek apakah ada perubahan dari latest
             $isSame =
+                ($newOwnerAsset ?? '') === ($latestSpec->owner_asset ?? '') &&
                 ($newProcessor ?? '') === ($latestSpec->processor ?? '') &&
                 (int)($newRam ?? 0) === (int)($latestSpec->ram ?? 0) &&
                 (int)($newStorage ?? 0) === (int)($latestSpec->storage ?? 0) &&
@@ -109,6 +116,7 @@ class AssetSpecificationController extends Controller
 
         AssetsSpecifications::create([
             'id_asset' => $asset->id_asset,
+            'owner_asset' => $newOwnerAsset ?? '',
             'processor' => $newProcessor ?? '',
             'ram' => $newRam ?? 0,
             'storage' => $newStorage ?? 0,
