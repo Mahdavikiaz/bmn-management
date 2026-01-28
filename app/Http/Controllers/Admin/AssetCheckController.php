@@ -130,57 +130,59 @@ class AssetCheckController extends Controller
         return 0;
     }
 
-    private function storageRecommendationMeta(int $priorStorage, ?string $storageType, int $currentStorageGb): array
+    private function parseStorageTargetMeta(?string $rec, ?string $currentType, int $currentStorageGb): array
     {
         $meta = [
-            'text' => '-',
             'target_type' => null,
             'target_size' => 0,
         ];
 
-        if ($priorStorage <= 0 || !$storageType || $currentStorageGb <= 0) {
-            return $meta;
-        }
+        if (!$rec) return $meta;
+        if (!$currentType || $currentStorageGb <= 0) return $meta;
 
-        if ($priorStorage >= 4) {
-            $target = $currentStorageGb * 2;
+        $t = strtolower($rec);
 
-            if ($currentStorageGb >= 2048 || $target > 2048) {
-                $meta['text'] = 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan';
-                return $meta;
+        // default tetap pakai tipe saat ini
+        $targetType = strtoupper($currentType);
+
+        // detect "ganti"
+        if (preg_match('/ganti\s*(jadi|ke)?\s*(ssd|nvme|hdd)\b/i', $t, $m)) {
+            $targetType = strtoupper($m[2]);
+        } else {
+            if (preg_match('/(ubah|switch|convert)\s*(jadi|ke)?\s*(ssd|nvme|hdd)\b/i', $t, $m2)) {
+                $targetType = strtoupper($m2[3]);
             }
-
-            if ($storageType === 'HDD') {
-                $meta['text'] = "Ganti jadi SSD\nUpgrade Storage x2";
-                $meta['target_type'] = 'SSD';
-                $meta['target_size'] = $target;
-                return $meta;
-            }
-
-            $meta['text'] = 'Upgrade Storage x2';
-            $meta['target_type'] = $storageType;
-            $meta['target_size'] = $target;
-            return $meta;
         }
 
-        if ($storageType === 'HDD') {
-            $meta['text'] = 'Ganti jadi SSD';
-            $meta['target_type'] = 'SSD';
-            $meta['target_size'] = $currentStorageGb;
-            return $meta;
+        // detect size
+        $targetSize = 0;
+        if (preg_match('/\b(\d{2,5})\s*gb\b/i', $t, $mSize)) {
+            $targetSize = (int) $mSize[1];
         }
 
-        $rows = Recommendation::where('category', 'STORAGE')
-            ->where('priority_level', $priorStorage)
-            ->orderBy('id_recommendation')
-            ->pluck('description')
-            ->all();
+        // detect x2 / 2x / kali 2
+        $hasX2 = (bool) preg_match('/\b(x2|2x|kali\s*2)\b/i', $t);
+        if ($hasX2) {
+            $targetSize = $currentStorageGb * 2;
+        }
 
-        $meta['text'] = count($rows) ? implode("\n", $rows) : '-';
+        // kalau tanpa angka, size pakai size sekarang
+        if ($targetSize <= 0 && preg_match('/\b(ganti|ubah)\b/i', $t)) {
+            $targetSize = $currentStorageGb;
+        }
+
+        // safety cap supaya ga kelewat nyari sparepart jadi ngaco
+        if ($targetSize > 2048) {
+            $targetSize = 2048;
+        }
+
+        $meta['target_type'] = $targetType ?: null;
+        $meta['target_size'] = max(0, (int) $targetSize);
+
         return $meta;
     }
 
-    // INDEX + FILTER
+    // INDEX DAN FILTER
     public function index(Request $request)
     {
         $this->authorize('viewAny', PerformanceReport::class);
@@ -195,7 +197,6 @@ class AssetCheckController extends Controller
             ])
             ->withCount('performanceReports');
 
-        // Search bar: cari by Kode BMN atau Nama Device
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
@@ -203,7 +204,6 @@ class AssetCheckController extends Controller
             });
         }
 
-        // Dropdown: kategori device (asset_types)
         if (!empty($typeId)) {
             $assetsQuery->where('id_type', (int) $typeId);
         }
@@ -213,7 +213,6 @@ class AssetCheckController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        // data dropdown kategori
         $types = AssetType::orderBy('type_name')->get();
 
         return view('admin.asset_checks.index', compact('assets', 'types'));
@@ -300,9 +299,15 @@ class AssetCheckController extends Controller
         $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
+        // RAM
         $recRamRaw = $this->getRecommendationText('RAM', $priorRam);
         $recRam    = $this->asBullets($recRamRaw);
 
+        // STORAGE
+        $recStorageRaw = $this->getRecommendationText('STORAGE', $priorStorage);
+        $recStorage    = $this->asBullets($recStorageRaw);
+
+        // CPU
         $recCpuRaw = $this->getRecommendationText('CPU', $priorCpu);
         $recCpu    = $this->asBullets($recCpuRaw);
 
@@ -321,8 +326,10 @@ class AssetCheckController extends Controller
             $priorStorage,
             $priorCpu,
             $recRam,
+            $recStorage,
             $recCpu,
-            $recRamRaw
+            $recRamRaw,
+            $recStorageRaw
         ) {
             $now = now();
 
@@ -334,17 +341,7 @@ class AssetCheckController extends Controller
                 ]));
             }
 
-            $storageType = $this->getStorageTypeFromSpec($spec);
-            $currentStorageGb = (int) $spec->storage;
-
-            $storageMeta = $this->storageRecommendationMeta(
-                (int) $priorStorage,
-                $storageType,
-                $currentStorageGb
-            );
-
-            $recStorage = $this->asBullets($storageMeta['text']);
-
+            // HARGA RAM
             $upgradeRamPrice = null;
             $ramType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
             $ramAddSize = $this->parseRamAddSizeGb($recRamRaw);
@@ -353,9 +350,15 @@ class AssetCheckController extends Controller
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramType, $ramAddSize);
             }
 
+            // HARGA STORAGE
             $upgradeStoragePrice = null;
-            $targetType = $storageMeta['target_type'] ?? null;
-            $targetSize = (int) ($storageMeta['target_size'] ?? 0);
+
+            $storageType = $this->getStorageTypeFromSpec($spec);
+            $currentStorageGb = (int) $spec->storage;
+
+            $stoMeta = $this->parseStorageTargetMeta($recStorageRaw, $storageType, $currentStorageGb);
+            $targetType = $stoMeta['target_type'] ?? null;
+            $targetSize = (int) ($stoMeta['target_size'] ?? 0);
 
             if ($priorStorage > 0 && $targetType && $targetSize > 0) {
                 $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $targetType, $targetSize);
