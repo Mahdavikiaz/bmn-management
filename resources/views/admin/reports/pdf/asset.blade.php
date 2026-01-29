@@ -27,10 +27,6 @@
         <td>{{ $asset->bmn_code ?? '-' }}</td>
     </tr>
     <tr>
-        <th>NUP</th>
-        <td>{{ $asset->nup ?? '-' }}</td>
-    </tr>
-    <tr>
         <th>Nama Device</th>
         <td>{{ $asset->device_name ?? '-' }}</td>
     </tr>
@@ -43,7 +39,7 @@
         <td>{{ $asset->procurement_year ?? '-' }}</td>
     </tr>
     <tr>
-        <th>Owner Asset</th>
+        <th>Owner Asset Saat Ini</th>
         <td>{{ $spec?->owner_asset ?? '-' }}</td>
     </tr>
     <tr>
@@ -68,6 +64,8 @@
     <div><strong>Estimasi Harga Upgrade</strong></div>
     <div>RAM: {{ $fmt($report->upgrade_ram_price) }}</div>
     <div>Storage: {{ $fmt($report->upgrade_storage_price) }}</div>
+    <br>
+    <div><strong>Total : </strong>{{ $fmt($report->upgrade_ram_price + $report->upgrade_storage_price) }}</div>
 </div>
 
 <div class="box">

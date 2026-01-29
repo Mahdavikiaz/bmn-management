@@ -5,8 +5,8 @@
 @section('content')
 
 <style>
-    .table-modern thead th{ background:#f8f9fa; font-weight:700; white-space: nowrap; border-bottom:2px solid #d0d7e2; }
-    .table-modern tbody td{ font-size:.95rem; border-top:1px solid #eef2f7; vertical-align:middle; }
+    .table-modern thead th{ background:#f8f9fa; font-weight:500; white-space: nowrap; border-bottom:2px solid #d0d7e2; }
+    .table-modern tbody td{ font-size:.90rem; border-top:1px solid #eef2f7; vertical-align:middle; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -32,13 +32,13 @@
                 <thead>
                     <tr>
                         <th style="width:60px;">No</th>
-                        <th>Kode BMN</th>
-                        <th>Nama Device</th>
+                        <th style="width: 160px">Kode BMN</th>
+                        <th style="width: 200px">Nama Device</th>
                         <th style="width:160px;">Kategori</th>
                         <th style="width:220px;">Report Terakhir</th>
-                        <th style="width:190px;">Priority</th>
-                        <th style="width:220px;">Estimasi Upgrade</th>
-                        <th style="width:130px;" class="text-center">Aksi</th>
+                        <th style="width:220px;">Priority</th>
+                        <th style="width:200px;">Estimasi Upgrade</th>
+                        <th style="width:210px;" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -53,15 +53,12 @@
 
                     <tr>
                         <td>{{ ($assets->currentPage()-1)*$assets->perPage() + $loop->iteration }}</td>
-                        <td class="fw-semibold">{{ $asset->bmn_code }}</td>
-                        <td>{{ $asset->device_name }}</td>
+                        <td class="fw-semibold">{{ $asset->bmn_code ?? '-' }}</td>
+                        <td>{{ $asset->device_name ?? '-' }}</td>
                         <td>{{ $asset->type?->type_name ?? '-' }}</td>
 
                         <td>
                             <div class="fw-semibold">{{ optional($r?->created_at)->format('d/m/Y H:i') ?? '-' }}</div>
-                            <div class="text-muted small">
-                                Oleh: {{ $r?->user?->name ?? '-' }}
-                            </div>
                         </td>
 
                         <td>
@@ -76,17 +73,17 @@
                         </td>
 
                         <td class="text-center">
-                            <a href="{{ route('admin.reports.export.asset.excel', $asset->id_asset) }}"
-                               class="btn btn-sm btn-success">
-                                <i class="bi bi-file-earmark-pdf"></i> EXCEL
-                            </a>
-                        </td>
+                            <div class="d-inline-flex gap-2 justify-content-center flex-wrap">
+                                <a href="{{ route('admin.reports.export.asset.excel', $asset->id_asset) }}"
+                                   class="btn btn-sm btn-success">
+                                    <i class="bi bi-file-earmark-excel"></i> Excel
+                                </a>
 
-                        <td class="text-center">
-                            <a href="{{ route('admin.reports.export.asset.pdf', $asset->id_asset) }}"
-                               class="btn btn-sm btn-danger">
-                                <i class="bi bi-file-earmark-pdf"></i> PDF
-                            </a>
+                                <a href="{{ route('admin.reports.export.asset.pdf', $asset->id_asset) }}"
+                                   class="btn btn-sm btn-danger">
+                                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty

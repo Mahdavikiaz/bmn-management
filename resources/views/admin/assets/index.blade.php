@@ -7,13 +7,13 @@
 <style>
     .table-modern thead th{
         background:#f8f9fa;
-        font-weight:700;
+        font-weight:500;
         white-space: nowrap;
     }
     .table-modern tbody tr:hover{ background:#f6f9ff; }
 
     .table-modern tbody td{
-        font-size: 0.95rem;
+        font-size: 0.90rem;
         border-top: 1px solid #eef2f7;
     }
 
@@ -55,7 +55,6 @@
 @php
     // helper count berdasarkan type_name
     $countByTypeName = function(string $name) use ($assets) {
-        // kalau paginator, items() adalah array, jadi pakai collection
         $items = collect(method_exists($assets, 'items') ? $assets->items() : $assets);
         return $items->filter(fn($a) => strtoupper($a->type?->type_name ?? '') === strtoupper($name))->count();
     };
@@ -134,15 +133,15 @@
             <table class="table table-modern align-middle mb-0">
                 <thead>
                 <tr>
-                    <th style="width:60px;" class="fw-semibold">No</th>
-                    <th class="fw-semibold">Kode BMN</th>
-                    <th class="fw-semibold">Nama Device</th>
-                    <th style="width:160px;" class="fw-semibold">Kategori</th>
-                    <th class="fw-semibold">GPU</th>
-                    <th class="fw-semibold">Tipe RAM</th>
-                    <th style="width:120px;" class="fw-semibold">Tahun Pengadaan</th>
-                    <th style="width:220px;" class="fw-semibold">Spesifikasi</th>
-                    <th style="width:180px;" class="text-center fw-semibold">Aksi</th>
+                    <th style="width:60px;">No</th>
+                    <th>Kode BMN</th>
+                    <th>Nama Device</th>
+                    <th style="width:100px;">Kategori</th>
+                    <th>GPU</th>
+                    <th>Tipe RAM</th>
+                    <th style="width:120px;">Tahun Pengadaan</th>
+                    <th style="width:180px;">Spesifikasi</th>
+                    <th style="width:180px;" class="text-center">Aksi</th>
                 </tr>
                 </thead>
 

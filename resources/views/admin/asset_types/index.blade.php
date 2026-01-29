@@ -7,13 +7,13 @@
 <style>
     .table-modern thead th{
         background:#f8f9fa;
-        font-weight:700;
+        font-weight:500;
         white-space: nowrap;
     }
     .table-modern tbody tr:hover{ background:#f6f9ff; }
 
     .table-modern tbody td{
-        font-size: 0.95rem;
+        font-size: 0.90rem;
         border-top: 1px solid #eef2f7;
     }
 

@@ -7,12 +7,12 @@
 <style>
     .table-modern thead th{
         background:#f8f9fa;
-        font-weight:700;
+        font-weight:500;
         white-space: nowrap;
     }
     .table-modern tbody tr:hover{ background:#f6f9ff; }
     .table-modern tbody td{
-        font-size: 0.95rem;
+        font-size: 0.90rem;
         border-top: 1px solid #eef2f7;
         vertical-align: middle;
     }
@@ -96,12 +96,12 @@
             <table class="table table-modern align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width:60px;" class="fw-semibold">No</th>
-                        <th class="fw-semibold">Kode BMN</th>
-                        <th class="fw-semibold">Nama Device</th>
-                        <th style="width:110px;" class="fw-semibold">Kategori</th>
-                        <th style="width:260px;" class="fw-semibold">Hasil Terakhir</th>
-                        <th class="text-center fw-semibold col-aksi">Aksi</th>
+                        <th style="width:60px;">No</th>
+                        <th>Kode BMN</th>
+                        <th>Nama Device</th>
+                        <th style="width:160px;">Kategori</th>
+                        <th style="width:260px;">Hasil Terakhir</th>
+                        <th style="width:60px;" class="text-center col-aksi">Aksi</th>
                     </tr>
                 </thead>
 

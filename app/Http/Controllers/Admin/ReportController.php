@@ -6,11 +6,10 @@ use App\Exports\AssetsReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\PerformanceReport;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -26,7 +25,7 @@ class ReportController extends Controller
                 'latestPerformanceReport.spec',
                 'latestPerformanceReport.user',
             ])
-            ->whereHas('performanceReports') // hanya yang sudah pernah dicek (punya report)
+            ->whereHas('performanceReports')
             ->latest('id_asset')
             ->paginate(10)
             ->withQueryString();
@@ -45,17 +44,16 @@ class ReportController extends Controller
         ]);
 
         $report = $asset->latestPerformanceReport;
-
         if (!$report) {
             abort(404, 'Asset ini belum memiliki report.');
         }
 
-        $fileName = 'Report_' . ($asset->bmn_code ?? ('asset_' . $asset->id_asset)) . '.pdf';
+        $fileName = $this->safeFileName('Report_' . ($asset->bmn_code ?? ('asset_' . $asset->id_asset)) . '.pdf');
 
         $pdf = Pdf::loadView('admin.reports.pdf.asset', [
-            'asset' => $asset,
+            'asset'  => $asset,
             'report' => $report,
-            'spec' => $report->spec,
+            'spec'   => $report->spec,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->download($fileName);
@@ -71,15 +69,13 @@ class ReportController extends Controller
             'latestPerformanceReport.user',
         ]);
 
-        $report = $asset->latestPerformanceReport;
-
-        if (!$report) {
+        if (!$asset->latestPerformanceReport) {
             abort(404, 'Asset ini belum memiliki report.');
         }
 
-        $fileName = 'Report_' . ($asset->bmn_code ?? ('asset_' . $asset->id_asset)) . '.xlsx';
+        $fileName = $this->safeFileName('Report_' . ($asset->bmn_code ?? ('asset_' . $asset->id_asset)) . '.xlsx');
 
-        return Excel::download(new AssetsReportExport($report), $fileName);
+        return Excel::download(new AssetsReportExport($asset), $fileName);
     }
 
     public function exportAllPdf(Request $request)
@@ -118,5 +114,10 @@ class ReportController extends Controller
             ->get();
 
         return Excel::download(new AssetsReportExport($assets), 'Reports_All_Assets.xlsx');
+    }
+
+    private function safeFileName(string $name): string
+    {
+        return preg_replace('/[\\\\\\/\\:\\*\\?\\"\\<\\>\\|]+/', '-', $name) ?? $name;
     }
 }

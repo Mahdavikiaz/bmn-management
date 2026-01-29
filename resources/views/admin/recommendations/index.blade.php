@@ -7,13 +7,13 @@
 <style>
     .table-modern thead th{
         background:#f8f9fa;
-        font-weight:700;
+        font-weight:500;
         white-space: nowrap;
     }
     .table-modern tbody tr:hover{ background:#f6f9ff; }
 
     .table-modern tbody td{
-        font-size: 0.95rem;
+        font-size: 0.90rem;
         border-top: 1px solid #eef2f7;
     }
 
@@ -148,11 +148,11 @@
 
                 <thead>
                 <tr>
-                    <th style="width:60px;" class="fw-semibold">No</th>
-                    <th style="width:120px;" class="fw-semibold">Kategori</th>
+                    <th style="width:60px;">No</th>
+                    <th style="width:120px;">Kategori</th>
                     <th class="fw-semibold">Deskripsi Rekomendasi</th>
-                    <th style="width:140px;" class="fw-semibold">Priority</th>
-                    <th style="width:160px;" class="text-center fw-semibold">Aksi</th>
+                    <th style="width:140px;">Priority</th>
+                    <th style="width:160px;" class="text-center">Aksi</th>
                 </tr>
                 </thead>
 
