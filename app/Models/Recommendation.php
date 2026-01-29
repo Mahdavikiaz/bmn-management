@@ -11,7 +11,8 @@ class Recommendation extends Model
 
     protected $fillable = [
         'category',
-        'description',
+        'action',
+        'explanation',
         'priority_level',
     ];
 }

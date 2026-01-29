@@ -101,25 +101,72 @@ class AssetCheckController extends Controller
         return "• " . implode("\n• ", $lines);
     }
 
-    private function getRecommendationText(string $cat, int $priorLevel): string
+    // Ambil action dan explanation dari DB berdasarkan category & priority_level
+    private function getRecommendationBundle(string $cat, int $priorLevel): array
     {
-        if ($priorLevel <= 0) return '-';
+        $bundle = [
+            'action_raw' => '-',
+            'explanation_raw' => '-',
+        ];
+
+        if ($priorLevel <= 0) return $bundle;
 
         $rows = Recommendation::where('category', $cat)
             ->where('priority_level', $priorLevel)
             ->orderBy('id_recommendation')
-            ->pluck('description')
+            ->get(['action', 'explanation']);
+
+        if ($rows->isEmpty()) {
+            return $bundle;
+        }
+
+        $actions = $rows->pluck('action')
+            ->map(fn($x) => trim((string) $x))
+            ->filter(fn($x) => $x !== '')
+            ->values()
             ->all();
 
-        if (!count($rows)) return '-';
+        $explanations = $rows->pluck('explanation')
+            ->map(fn($x) => trim((string) $x))
+            ->filter(fn($x) => $x !== '')
+            ->values()
+            ->all();
 
-        return implode("\n", $rows);
+        $bundle['action_raw'] = count($actions) ? implode("\n", $actions) : '-';
+        $bundle['explanation_raw'] = count($explanations) ? implode("\n", $explanations) : '-';
+
+        return $bundle;
     }
 
-    private function parseRamAddSizeGb(?string $rec): int
+    // Format gabungan supaya di report bisa tampilin Action dan Explanation
+    private function formatActionExplanation(string $actionRaw, string $explanationRaw): string
     {
-        if (!$rec) return 0;
-        $t = strtolower($rec);
+        $actionRaw = trim($actionRaw) === '' ? '-' : trim($actionRaw);
+        $explanationRaw = trim($explanationRaw) === '' ? '-' : trim($explanationRaw);
+
+        $action = $this->asBullets($actionRaw);
+        $explanation = $this->asBullets($explanationRaw);
+
+        // kalau dua duanya kosong
+        if ($action === '-' && $explanation === '-') return '-';
+
+        $out = [];
+
+        if ($action !== '-') {
+            $out[] = "Action:\n" . $action;
+        }
+        if ($explanation !== '-') {
+            $out[] = "Explanation:\n" . $explanation;
+        }
+
+        return implode("\n\n", $out);
+    }
+
+    // Parse ukuran RAM dari action untuk estimasi harga
+    private function parseRamAddSizeGb(?string $recAction): int
+    {
+        if (!$recAction) return 0;
+        $t = strtolower($recAction);
 
         if (preg_match('/(\d+)\s*\+?\s*gb\b/i', $t, $m)) {
             return (int) $m[1];
@@ -132,74 +179,86 @@ class AssetCheckController extends Controller
         return 0;
     }
 
-    private function buildStorageRecommendationRaw(?string $baseRec, ?string $storageType, int $currentStorageGb): string
+    private function buildStorageRecommendationBundle(array $base, ?string $storageType, int $currentStorageGb): array
     {
-        $base = trim((string) $baseRec);
-        $base = $base === '' ? '-' : $base;
+        $baseAction = trim((string) ($base['action_raw'] ?? '-'));
+        $baseExplain = trim((string) ($base['explanation_raw'] ?? '-'));
 
-        $lines = [];
+        $actions = [];
+        $explains = [];
 
-        // Rule: HDD -> selalu ganti SSD
-        if (strtoupper((string) $storageType) === 'HDD') {
-            $lines[] = 'Ganti jadi SSD';
-        }
-
-        // Rule: kapasitas maksimal
-        if ($currentStorageGb >= self::STORAGE_MAX_GB) {
-            $lines[] = 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan';
-        }
-
-        // Kalau tidak kena rule khusus, pake baseRec dari DB
-        if (!count($lines)) {
-            return $base;
-        }
-
-        // Jika kena rule khusus, base rekomendasi dari DB tetap bisa ditambah (selama bukan "-")
-        if ($base !== '-' && $base !== '') {
-            foreach (preg_split("/\r\n|\n|\r/", $base) ?: [] as $ln) {
+        // base
+        if ($baseAction !== '' && $baseAction !== '-') {
+            foreach (preg_split("/\r\n|\n|\r/", $baseAction) ?: [] as $ln) {
                 $ln = trim($ln);
-                if ($ln !== '') $lines[] = $ln;
+                if ($ln !== '') $actions[] = $ln;
+            }
+        }
+        if ($baseExplain !== '' && $baseExplain !== '-') {
+            foreach (preg_split("/\r\n|\n|\r/", $baseExplain) ?: [] as $ln) {
+                $ln = trim($ln);
+                if ($ln !== '') $explains[] = $ln;
             }
         }
 
+        // rule HDD
+        if (strtoupper((string) $storageType) === 'HDD') {
+            array_unshift($actions, 'Ganti jadi SSD');
+        }
+
+        // rule maksimal
+        if ($currentStorageGb >= self::STORAGE_MAX_GB) {
+            array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan');
+        }
+
+        // action/explain
+        $actions = $this->uniqueLines($actions);
+        $explains = $this->uniqueLines($explains);
+
+        return [
+            'action_raw' => count($actions) ? implode("\n", $actions) : '-',
+            'explanation_raw' => count($explains) ? implode("\n", $explains) : '-',
+        ];
+    }
+
+    private function uniqueLines(array $lines): array
+    {
         $seen = [];
         $out = [];
         foreach ($lines as $ln) {
-            $key = mb_strtolower(trim($ln));
-            if ($key === '') continue;
+            $ln = trim((string) $ln);
+            if ($ln === '') continue;
+            $key = mb_strtolower($ln);
             if (isset($seen[$key])) continue;
             $seen[$key] = true;
-            $out[] = trim($ln);
+            $out[] = $ln;
         }
-
-        return count($out) ? implode("\n", $out) : '-';
+        return $out;
     }
 
-    private function parseStorageTargetMeta(?string $rec, ?string $currentType, int $currentStorageGb): array
+    // Parse target STORAGE dari ACTION (untuk estimasi harga).
+    private function parseStorageTargetMeta(?string $recAction, ?string $currentType, int $currentStorageGb): array
     {
         $meta = [
             'target_type' => null,
             'target_size' => 0,
         ];
 
-        if (!$rec) return $meta;
+        if (!$recAction) return $meta;
         if (!$currentType || $currentStorageGb <= 0) return $meta;
 
-        $t = strtolower($rec);
+        $t = strtolower($recAction);
 
-        // default tetap pakai tipe saat ini
         $targetType = strtoupper($currentType);
 
-        // detect "ganti"
+        // detect ganti jadi SSD/NVME/HDD
         if (preg_match('/ganti\s*(jadi|ke)?\s*(ssd|nvme|hdd)\b/i', $t, $m)) {
             $targetType = strtoupper($m[2]);
-        } else {
-            if (preg_match('/(ubah|switch|convert)\s*(jadi|ke)?\s*(ssd|nvme|hdd)\b/i', $t, $m2)) {
-                $targetType = strtoupper($m2[3]);
-            }
+        } elseif (preg_match('/(ubah|switch|convert)\s*(jadi|ke)?\s*(ssd|nvme|hdd)\b/i', $t, $m2)) {
+            $targetType = strtoupper($m2[3]);
         }
 
-        // detect size explicit: "1024 GB"
+        // detect size explicit "1024 GB"
         $targetSize = 0;
         if (preg_match('/\b(\d{2,5})\s*gb\b/i', $t, $mSize)) {
             $targetSize = (int) $mSize[1];
@@ -211,7 +270,7 @@ class AssetCheckController extends Controller
             $targetSize = $currentStorageGb * 2;
         }
 
-        // kalau ada kata ganti/ubah tapi tanpa angka => pakai size sekarang
+        // kalau ada kata ganti/ubah tanpa angka => size pakai size sekarang
         if ($targetSize <= 0 && preg_match('/\b(ganti|ubah|switch|convert)\b/i', $t)) {
             $targetSize = $currentStorageGb;
         }
@@ -227,7 +286,6 @@ class AssetCheckController extends Controller
         return $meta;
     }
 
-    // INDEX DAN FILTER
     public function index(Request $request)
     {
         $this->authorize('viewAny', PerformanceReport::class);
@@ -344,16 +402,10 @@ class AssetCheckController extends Controller
         $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
-        // RAM
-        $recRamRaw = $this->getRecommendationText('RAM', $priorRam);
-        $recRam    = $this->asBullets($recRamRaw);
-
-        // STORAGE (base dari DB by priority)
-        $recStorageBaseRaw = $this->getRecommendationText('STORAGE', $priorStorage);
-
-        // CPU
-        $recCpuRaw = $this->getRecommendationText('CPU', $priorCpu);
-        $recCpu    = $this->asBullets($recCpuRaw);
+        // ambil action dan explanation per kategori
+        $ramBundle = $this->getRecommendationBundle('RAM', $priorRam);
+        $cpuBundle = $this->getRecommendationBundle('CPU', $priorCpu);
+        $storageBaseBundle = $this->getRecommendationBundle('STORAGE', $priorStorage);
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
@@ -369,10 +421,9 @@ class AssetCheckController extends Controller
             $priorRam,
             $priorStorage,
             $priorCpu,
-            $recRam,
-            $recCpu,
-            $recRamRaw,
-            $recStorageBaseRaw
+            $ramBundle,
+            $cpuBundle,
+            $storageBaseBundle
         ) {
             $now = now();
 
@@ -388,34 +439,45 @@ class AssetCheckController extends Controller
             $storageType = $this->getStorageTypeFromSpec($spec);
             $currentStorageGb = (int) $spec->storage;
 
-            $recStorageRawFinal = $this->buildStorageRecommendationRaw(
-                $recStorageBaseRaw,
+            $storageFinalBundle = $this->buildStorageRecommendationBundle(
+                $storageBaseBundle,
                 $storageType,
                 $currentStorageGb
             );
-            $recStorageFinal = $this->asBullets($recStorageRawFinal);
 
-            // HARGA RAM
+            // format untuk disimpan ke performance_reports
+            $recRamFinal     = $this->formatActionExplanation($ramBundle['action_raw'], $ramBundle['explanation_raw']);
+            $recCpuFinal     = $this->formatActionExplanation($cpuBundle['action_raw'], $cpuBundle['explanation_raw']);
+            $recStorageFinal = $this->formatActionExplanation($storageFinalBundle['action_raw'], $storageFinalBundle['explanation_raw']);
+
+            // ESTIMASI HARGA UPGRADE
+
+            // RAM
             $upgradeRamPrice = null;
             $ramType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
-            $ramAddSize = $this->parseRamAddSizeGb($recRamRaw);
+            $ramAddSize = $this->parseRamAddSizeGb($ramBundle['action_raw']);
 
             if ($priorRam > 0 && $ramAddSize > 0 && $ramType) {
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramType, $ramAddSize);
             }
 
-            // HARGA STORAGE
+            // STORAGE
             $upgradeStoragePrice = null;
 
-            $stoMeta = $this->parseStorageTargetMeta($recStorageRawFinal, $storageType, $currentStorageGb);
+            $stoMeta = $this->parseStorageTargetMeta(
+                $storageFinalBundle['action_raw'],
+                $storageType,
+                $currentStorageGb
+            );
+
             $targetType = $stoMeta['target_type'] ?? null;
             $targetSize = (int) ($stoMeta['target_size'] ?? 0);
 
-            // Bisa 0 kalo ga disuruh upgrade
             if ($priorStorage > 0 && $targetType && $targetSize > 0) {
                 $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $targetType, $targetSize);
             }
 
+            // Simpan Report
             $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
@@ -425,9 +487,9 @@ class AssetCheckController extends Controller
                 'prior_storage' => $priorStorage,
                 'prior_processor' => $priorCpu,
 
-                'recommendation_ram' => $recRam,
+                'recommendation_ram' => $recRamFinal,
                 'recommendation_storage' => $recStorageFinal,
-                'recommendation_processor' => $recCpu,
+                'recommendation_processor' => $recCpuFinal,
 
                 'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
                 'upgrade_storage_price' => $this->priceOrZero($upgradeStoragePrice),
