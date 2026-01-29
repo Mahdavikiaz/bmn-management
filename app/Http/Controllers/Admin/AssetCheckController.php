@@ -21,6 +21,8 @@ class AssetCheckController extends Controller
 {
     use AuthorizesRequests;
 
+    private const STORAGE_MAX_GB = 2048;
+
     private function norm(?string $v): ?string
     {
         if ($v === null) return null;
@@ -130,6 +132,49 @@ class AssetCheckController extends Controller
         return 0;
     }
 
+    private function buildStorageRecommendationRaw(?string $baseRec, ?string $storageType, int $currentStorageGb): string
+    {
+        $base = trim((string) $baseRec);
+        $base = $base === '' ? '-' : $base;
+
+        $lines = [];
+
+        // Rule: HDD -> selalu ganti SSD
+        if (strtoupper((string) $storageType) === 'HDD') {
+            $lines[] = 'Ganti jadi SSD';
+        }
+
+        // Rule: kapasitas maksimal
+        if ($currentStorageGb >= self::STORAGE_MAX_GB) {
+            $lines[] = 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan';
+        }
+
+        // Kalau tidak kena rule khusus, pake baseRec dari DB
+        if (!count($lines)) {
+            return $base;
+        }
+
+        // Jika kena rule khusus, base rekomendasi dari DB tetap bisa ditambah (selama bukan "-")
+        if ($base !== '-' && $base !== '') {
+            foreach (preg_split("/\r\n|\n|\r/", $base) ?: [] as $ln) {
+                $ln = trim($ln);
+                if ($ln !== '') $lines[] = $ln;
+            }
+        }
+
+        $seen = [];
+        $out = [];
+        foreach ($lines as $ln) {
+            $key = mb_strtolower(trim($ln));
+            if ($key === '') continue;
+            if (isset($seen[$key])) continue;
+            $seen[$key] = true;
+            $out[] = trim($ln);
+        }
+
+        return count($out) ? implode("\n", $out) : '-';
+    }
+
     private function parseStorageTargetMeta(?string $rec, ?string $currentType, int $currentStorageGb): array
     {
         $meta = [
@@ -154,7 +199,7 @@ class AssetCheckController extends Controller
             }
         }
 
-        // detect size
+        // detect size explicit: "1024 GB"
         $targetSize = 0;
         if (preg_match('/\b(\d{2,5})\s*gb\b/i', $t, $mSize)) {
             $targetSize = (int) $mSize[1];
@@ -166,14 +211,14 @@ class AssetCheckController extends Controller
             $targetSize = $currentStorageGb * 2;
         }
 
-        // kalau tanpa angka, size pakai size sekarang
-        if ($targetSize <= 0 && preg_match('/\b(ganti|ubah)\b/i', $t)) {
+        // kalau ada kata ganti/ubah tapi tanpa angka => pakai size sekarang
+        if ($targetSize <= 0 && preg_match('/\b(ganti|ubah|switch|convert)\b/i', $t)) {
             $targetSize = $currentStorageGb;
         }
 
-        // safety cap supaya ga kelewat nyari sparepart jadi ngaco
-        if ($targetSize > 2048) {
-            $targetSize = 2048;
+        // cap
+        if ($targetSize > self::STORAGE_MAX_GB) {
+            $targetSize = self::STORAGE_MAX_GB;
         }
 
         $meta['target_type'] = $targetType ?: null;
@@ -303,9 +348,8 @@ class AssetCheckController extends Controller
         $recRamRaw = $this->getRecommendationText('RAM', $priorRam);
         $recRam    = $this->asBullets($recRamRaw);
 
-        // STORAGE
-        $recStorageRaw = $this->getRecommendationText('STORAGE', $priorStorage);
-        $recStorage    = $this->asBullets($recStorageRaw);
+        // STORAGE (base dari DB by priority)
+        $recStorageBaseRaw = $this->getRecommendationText('STORAGE', $priorStorage);
 
         // CPU
         $recCpuRaw = $this->getRecommendationText('CPU', $priorCpu);
@@ -326,10 +370,9 @@ class AssetCheckController extends Controller
             $priorStorage,
             $priorCpu,
             $recRam,
-            $recStorage,
             $recCpu,
             $recRamRaw,
-            $recStorageRaw
+            $recStorageBaseRaw
         ) {
             $now = now();
 
@@ -340,6 +383,17 @@ class AssetCheckController extends Controller
                     'datetime' => $now,
                 ]));
             }
+
+            // STORAGE RULE
+            $storageType = $this->getStorageTypeFromSpec($spec);
+            $currentStorageGb = (int) $spec->storage;
+
+            $recStorageRawFinal = $this->buildStorageRecommendationRaw(
+                $recStorageBaseRaw,
+                $storageType,
+                $currentStorageGb
+            );
+            $recStorageFinal = $this->asBullets($recStorageRawFinal);
 
             // HARGA RAM
             $upgradeRamPrice = null;
@@ -353,13 +407,11 @@ class AssetCheckController extends Controller
             // HARGA STORAGE
             $upgradeStoragePrice = null;
 
-            $storageType = $this->getStorageTypeFromSpec($spec);
-            $currentStorageGb = (int) $spec->storage;
-
-            $stoMeta = $this->parseStorageTargetMeta($recStorageRaw, $storageType, $currentStorageGb);
+            $stoMeta = $this->parseStorageTargetMeta($recStorageRawFinal, $storageType, $currentStorageGb);
             $targetType = $stoMeta['target_type'] ?? null;
             $targetSize = (int) ($stoMeta['target_size'] ?? 0);
 
+            // Bisa 0 kalo ga disuruh upgrade
             if ($priorStorage > 0 && $targetType && $targetSize > 0) {
                 $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $targetType, $targetSize);
             }
@@ -374,7 +426,7 @@ class AssetCheckController extends Controller
                 'prior_processor' => $priorCpu,
 
                 'recommendation_ram' => $recRam,
-                'recommendation_storage' => $recStorage,
+                'recommendation_storage' => $recStorageFinal,
                 'recommendation_processor' => $recCpu,
 
                 'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),

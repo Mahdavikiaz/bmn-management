@@ -13,8 +13,8 @@
 
     {{-- KIRI : TITLE + FILTER --}}
     <div class="flex-grow-1">
-        <h4 class="mb-1">Report Asset</h4>
-        <div class="text-muted small mb-2">
+        <h4 class="mb-2">Report Asset</h4>
+        <div class="text-muted small mb-3">
             Menampilkan asset yang sudah memiliki report (hasil pengecekan terakhir).
         </div>
 
