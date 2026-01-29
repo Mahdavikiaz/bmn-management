@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Exports\AssetsReportExport;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use App\Models\AssetType;
 use App\Models\PerformanceReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -19,6 +20,8 @@ class ReportController extends Controller
     {
         $this->authorize('viewAny', PerformanceReport::class);
 
+        $types = AssetType::orderBy('type_name')->get();
+
         $assets = Asset::query()
             ->with([
                 'type',
@@ -30,7 +33,7 @@ class ReportController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('admin.reports.index', compact('assets'));
+        return view('admin.reports.index', compact('assets', 'types'));
     }
 
     public function exportAssetPdf(Asset $asset)
