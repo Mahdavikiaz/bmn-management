@@ -23,7 +23,7 @@
             </li>
 
             <li class="nav-item">
-                <a href="{{ route('admin.reports.index') }}" 
+                <a href="{{ route('admin.reports.index') }}"
                 class="nav-link {{ request()->is('admin/reports*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-file-earmark-text"></i>
                     Report
@@ -76,7 +76,7 @@
                 <a href="{{ route('admin.users.index') }}"
                    class="nav-link {{ request()->is('admin/users*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-people"></i>
-                    Data Pengguna
+                    Data User
                 </a>
             </li>
 

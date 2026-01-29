@@ -57,8 +57,11 @@
     .col-aksi{ min-width: 240px; }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Pengecekan Asset</h4>
+<div class="mb-3">
+    <h4 class="mb-1">Pengecekan Asset</h4>
+    <div class="text-muted small">
+        Menampilkan pengecekan asset
+    </div>
 </div>
 
 {{-- FILTER BAR --}}

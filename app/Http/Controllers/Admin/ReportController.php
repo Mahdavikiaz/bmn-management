@@ -18,20 +18,35 @@ class ReportController extends Controller
 
     public function index(Request $request)
     {
-        $this->authorize('viewAny', PerformanceReport::class);
+$this->authorize('viewAny', PerformanceReport::class);
 
-        $types = AssetType::orderBy('type_name')->get();
+        $q = trim((string) $request->get('q', ''));
+        $typeId = $request->get('id_type');
 
-        $assets = Asset::query()
+        $assetsQuery = Asset::query()
             ->with([
+                'latestPerformanceReport',
                 'type',
-                'latestPerformanceReport.spec',
-                'latestPerformanceReport.user',
             ])
-            ->whereHas('performanceReports')
+            ->withCount('performanceReports');
+
+        if ($q !== '') {
+            $assetsQuery->where(function ($w) use ($q) {
+                $w->where('bmn_code', 'like', "%{$q}%")
+                  ->orWhere('device_name', 'like', "%{$q}%");
+            });
+        }
+
+        if (!empty($typeId)) {
+            $assetsQuery->where('id_type', (int) $typeId);
+        }
+
+        $assets = $assetsQuery
             ->latest('id_asset')
             ->paginate(10)
             ->withQueryString();
+
+        $types = AssetType::orderBy('type_name')->get();
 
         return view('admin.reports.index', compact('assets', 'types'));
     }

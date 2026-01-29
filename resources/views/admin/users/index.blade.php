@@ -38,7 +38,12 @@
         .filter-select{ min-width: 220px; }
     </style>
 
-    <h4 class="mb-4">Daftar Pengguna</h4>
+    <div class="mb-3">
+        <h4 class="mb-1">Daftar User</h4>
+        <div class="text-muted small">
+            Menampilkan daftar user
+        </div>
+    </div>
 
     {{-- CARD RECAP --}}
     <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2">
@@ -82,7 +87,7 @@
 
         {{-- TAMBAH DATA --}}
         <a href="{{ route('admin.users.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Tambah Pengguna
+            <i class="bi bi-plus-lg me-1"></i> Tambah User
         </a>
     </div>
 

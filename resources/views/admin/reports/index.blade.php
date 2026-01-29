@@ -9,21 +9,54 @@
     .table-modern tbody td{ font-size:.90rem; border-top:1px solid #eef2f7; vertical-align:middle; }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
+<div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
+
+    {{-- KIRI : TITLE + FILTER --}}
+    <div class="flex-grow-1">
         <h4 class="mb-1">Report Asset</h4>
-        <div class="text-muted small">Menampilkan asset yang sudah memiliki report (hasil pengecekan terakhir).</div>
+        <div class="text-muted small mb-2">
+            Menampilkan asset yang sudah memiliki report (hasil pengecekan terakhir).
+        </div>
+
+        <form method="GET" class="d-flex gap-2 flex-wrap align-items-center">
+            <input type="text"
+                   name="q"
+                   class="form-control"
+                   style="max-width: 220px;"
+                   placeholder="Cari Kode BMN / Nama Device..."
+                   value="{{ request('q') }}">
+
+            <select name="id_type" class="form-select" style="max-width: 180px;">
+                <option value="">Semua Kategori</option>
+                @foreach($types as $t)
+                    <option value="{{ $t->id_type }}" {{ request('id_type') == $t->id_type ? 'selected' : '' }}>
+                        {{ $t->type_name }}
+                    </option>
+                @endforeach
+            </select>
+
+            <button class="btn btn-primary">
+                <i class="bi bi-search me-1"></i> Search
+            </button>
+
+            <a href="{{ route('admin.reports.index') }}" class="btn btn-danger">
+                Reset
+            </a>
+        </form>
     </div>
 
-    <div class="d-flex gap-2">
+    {{-- KANAN : EXPORT --}}
+    <div class="d-flex gap-2 flex-shrink-0">
         <a href="{{ route('admin.reports.export.all.excel') }}" class="btn btn-outline-success">
-            <i class="bi bi-file-earmark-excel"></i> Export Excel (All)
+            <i class="bi bi-file-earmark-excel"></i> Export Excel
         </a>
         <a href="{{ route('admin.reports.export.all.pdf') }}" class="btn btn-outline-danger">
-            <i class="bi bi-file-earmark-pdf"></i> Export PDF (All)
+            <i class="bi bi-file-earmark-pdf"></i> Export PDF
         </a>
     </div>
+
 </div>
+
 
 <div class="card shadow-sm">
     <div class="card-body p-0">

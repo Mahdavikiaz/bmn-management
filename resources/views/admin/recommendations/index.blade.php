@@ -90,7 +90,12 @@
     }
 </style>
 
-<h4 class="mb-4">Daftar Rekomendasi</h4>
+<div class="mb-3">
+    <h4 class="mb-1">Daftar Rekomendasi</h4>
+    <div class="text-muted small">
+        Menampilkan daftar rekomendasi
+    </div>
+</div>
 
 {{-- ACTION BAR + FILTER --}}
 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">

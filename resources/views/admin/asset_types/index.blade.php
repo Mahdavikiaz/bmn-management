@@ -37,37 +37,21 @@
     }
 </style>
 
-<h4 class="mb-4">Daftar Tipe Asset</h4>
-
 {{-- ACTION BAR --}}
-<div class="d-flex justify-content-between align-items-center gap-3 mb-3">
 
-    {{-- SEARCH (opsional, siap dipakai kalau nanti ditambah di controller) --}}
-    <form method="GET" class="d-flex align-items-center gap-2 flex-wrap">
-        <select name="type_name" class="form-select filter-select">
-            <option value="">Tipe Asset</option>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-1">Daftar Tipe Asset</h4>
+        <div class="text-muted small">Menampilkan daftar tipe asset</div>
+    </div>
 
-            @foreach($typeNames as $typeName)
-                <option value="{{ $typeName }}"
-                    {{ request('type_name') == $typeName ? 'selected' : '' }}>
-                    {{ $typeName }}
-                </option>
-            @endforeach
-        </select>
-
-        <button class="btn btn-primary">Cari</button>
-
-        <a href="{{ route('admin.asset-types.index') }}"
-           class="btn btn-danger">
-            Reset
+    <div class="d-flex gap-2">
+        {{-- TAMBAH --}}
+        <a href="{{ route('admin.asset-types.create') }}"
+        class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Tambah Tipe Asset
         </a>
-    </form>
-
-    {{-- TAMBAH --}}
-    <a href="{{ route('admin.asset-types.create') }}"
-       class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Tipe Asset
-    </a>
+    </div>
 </div>
 
 {{-- TABLE --}}

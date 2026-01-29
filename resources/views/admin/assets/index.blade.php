@@ -50,7 +50,12 @@
     .spec-muted{ color:#6c757d; font-size:.85rem; }
 </style>
 
-<h4 class="mb-4">Daftar Asset</h4>
+<div class="mb-3">
+    <h4 class="mb-1">Daftar Asset</h4>
+    <div class="text-muted small">
+        Menampilkan daftar asset
+    </div>
+</div>
 
 @php
     // helper count berdasarkan type_name
@@ -59,39 +64,6 @@
         return $items->filter(fn($a) => strtoupper($a->type?->type_name ?? '') === strtoupper($name))->count();
     };
 @endphp
-
-{{-- CARD RECAP --}}
-<div class="row g-3 mb-4 row-cols-1 row-cols-sm-2 row-cols-lg-3">
-    <div class="col">
-        <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-laptop fs-3 text-primary"></i>
-                <h6 class="mt-2">Total Asset</h6>
-                <h4>{{ $assets->total() ?? $assets->count() }}</h4>
-            </div>
-        </div>
-    </div>
-
-    <div class="col">
-        <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-pc-display fs-3 text-success"></i>
-                <h6 class="mt-2">Total PC</h6>
-                <h4>{{ $countByTypeName('PC') }}</h4>
-            </div>
-        </div>
-    </div>
-
-    <div class="col">
-        <div class="card shadow-sm h-100">
-            <div class="card-body text-center">
-                <i class="bi bi-laptop fs-3 text-warning"></i>
-                <h6 class="mt-2">Total Laptop</h6>
-                <h4>{{ $countByTypeName('Laptop') }}</h4>
-            </div>
-        </div>
-    </div>
-</div>
 
 {{-- ACTION BAR + FILTER --}}
 <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
