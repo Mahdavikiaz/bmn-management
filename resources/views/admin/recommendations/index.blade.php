@@ -155,7 +155,8 @@
                 <tr>
                     <th style="width:60px;">No</th>
                     <th style="width:120px;">Kategori</th>
-                    <th class="fw-semibold">Deskripsi Rekomendasi</th>
+                    <th class="fw-semibold">Tindakan</th>
+                    <th class="fw-semibold">Penjelasan</th>
                     <th style="width:140px;">Priority</th>
                     <th style="width:160px;" class="text-center">Aksi</th>
                 </tr>
@@ -199,7 +200,11 @@
                             </span>
                         </td>
 
-                        <td>{{ $recommendation->description }}</td>
+                        <td>{{ $recommendation->action }}</td>
+
+                        <td title="{{ $recommendation->explanation }}">
+                            {{ Str::limit($recommendation->explanation, 80) }}
+                        </td>
 
                         <td>
                             <span class="badge rounded-pill badge-priority {{ $priorityClass }} fw-semibold">

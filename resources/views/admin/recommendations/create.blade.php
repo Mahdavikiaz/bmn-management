@@ -39,16 +39,30 @@
                 @enderror
             </div>
 
-            {{-- Deskripsi Recommendation --}}
+            {{-- Tindakan --}}
             <div class="mb-3">
-                <label class="form-label">Deskripsi Rekomendasi</label>
-                <textarea name="description"
-                          rows="4"
-                          class="form-control @error('description') is-invalid @enderror"
-                          placeholder="Masukkan deskripsi rekomendasi"
-                          required>{{ old('description') }}</textarea>
+                <label class="form-label">Tindakan</label>
+                <input type="text"
+                       name="action"
+                       class="form-control @error('action') is-invalid @enderror"
+                       value="{{ old('action') }}"
+                       required>
 
-                @error('description')
+                @error('action')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- Penjelasan --}}
+            <div class="mb-3">
+                <label class="form-label">Penjelasan</label>
+                <textarea name="explanation"
+                          rows="4"
+                          class="form-control @error('explanation') is-invalid @enderror"
+                          placeholder="Masukkan penjelasan"
+                          required>{{ old('explanation') }}</textarea>
+
+                @error('explanation')
                 <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
