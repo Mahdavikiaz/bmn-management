@@ -6,129 +6,73 @@
 
 <style>
     .text-muted-sm{ color:#6c757d; font-size:.85rem; }
+    .card-soft{ border: 1px solid #eef2f7; border-radius: 14px; }
 
-    .card-soft{
-        border: 1px solid #eef2f7;
-        border-radius: 14px;
-    }
-
-    .section-title{
-        font-weight:700;
-        margin-bottom:.25rem;
-    }
-    .section-subtitle{
-        color:#6c757d;
-        font-size:.9rem;
-    }
+    .section-title{ font-weight:700; margin-bottom:.25rem; }
+    .section-subtitle{ color:#6c757d; font-size:.9rem; }
 
     .spec-list .spec-item{
-        display:flex;
-        gap:10px;
-        align-items:flex-start;
-        padding:10px 0;
-        border-bottom:1px dashed #e9ecef;
+        display:flex; gap:10px; align-items:flex-start;
+        padding:10px 0; border-bottom:1px dashed #e9ecef;
     }
     .spec-list .spec-item:last-child{ border-bottom:0; }
 
     .spec-icon{
-        width:36px;
-        height:36px;
-        border-radius:10px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        background:#eef2ff;
-        color:#0d6efd;
-        flex:0 0 auto;
-        font-size:1.1rem;
+        width:36px; height:36px; border-radius:10px;
+        display:flex; align-items:center; justify-content:center;
+        background:#eef2ff; color:#0d6efd; flex:0 0 auto; font-size:1.1rem;
     }
-
-    .spec-label{
-        color:#6c757d;
-        font-size:.85rem;
-    }
-
-    .spec-value{
-        font-weight:700;
-    }
-
-    .badge-soft{
-        background:#eef2ff;
-        color:#0d6efd;
-        border:1px solid #dfe7ff;
-        font-weight:600;
-    }
+    .spec-label{ color:#6c757d; font-size:.85rem; }
+    .spec-value{ font-weight:700; }
 
     .badge-media{
-        background:#f1f3f5;
-        color:#343a40;
-        border:1px solid #e9ecef;
-        font-weight:600;
+        background:#f1f3f5; color:#343a40; border:1px solid #e9ecef; font-weight:600;
     }
 
     .prio-badge{
-        display:inline-flex;
-        align-items:center;
-        justify-content:center;
-        min-width: 44px;
-        height: 34px;
-        padding: 0 12px;
-        border-radius: 999px;
-        font-weight: 800;
-        border: 1px solid transparent;
+        display:inline-flex; align-items:center; justify-content:center;
+        min-width:44px; height:34px; padding:0 12px; border-radius:999px;
+        font-weight:800; border:1px solid transparent;
     }
-    .prio-nd{
-        background:#f1f3f5;
-        border-color:#e9ecef;
-        color:#6c757d;
-        font-weight:700;
-    }
+    .prio-nd{ background:#f1f3f5; border-color:#e9ecef; color:#6c757d; font-weight:700; }
     .prio-1{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; }
     .prio-2{ background:#d1e7dd; border-color:#badbcc; color:#0f5132; }
     .prio-3{ background:#fff3cd; border-color:#ffecb5; color:#664d03; }
     .prio-4{ background:#ffe5d0; border-color:#ffd3b0; color:#7a3e00; }
     .prio-5{ background:#f8d7da; border-color:#f5c2c7; color:#842029; }
 
-    .prio-desc{
-        margin-top: .5rem;
-        font-size: .85rem;
-        color:#6c757d;
-        line-height: 1.25rem;
-    }
+    .prio-desc{ margin-top:.5rem; font-size:.85rem; color:#6c757d; line-height:1.25rem; }
 
     .rec-box{
-        background:#fff;
-        border: 1px solid #eef2f7;
-        border-radius: 14px;
-        padding: 14px;
-        min-height: 120px;
-        white-space: pre-line;
+        background:#fff; border:1px solid #eef2f7; border-radius:14px;
+        padding:14px; min-height:120px;
     }
 
+    .rec-block-title{
+        font-weight:700; font-size:.9rem; margin-bottom:6px;
+        display:flex; align-items:center; gap:8px;
+    }
+    .rec-block-title .badge{ font-weight:700; }
+
+    .rec-block-content{ white-space:pre-line; color:#212529; line-height:1.45rem; }
+    .rec-block-content.text-muted{ color:#6c757d !important; }
+
+    .rec-divider{ border-top:1px dashed #e9ecef; margin:12px 0; }
+
     .table-modern thead th{
-        background:#f8f9fa;
-        font-weight:700;
-        white-space: nowrap;
-        border-bottom: 2px solid #d0d7e2;
+        background:#f8f9fa; font-weight:700; white-space:nowrap; border-bottom:2px solid #d0d7e2;
     }
     .table-modern tbody td{
-        font-size: 0.95rem;
-        border-top: 1px solid #eef2f7;
-        vertical-align: middle;
-    }
-    .btn-icon{
-        width:38px; height:38px;
-        display:inline-flex; align-items:center; justify-content:center;
-        border-radius:10px;
-        padding:0;
+        font-size:.95rem; border-top:1px solid #eef2f7; vertical-align:middle;
     }
 </style>
 
 @php
-    // spec terkini
+    use App\Models\Recommendation;
+
+    // ===== SPEC =====
     $spec = $latestSpec ?? null;
 
-    // tipe storage
     $storage_type = [];
     if ($spec?->is_hdd)  $storage_type[] = 'HDD';
     if ($spec?->is_ssd)  $storage_type[] = 'SSD';
@@ -138,16 +82,18 @@
         return (int)$row->id_report === (int)$report->id_report;
     };
 
-    // PRIORITY
+    // ===== PRIORITY META =====
     $prioMeta = function($p){
         $map = [
-            0 => ['prio-badge prio-nd', 'Belum dinilai', 'Belum ada penilaian untuk kategori ini (pertanyaan indikator belum tersedia).'],
+            0 => ['prio-badge prio-nd', 'Belum dinilai', 'Belum ada penilaian untuk kategori ini.'],
             1 => ['prio-badge prio-1', 'Rendah',       'Tidak perlu tindakan apa-apa.'],
             2 => ['prio-badge prio-2', 'Cukup rendah', 'Pantau saja, belum perlu tindakan.'],
             3 => ['prio-badge prio-3', 'Sedang',       'Perlu dipertimbangkan untuk ditindaklanjuti.'],
             4 => ['prio-badge prio-4', 'Tinggi',       'Perlu tindakan (disarankan upgrade/penanganan).'],
             5 => ['prio-badge prio-5', 'Sangat tinggi','Harus segera ditindaklanjuti.'],
         ];
+        $p = (int) $p;
+        if (!isset($map[$p])) $p = 0;
 
         return [
             'badgeClass' => $map[$p][0],
@@ -157,32 +103,211 @@
         ];
     };
 
-    // Formatter harga
     $fmtPrice = function ($price): string {
         $p = (float) $price;
         if ($p <= 0) return '-';
         return 'Rp ' . number_format($p, 0, ',', '.');
     };
 
-    // Kapan harga ditampilkan
-    $shouldShowPrice = function (?string $rec): bool {
-        if (!$rec) return false;
-        $t = strtolower(trim($rec));
+    $shouldShowPrice = function (?string $action): bool {
+        if (!$action) return false;
+        $t = strtolower(trim($action));
+        if ($t === '' || $t === '-') return false;
 
-        // RAM add (prior 3-5)
-        if (str_contains($t, 'tambahkan ram sebesar')) return true;
+        // RAM
+        if (str_contains($t, 'tambahkan ram')) return true;
 
-        // Storage ganti SSD / upgrade x2
+        // Storage
         if (str_contains($t, 'ganti jadi ssd')) return true;
-        if (str_contains($t, 'upgrade storage x2')) return true;
+        if (preg_match('/\b(x2|2x|kali\s*2)\b/i', $t)) return true;
+        if (str_contains($t, 'upgrade storage')) return true;
 
         return false;
     };
 
+    // ====== HELPER: normalize dash ======
+    $valOrDash = function(?string $t): string {
+        $t = trim((string) $t);
+        return ($t === '' || $t === '-') ? '-' : $t;
+    };
 
-    $mRam = $prioMeta($report->prior_ram);
-    $mSto = $prioMeta($report->prior_storage);
-    $mCpu = $prioMeta($report->prior_processor);
+    /**
+     * ✅ Support data lama yang masih gabung: ada "Action:" dan "Explanation:"
+     * - Return: ['action' => '...', 'explanation' => '...']
+     * - Kalau tidak ada marker, action = teks asli, explanation = null
+     */
+    $splitActionExplanation = function(?string $text): array {
+        $raw = trim((string) $text);
+        if ($raw === '' || $raw === '-') {
+            return ['action' => '-', 'explanation' => null];
+        }
+
+        $raw = preg_replace("/\r\n|\r/", "\n", $raw);
+
+        $posA = stripos($raw, 'action:');
+        $posE = stripos($raw, 'explanation:');
+
+        if ($posA === false && $posE === false) {
+            return ['action' => $raw, 'explanation' => null];
+        }
+
+        $actionPart = '';
+        $explainPart = '';
+
+        if ($posE !== false) {
+            $beforeE = substr($raw, 0, $posE);
+            $afterE  = substr($raw, $posE);
+
+            $beforeE = preg_replace('/^.*action:\s*/i', '', $beforeE);
+            $actionPart = trim($beforeE);
+
+            $afterE = preg_replace('/^explanation:\s*/i', '', $afterE);
+            $explainPart = trim($afterE);
+        } else {
+            $actionPart = preg_replace('/^action:\s*/i', '', $raw);
+            $actionPart = trim($actionPart);
+        }
+
+        return [
+            'action' => ($actionPart === '' ? '-' : $actionPart),
+            'explanation' => ($explainPart === '' ? null : $explainPart),
+        ];
+    };
+
+    /**
+     * Convert string ke bullet list ringan (kalau sudah ada bullet, biarkan).
+     */
+    $toBullets = function(?string $text): string {
+        $t = trim((string)$text);
+        if ($t === '' || $t === '-') return '-';
+
+        // kalau sudah ada bullet "•" di awal, return apa adanya
+        if (preg_match('/^\s*•\s+/u', $t)) return $t;
+
+        $lines = preg_split("/\r\n|\n|\r/", $t) ?: [$t];
+        $lines = array_map(fn($x) => trim((string)$x), $lines);
+        $lines = array_values(array_filter($lines, fn($x) => $x !== '' && $x !== '-'));
+
+        if (!count($lines)) return '-';
+
+        return "• " . implode("\n• ", $lines);
+    };
+
+    /**
+     * Extract baris action dari teks action (hapus bullet, dash, dsb).
+     */
+    $extractActionLines = function(?string $actionText): array {
+        $t = trim((string) $actionText);
+        if ($t === '' || $t === '-') return [];
+
+        $lines = preg_split("/\r\n|\n|\r/", $t) ?: [];
+        $lines = array_map(function($ln){
+            $ln = trim((string)$ln);
+            $ln = ltrim($ln, "• \t-");
+            return trim($ln);
+        }, $lines);
+
+        return array_values(array_filter($lines, fn($ln) => $ln !== '' && $ln !== '-' && !preg_match('/^(action:|explanation:)$/i', $ln)));
+    };
+
+    /**
+     * Ambil EXPLANATION dari DB on-the-fly
+     * - Primary: match per action line dari report -> recommendations.action
+     * - Fallback: gabungkan semua explanation pada category+priority_level
+     * - Special rules storage kalau action-nya berasal dari rule (bukan DB)
+     */
+    $getExplanationFromDb = function(string $category, int $priority, ?string $actionText) use ($extractActionLines, $toBullets): string {
+        if ($priority <= 0) return '-';
+
+        // fetch rows sekali per kategori+priority
+        $rows = Recommendation::where('category', $category)
+            ->where('priority_level', $priority)
+            ->orderBy('id_recommendation')
+            ->get(['action', 'explanation']);
+
+        $map = [];
+        foreach ($rows as $r) {
+            $a = trim((string)$r->action);
+            $e = trim((string)$r->explanation);
+            if ($a !== '' && $e !== '') {
+                $map[$a] = $e;
+            }
+        }
+
+        $lines = $extractActionLines($actionText);
+
+        $exps = [];
+
+        foreach ($lines as $ln) {
+            // Special storage rule (kalau tidak ada di DB)
+            if ($category === 'STORAGE') {
+                if (mb_strtolower($ln) === 'ganti jadi ssd') {
+                    $exps[] = 'HDD cenderung lebih lambat dibanding SSD. Upgrade ke SSD akan meningkatkan kecepatan booting, membuka aplikasi, dan respons sistem secara signifikan.';
+                    continue;
+                }
+                if (str_starts_with(mb_strtolower($ln), mb_strtolower('Kapasitas Storage sudah maksimal'))) {
+                    $exps[] = 'Kapasitas storage sudah menyentuh batas maksimal. Solusi terbaik adalah menghapus aplikasi/file yang tidak diperlukan, memindahkan data ke penyimpanan lain, atau menggunakan penyimpanan eksternal/cloud.';
+                    continue;
+                }
+            }
+
+            // Match exact
+            if (isset($map[$ln])) {
+                $exps[] = $map[$ln];
+            }
+        }
+
+        // Kalau match per-action kosong -> fallback semua explanation by priority
+        if (!count($exps)) {
+            $fallback = $rows->pluck('explanation')
+                ->map(fn($x) => trim((string)$x))
+                ->filter(fn($x) => $x !== '')
+                ->values()
+                ->all();
+
+            return count($fallback) ? $toBullets(implode("\n", $fallback)) : '-';
+        }
+
+        // unique
+        $uniq = [];
+        foreach ($exps as $e) {
+            $k = mb_strtolower(trim($e));
+            if (!isset($uniq[$k])) $uniq[$k] = $e;
+        }
+
+        return $toBullets(implode("\n", array_values($uniq)));
+    };
+
+    // ===== PRIORITY =====
+    $mRam = $prioMeta((int)($report->prior_ram ?? 0));
+    $mSto = $prioMeta((int)($report->prior_storage ?? 0));
+    $mCpu = $prioMeta((int)($report->prior_processor ?? 0));
+
+    // ===== SPLIT (kompatibel data lama) =====
+    $ramSplit = $splitActionExplanation($report->recommendation_ram ?? null);
+    $stoSplit = $splitActionExplanation($report->recommendation_storage ?? null);
+    $cpuSplit = $splitActionExplanation($report->recommendation_processor ?? null);
+
+    $ramAction = $valOrDash($ramSplit['action'] ?? '-');
+    $stoAction = $valOrDash($stoSplit['action'] ?? '-');
+    $cpuAction = $valOrDash($cpuSplit['action'] ?? '-');
+
+    // Explanation:
+    // - kalau data lama sudah punya explanation di report, pakai itu
+    // - kalau tidak ada, query DB (tanpa simpan ke report)
+    $ramExplain = $valOrDash($ramSplit['explanation'] ?? null);
+    if ($ramExplain === '-') $ramExplain = $getExplanationFromDb('RAM', (int)($report->prior_ram ?? 0), $ramAction);
+
+    $stoExplain = $valOrDash($stoSplit['explanation'] ?? null);
+    if ($stoExplain === '-') $stoExplain = $getExplanationFromDb('STORAGE', (int)($report->prior_storage ?? 0), $stoAction);
+
+    $cpuExplain = $valOrDash($cpuSplit['explanation'] ?? null);
+    if ($cpuExplain === '-') $cpuExplain = $getExplanationFromDb('CPU', (int)($report->prior_processor ?? 0), $cpuAction);
+
+    // Kalau action-nya masih non-bullet (data lama), bikin bullet biar rapi
+    $ramActionUi = $toBullets($ramAction);
+    $stoActionUi = $toBullets($stoAction);
+    $cpuActionUi = $toBullets($cpuAction);
 @endphp
 
 {{-- HEADER --}}
@@ -316,7 +441,7 @@
         </div>
     </div>
 
-    {{-- HASIL PENGECEKAN SAAT INI --}}
+    {{-- HASIL PENGECEKAN --}}
     <div class="col-12">
         <div class="card card-soft shadow-sm">
             <div class="card-body">
@@ -326,8 +451,7 @@
                             <i class="bi bi-clipboard-check"></i> Hasil Pengecekan Terbaru
                         </div>
                         <div class="section-subtitle text-muted-sm">
-                            Dibuat:
-                            <strong>{{ optional($report->created_at)->format('d/m/Y H:i') }}</strong>
+                            Dibuat: <strong>{{ optional($report->created_at)->format('d/m/Y H:i') }}</strong>
                         </div>
                     </div>
                 </div>
@@ -336,7 +460,6 @@
 
                 {{-- PRIORITIES --}}
                 <div class="row g-3">
-                    {{-- RAM --}}
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
                             <div class="text-muted-sm mb-4">Priority Level RAM</div>
@@ -347,13 +470,16 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{ $shouldShowPrice($report->recommendation_ram) ? $fmtPrice($report->upgrade_ram_price) : '-' }}
+                                    @if ($report->upgrade_ram_price > 0)
+                                        Rp {{ number_format($report->upgrade_ram_price, 0, ',', '.') }}
+                                    @else
+                                        -
+                                    @endif
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- STORAGE --}}
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
                             <div class="text-muted-sm mb-4">Priority Level Storage</div>
@@ -364,13 +490,16 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{ $shouldShowPrice($report->recommendation_storage) ? $fmtPrice($report->upgrade_storage_price) : '-' }}
+                                    @if ($report->upgrade_ram_price > 0)
+                                        Rp {{ number_format($report->upgrade_storage_price, 0, ',', '.') }}
+                                    @else
+                                        -
+                                    @endif
                                 </span>
                             </div>
                         </div>
                     </div>
 
-                    {{-- CPU --}}
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
                             <div class="text-muted-sm mb-4">Priority Level CPU</div>
@@ -385,34 +514,69 @@
                     </div>
                 </div>
 
-                {{-- RECOMMENDATIONS --}}
+                {{-- RECOMMENDATIONS: ACTION + EXPLANATION (TERPISAH) --}}
                 <div class="row g-3 mt-1">
                     <div class="col-md-4">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
                             <i class="bi bi-memory"></i> Rekomendasi RAM
                         </div>
-                        <div class="rec-box">{{ $report->recommendation_ram ?? '-' }}</div>
+                        <div class="rec-box">
+                            <div class="rec-block-title">
+                                <span class="badge text-bg-primary">Tindakan</span>
+                            </div>
+                            <div class="rec-block-content {{ $ramActionUi === '-' ? 'text-muted' : '' }}">{{ $ramActionUi }}</div>
+
+                            <div class="rec-divider"></div>
+
+                            <div class="rec-block-title">
+                                <span class="badge text-bg-light border">Penjelasan</span>
+                            </div>
+                            <div class="rec-block-content text-muted">{{ $ramExplain }}</div>
+                        </div>
                     </div>
 
                     <div class="col-md-4">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
                             <i class="bi bi-hdd-stack"></i> Rekomendasi Storage
                         </div>
-                        <div class="rec-box">{{ $report->recommendation_storage ?? '-' }}</div>
+                        <div class="rec-box">
+                            <div class="rec-block-title">
+                                <span class="badge text-bg-primary">Tindakan</span>
+                            </div>
+                            <div class="rec-block-content {{ $stoActionUi === '-' ? 'text-muted' : '' }}">{{ $stoActionUi }}</div>
+
+                            <div class="rec-divider"></div>
+
+                            <div class="rec-block-title">
+                                <span class="badge text-bg-light border">Penjelasan</span>
+                            </div>
+                            <div class="rec-block-content text-muted">{{ $stoExplain }}</div>
+                        </div>
                     </div>
 
                     <div class="col-md-4">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
                             <i class="bi bi-cpu"></i> Rekomendasi CPU
                         </div>
-                        <div class="rec-box">{{ $report->recommendation_processor ?? '-' }}</div>
+                        <div class="rec-box">
+                            <div class="rec-block-title">
+                                <span class="badge text-bg-primary">Tindakan</span>
+                            </div>
+                            <div class="rec-block-content {{ $cpuActionUi === '-' ? 'text-muted' : '' }}">{{ $cpuActionUi }}</div>
+
+                            <div class="rec-divider"></div>
+
+                            <div class="rec-block-title">
+                                <span class="badge text-bg-light border">Penjelasan</span>
+                            </div>
+                            <div class="rec-block-content text-muted">{{ $cpuExplain }}</div>
+                        </div>
                     </div>
                 </div>
 
             </div>
         </div>
     </div>
-
 </div>
 
 {{-- RIWAYAT --}}
@@ -445,13 +609,25 @@
                     @php
                         $pick = function($txt) {
                             if (!$txt) return null;
-                            $t = trim($txt);
+                            $t = trim((string) $txt);
                             if ($t === '-' || $t === '') return null;
 
-                            $t = preg_split("/\r\n|\n|\r/", $t)[0] ?? $t;
-                            $t = str_replace('•', '', $t);
-                            $t = preg_replace('/\s+/', ' ', $t);
-                            return trim($t);
+                            $t = preg_replace("/\r\n|\r/", "\n", $t);
+                            $lines = preg_split("/\n/", $t) ?: [];
+                            $lines = array_map('trim', $lines);
+
+                            // skip label "Action:"/"Explanation:" kalau data lama
+                            $lines = array_values(array_filter($lines, function($ln){
+                                $ln2 = strtolower(trim($ln));
+                                if ($ln2 === 'action:' || $ln2 === 'explanation:') return false;
+                                return $ln !== '';
+                            }));
+
+                            $first = $lines[0] ?? $t;
+
+                            $first = str_replace('•', '', $first);
+                            $first = preg_replace('/\s+/', ' ', $first);
+                            return trim($first);
                         };
 
                         $parts = array_filter([
@@ -469,24 +645,18 @@
 
                     <tr>
                         <td>{{ $history->firstItem() + $i }}</td>
-                        <td class="fw-semibold">
-                            {{ optional($row->created_at)->format('d/m/Y H:i') }}
-                        </td>
+                        <td class="fw-semibold">{{ optional($row->created_at)->format('d/m/Y H:i') }}</td>
                         <td>
                             <span class="badge rounded-pill text-bg-light border">RAM : {{ $pr }}</span>
                             <span class="badge rounded-pill text-bg-light border">STORAGE : {{ $ps }}</span>
                             <span class="badge rounded-pill text-bg-light border">CPU : {{ $pc }}</span>
                         </td>
-
                         <td class="text-muted-sm">
-                            <span title="{{ $summary }}">
-                                {{ \Illuminate\Support\Str::limit($summary, 140) }}
-                            </span>
+                            <span title="{{ $summary }}">{{ \Illuminate\Support\Str::limit($summary, 140) }}</span>
                         </td>
-
                         <td class="text-center">
                             <div class="d-inline-flex gap-2 justify-content-center">
-                                @if(!$isLatest($row))
+                                @if((int)$row->id_report !== (int)$report->id_report)
                                     <button type="button"
                                         class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-2 js-delete"
                                         data-action="{{ route('admin.asset-checks.reports.destroy', [$asset->id_asset, $row->id_report]) }}"
@@ -495,11 +665,9 @@
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 @else
-                                    <div class="mt-0">
-                                        <span class="badge rounded-pill text-bg-primary fw-semibold">
-                                            <i class="bi bi-star-fill me-1"></i> Terbaru
-                                        </span>
-                                    </div>
+                                    <span class="badge rounded-pill text-bg-primary fw-semibold">
+                                        <i class="bi bi-star-fill me-1"></i> Terbaru
+                                    </span>
                                 @endif
                             </div>
                         </td>
