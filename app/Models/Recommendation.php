@@ -14,5 +14,16 @@ class Recommendation extends Model
         'action',
         'explanation',
         'priority_level',
+        
+        'target_type',
+        'size_mode',
+        'target_size_gb',
+        'target_multiplier',
+    ];
+
+     protected $casts = [
+        'priority_level'    => 'integer',
+        'target_size_gb'    => 'integer',
+        'target_multiplier' => 'float',
     ];
 }

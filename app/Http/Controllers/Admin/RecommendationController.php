@@ -67,10 +67,29 @@ class RecommendationController extends Controller
         $validated = $request->validate([
             'category' => ['required', 'in:RAM,STORAGE,CPU'],
             'priority_level' => ['required', 'integer', 'min:1', 'max:5'],
-
             'action' => ['required', 'string'],
             'explanation' => ['nullable', 'string'],
+            'target_type' => 'nullable|string|max:50',
+            'size_mode' => 'nullable|in:fixed,multiplier',
+            'target_size_gb' => 'nullable|integer|min:1',
+            'target_multiplier' => 'nullable|numeric|min:1',
         ]);
+
+        $mode = $request->input('size_mode');
+        $size = $request->input('target_size_gb');
+        $mul  = $request->input('target_multiplier');
+
+        if ($mode === 'fixed') {
+            if (!$size) return back()->withErrors(['target_size_gb' => 'Ukuran tetap wajib diisi.'])->withInput();
+            if ($mul) return back()->withErrors(['target_multiplier' => 'Kosongkan multiplier jika memilih ukuran tetap.'])->withInput();
+        } elseif ($mode === 'multiplier') {
+            if (!$mul) return back()->withErrors(['target_multiplier' => 'Multiplier wajib diisi.'])->withInput();
+            if ($size) return back()->withErrors(['target_size_gb' => 'Kosongkan ukuran jika memilih multiplier.'])->withInput();
+        } else {
+            if ($size || $mul) {
+                return back()->withErrors(['size_mode' => 'Pilih cara ukuran (fixed/multiplier) atau kosongkan semuanya.'])->withInput();
+            }
+        }
 
         Recommendation::create($validated);
 
@@ -96,10 +115,57 @@ class RecommendationController extends Controller
         $validated = $request->validate([
             'category' => ['required', 'in:RAM,STORAGE,CPU'],
             'priority_level' => ['required', 'integer', 'min:1', 'max:5'],
-
             'action' => ['required', 'string'],
-            'explanation' => ['nullable', 'string'],
+            'explanation' => ['required', 'string'],
+            'target_type' => ['nullable', 'string', 'max:32'],
+            'size_mode' => ['nullable', 'in:fixed,multiplier'],
+            'target_size_gb' => ['nullable', 'integer', 'min:1'],
+            'target_multiplier' => ['nullable', 'numeric', 'min:1'],
         ]);
+
+        $sizeMode = $request->input('size_mode');
+
+        if (!$sizeMode) {
+            $validated['size_mode'] = null;
+            $validated['target_type'] = null;
+            $validated['target_size_gb'] = null;
+            $validated['target_multiplier'] = null;
+        }
+
+        if ($sizeMode === 'fixed') {
+            $request->validate([
+                'target_size_gb' => ['required', 'integer', 'min:1'],
+            ]);
+
+            $validated['target_size_gb'] = (int) $request->input('target_size_gb');
+            $validated['target_multiplier'] = null;
+
+            if (empty($validated['target_type'])) {
+                $validated['size_mode'] = null;
+                $validated['target_size_gb'] = null;
+            }
+        }
+
+        if ($sizeMode === 'multiplier') {
+            $request->validate([
+                'target_multiplier' => ['required', 'numeric', 'min:1'],
+            ]);
+
+            $validated['target_multiplier'] = (float) $request->input('target_multiplier');
+            $validated['target_size_gb'] = null;
+
+            if (empty($validated['target_type'])) {
+                $validated['size_mode'] = null;
+                $validated['target_multiplier'] = null;
+            }
+        }
+
+        if (($validated['category'] ?? '') === 'CPU') {
+            $validated['target_type'] = null;
+            $validated['size_mode'] = null;
+            $validated['target_size_gb'] = null;
+            $validated['target_multiplier'] = null;
+        }
 
         $recommendation->update($validated);
 
@@ -107,6 +173,7 @@ class RecommendationController extends Controller
             ->route('admin.recommendations.index')
             ->with('success', 'Recommendation berhasil diperbarui.');
     }
+
 
     public function destroy(Recommendation $recommendation)
     {

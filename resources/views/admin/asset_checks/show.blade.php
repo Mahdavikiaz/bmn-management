@@ -54,7 +54,7 @@
     }
     .rec-block-title .badge{ font-weight:700; }
 
-    .rec-block-content{ white-space:pre-line; color:#212529; line-height:1.45rem; }
+    .rec-block-content{ white-space:pre-line; color:#212529; line-height:1.45rem; font-size:.85rem; text-align: justify; text-justify: inter-word;}
     .rec-block-content.text-muted{ color:#6c757d !important; }
 
     .rec-divider{ border-top:1px dashed #e9ecef; margin:12px 0; }
@@ -73,14 +73,10 @@
     // ===== SPEC =====
     $spec = $latestSpec ?? null;
 
-    $storage_type = [];
-    if ($spec?->is_hdd)  $storage_type[] = 'HDD';
-    if ($spec?->is_ssd)  $storage_type[] = 'SSD';
-    if ($spec?->is_nvme) $storage_type[] = 'NVMe';
-
-    $isLatest = function($row) use ($report) {
-        return (int)$row->id_report === (int)$report->id_report;
-    };
+    $storageTypeBadges = [];
+    if ($spec?->is_hdd)  $storageTypeBadges[] = 'HDD';
+    if ($spec?->is_ssd)  $storageTypeBadges[] = 'SSD';
+    if ($spec?->is_nvme) $storageTypeBadges[] = 'NVMe';
 
     // ===== PRIORITY META =====
     $prioMeta = function($p){
@@ -104,210 +100,49 @@
     };
 
     $fmtPrice = function ($price): string {
-        $p = (float) $price;
+        $p = (float) ($price ?? 0);
         if ($p <= 0) return '-';
         return 'Rp ' . number_format($p, 0, ',', '.');
     };
 
-    $shouldShowPrice = function (?string $action): bool {
-        if (!$action) return false;
-        $t = strtolower(trim($action));
-        if ($t === '' || $t === '-') return false;
-
-        // RAM
-        if (str_contains($t, 'tambahkan ram')) return true;
-
-        // Storage
-        if (str_contains($t, 'ganti jadi ssd')) return true;
-        if (preg_match('/\b(x2|2x|kali\s*2)\b/i', $t)) return true;
-        if (str_contains($t, 'upgrade storage')) return true;
-
-        return false;
-    };
-
-    // ====== HELPER: normalize dash ======
     $valOrDash = function(?string $t): string {
         $t = trim((string) $t);
         return ($t === '' || $t === '-') ? '-' : $t;
     };
 
-    /**
-     * ✅ Support data lama yang masih gabung: ada "Action:" dan "Explanation:"
-     * - Return: ['action' => '...', 'explanation' => '...']
-     * - Kalau tidak ada marker, action = teks asli, explanation = null
-     */
-    $splitActionExplanation = function(?string $text): array {
-        $raw = trim((string) $text);
-        if ($raw === '' || $raw === '-') {
-            return ['action' => '-', 'explanation' => null];
-        }
-
-        $raw = preg_replace("/\r\n|\r/", "\n", $raw);
-
-        $posA = stripos($raw, 'action:');
-        $posE = stripos($raw, 'explanation:');
-
-        if ($posA === false && $posE === false) {
-            return ['action' => $raw, 'explanation' => null];
-        }
-
-        $actionPart = '';
-        $explainPart = '';
-
-        if ($posE !== false) {
-            $beforeE = substr($raw, 0, $posE);
-            $afterE  = substr($raw, $posE);
-
-            $beforeE = preg_replace('/^.*action:\s*/i', '', $beforeE);
-            $actionPart = trim($beforeE);
-
-            $afterE = preg_replace('/^explanation:\s*/i', '', $afterE);
-            $explainPart = trim($afterE);
-        } else {
-            $actionPart = preg_replace('/^action:\s*/i', '', $raw);
-            $actionPart = trim($actionPart);
-        }
-
-        return [
-            'action' => ($actionPart === '' ? '-' : $actionPart),
-            'explanation' => ($explainPart === '' ? null : $explainPart),
-        ];
-    };
-
-    /**
-     * Convert string ke bullet list ringan (kalau sudah ada bullet, biarkan).
-     */
-    $toBullets = function(?string $text): string {
-        $t = trim((string)$text);
-        if ($t === '' || $t === '-') return '-';
-
-        // kalau sudah ada bullet "•" di awal, return apa adanya
-        if (preg_match('/^\s*•\s+/u', $t)) return $t;
-
-        $lines = preg_split("/\r\n|\n|\r/", $t) ?: [$t];
-        $lines = array_map(fn($x) => trim((string)$x), $lines);
-        $lines = array_values(array_filter($lines, fn($x) => $x !== '' && $x !== '-'));
-
-        if (!count($lines)) return '-';
-
-        return "• " . implode("\n• ", $lines);
-    };
-
-    /**
-     * Extract baris action dari teks action (hapus bullet, dash, dsb).
-     */
-    $extractActionLines = function(?string $actionText): array {
-        $t = trim((string) $actionText);
-        if ($t === '' || $t === '-') return [];
-
-        $lines = preg_split("/\r\n|\n|\r/", $t) ?: [];
-        $lines = array_map(function($ln){
-            $ln = trim((string)$ln);
-            $ln = ltrim($ln, "• \t-");
-            return trim($ln);
-        }, $lines);
-
-        return array_values(array_filter($lines, fn($ln) => $ln !== '' && $ln !== '-' && !preg_match('/^(action:|explanation:)$/i', $ln)));
-    };
-
-    /**
-     * Ambil EXPLANATION dari DB on-the-fly
-     * - Primary: match per action line dari report -> recommendations.action
-     * - Fallback: gabungkan semua explanation pada category+priority_level
-     * - Special rules storage kalau action-nya berasal dari rule (bukan DB)
-     */
-    $getExplanationFromDb = function(string $category, int $priority, ?string $actionText) use ($extractActionLines, $toBullets): string {
+    // ambil semua explanation berdasarkan category + priority_level
+    $getExplanationByPriority = function(string $category, int $priority) {
         if ($priority <= 0) return '-';
 
-        // fetch rows sekali per kategori+priority
         $rows = Recommendation::where('category', $category)
             ->where('priority_level', $priority)
             ->orderBy('id_recommendation')
-            ->get(['action', 'explanation']);
+            ->pluck('explanation')
+            ->map(fn($x) => trim((string) $x))
+            ->filter(fn($x) => $x !== '')
+            ->values()
+            ->all();
 
-        $map = [];
-        foreach ($rows as $r) {
-            $a = trim((string)$r->action);
-            $e = trim((string)$r->explanation);
-            if ($a !== '' && $e !== '') {
-                $map[$a] = $e;
-            }
-        }
+        if (!count($rows)) return '-';
 
-        $lines = $extractActionLines($actionText);
-
-        $exps = [];
-
-        foreach ($lines as $ln) {
-            // Special storage rule (kalau tidak ada di DB)
-            if ($category === 'STORAGE') {
-                if (mb_strtolower($ln) === 'ganti jadi ssd') {
-                    $exps[] = 'HDD cenderung lebih lambat dibanding SSD. Upgrade ke SSD akan meningkatkan kecepatan booting, membuka aplikasi, dan respons sistem secara signifikan.';
-                    continue;
-                }
-                if (str_starts_with(mb_strtolower($ln), mb_strtolower('Kapasitas Storage sudah maksimal'))) {
-                    $exps[] = 'Kapasitas storage sudah menyentuh batas maksimal. Solusi terbaik adalah menghapus aplikasi/file yang tidak diperlukan, memindahkan data ke penyimpanan lain, atau menggunakan penyimpanan eksternal/cloud.';
-                    continue;
-                }
-            }
-
-            // Match exact
-            if (isset($map[$ln])) {
-                $exps[] = $map[$ln];
-            }
-        }
-
-        // Kalau match per-action kosong -> fallback semua explanation by priority
-        if (!count($exps)) {
-            $fallback = $rows->pluck('explanation')
-                ->map(fn($x) => trim((string)$x))
-                ->filter(fn($x) => $x !== '')
-                ->values()
-                ->all();
-
-            return count($fallback) ? $toBullets(implode("\n", $fallback)) : '-';
-        }
-
-        // unique
-        $uniq = [];
-        foreach ($exps as $e) {
-            $k = mb_strtolower(trim($e));
-            if (!isset($uniq[$k])) $uniq[$k] = $e;
-        }
-
-        return $toBullets(implode("\n", array_values($uniq)));
+        // jadikan bullet
+        return "• " . implode("\n• ", $rows);
     };
 
-    // ===== PRIORITY =====
+    // Ambil action
+    $ramActionUi = $valOrDash($report->recommendation_ram);
+    $stoActionUi = $valOrDash($report->recommendation_storage);
+    $cpuActionUi = $valOrDash($report->recommendation_processor);
+
+    // Explanation by priority
+    $ramExplain = $getExplanationByPriority('RAM', (int)($report->prior_ram ?? 0));
+    $stoExplain = $getExplanationByPriority('STORAGE', (int)($report->prior_storage ?? 0));
+    $cpuExplain = $getExplanationByPriority('CPU', (int)($report->prior_processor ?? 0));
+
+    // PRIORITY META
     $mRam = $prioMeta((int)($report->prior_ram ?? 0));
     $mSto = $prioMeta((int)($report->prior_storage ?? 0));
     $mCpu = $prioMeta((int)($report->prior_processor ?? 0));
-
-    // ===== SPLIT (kompatibel data lama) =====
-    $ramSplit = $splitActionExplanation($report->recommendation_ram ?? null);
-    $stoSplit = $splitActionExplanation($report->recommendation_storage ?? null);
-    $cpuSplit = $splitActionExplanation($report->recommendation_processor ?? null);
-
-    $ramAction = $valOrDash($ramSplit['action'] ?? '-');
-    $stoAction = $valOrDash($stoSplit['action'] ?? '-');
-    $cpuAction = $valOrDash($cpuSplit['action'] ?? '-');
-
-    // Explanation:
-    // - kalau data lama sudah punya explanation di report, pakai itu
-    // - kalau tidak ada, query DB (tanpa simpan ke report)
-    $ramExplain = $valOrDash($ramSplit['explanation'] ?? null);
-    if ($ramExplain === '-') $ramExplain = $getExplanationFromDb('RAM', (int)($report->prior_ram ?? 0), $ramAction);
-
-    $stoExplain = $valOrDash($stoSplit['explanation'] ?? null);
-    if ($stoExplain === '-') $stoExplain = $getExplanationFromDb('STORAGE', (int)($report->prior_storage ?? 0), $stoAction);
-
-    $cpuExplain = $valOrDash($cpuSplit['explanation'] ?? null);
-    if ($cpuExplain === '-') $cpuExplain = $getExplanationFromDb('CPU', (int)($report->prior_processor ?? 0), $cpuAction);
-
-    // Kalau action-nya masih non-bullet (data lama), bikin bullet biar rapi
-    $ramActionUi = $toBullets($ramAction);
-    $stoActionUi = $toBullets($stoAction);
-    $cpuActionUi = $toBullets($cpuAction);
 @endphp
 
 {{-- HEADER --}}
@@ -378,7 +213,7 @@
                             <div class="spec-icon"><i class="bi bi-memory"></i></div>
                             <div>
                                 <div class="spec-label">RAM</div>
-                                <div class="spec-value fw-semibold">{{ $spec->ram }} GB</div>
+                                <div class="spec-value fw-semibold">{{ (int)$spec->ram }} GB</div>
                             </div>
                         </div>
 
@@ -386,7 +221,7 @@
                             <div class="spec-icon"><i class="bi bi-hdd-stack"></i></div>
                             <div>
                                 <div class="spec-label">Storage</div>
-                                <div class="spec-value fw-semibold">{{ $spec->storage }} GB</div>
+                                <div class="spec-value fw-semibold">{{ (int)$spec->storage }} GB</div>
                             </div>
                         </div>
 
@@ -394,7 +229,7 @@
                             <div class="spec-icon"><i class="bi bi-nvidia"></i></div>
                             <div>
                                 <div class="spec-label">GPU</div>
-                                <div class="spec-value fw-semibold">{{ $asset->gpu }}</div>
+                                <div class="spec-value fw-semibold">{{ $asset->gpu ?: '-' }}</div>
                             </div>
                         </div>
 
@@ -402,7 +237,7 @@
                             <div class="spec-icon"><i class="bi bi-device-hdd"></i></div>
                             <div>
                                 <div class="spec-label">Tipe RAM</div>
-                                <div class="spec-value fw-semibold">{{ $asset->ram_type }}</div>
+                                <div class="spec-value fw-semibold">{{ $asset->ram_type ?: '-' }}</div>
                             </div>
                         </div>
 
@@ -411,8 +246,8 @@
                             <div>
                                 <div class="spec-label">Tipe Storage</div>
                                 <div class="spec-value">
-                                    @if(count($storage_type))
-                                        @foreach($storage_type as $type)
+                                    @if(count($storageTypeBadges))
+                                        @foreach($storageTypeBadges as $type)
                                             <span class="badge rounded-pill badge-media me-1 fw-semibold">{{ $type }}</span>
                                         @endforeach
                                     @else
@@ -470,11 +305,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    @if ($report->upgrade_ram_price > 0)
-                                        Rp {{ number_format($report->upgrade_ram_price, 0, ',', '.') }}
-                                    @else
-                                        -
-                                    @endif
+                                    <strong>{{ $fmtPrice($report->upgrade_ram_price) }}</strong>
                                 </span>
                             </div>
                         </div>
@@ -490,11 +321,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    @if ($report->upgrade_ram_price > 0)
-                                        Rp {{ number_format($report->upgrade_storage_price, 0, ',', '.') }}
-                                    @else
-                                        -
-                                    @endif
+                                    <strong>{{ $fmtPrice($report->upgrade_storage_price) }}</strong>
                                 </span>
                             </div>
                         </div>
@@ -508,13 +335,13 @@
                                 <span class="text-muted-sm"><strong>{{ $mCpu['label'] }}</strong> - {{ $mCpu['desc'] }}</span>
                             </div>
                             <div class="prio-desc">
-                                <span class="text-muted-sm">Estimasi Harga Upgrade : -</span>
+                                <span class="text-muted-sm">Estimasi Harga Upgrade : <strong>-</strong></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- RECOMMENDATIONS: ACTION + EXPLANATION (TERPISAH) --}}
+                {{-- RECOMMENDATIONS --}}
                 <div class="row g-3 mt-1">
                     <div class="col-md-4">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
@@ -607,49 +434,36 @@
                 <tbody>
                 @forelse($history as $i => $row)
                     @php
-                        $pick = function($txt) {
-                            if (!$txt) return null;
+                        $pickFirstBullet = function($txt) {
                             $t = trim((string) $txt);
-                            if ($t === '-' || $t === '') return null;
+                            if ($t === '' || $t === '-') return null;
 
+                            // ambil baris pertama
                             $t = preg_replace("/\r\n|\r/", "\n", $t);
-                            $lines = preg_split("/\n/", $t) ?: [];
-                            $lines = array_map('trim', $lines);
-
-                            // skip label "Action:"/"Explanation:" kalau data lama
-                            $lines = array_values(array_filter($lines, function($ln){
-                                $ln2 = strtolower(trim($ln));
-                                if ($ln2 === 'action:' || $ln2 === 'explanation:') return false;
-                                return $ln !== '';
-                            }));
-
+                            $lines = array_values(array_filter(array_map('trim', explode("\n", $t))));
                             $first = $lines[0] ?? $t;
 
-                            $first = str_replace('•', '', $first);
-                            $first = preg_replace('/\s+/', ' ', $first);
-                            return trim($first);
+                            // bersihkan bullet di depan
+                            $first = ltrim($first, "• \t-");
+                            return trim($first) ?: null;
                         };
 
                         $parts = array_filter([
-                            $pick($row->recommendation_ram) ? 'RAM: '.$pick($row->recommendation_ram) : null,
-                            $pick($row->recommendation_storage) ? 'Storage: '.$pick($row->recommendation_storage) : null,
-                            $pick($row->recommendation_processor) ? 'CPU: '.$pick($row->recommendation_processor) : null,
+                            $pickFirstBullet($row->recommendation_ram) ? 'RAM: '.$pickFirstBullet($row->recommendation_ram) : null,
+                            $pickFirstBullet($row->recommendation_storage) ? 'Storage: '.$pickFirstBullet($row->recommendation_storage) : null,
+                            $pickFirstBullet($row->recommendation_processor) ? 'CPU: '.$pickFirstBullet($row->recommendation_processor) : null,
                         ]);
 
                         $summary = count($parts) ? implode(' | ', $parts) : '-';
-
-                        $pr = $row->prior_ram === null ? 'Belum dinilai' : $row->prior_ram;
-                        $ps = $row->prior_storage === null ? 'Belum dinilai' : $row->prior_storage;
-                        $pc = $row->prior_processor === null ? 'Belum dinilai' : $row->prior_processor;
                     @endphp
 
                     <tr>
                         <td>{{ $history->firstItem() + $i }}</td>
                         <td class="fw-semibold">{{ optional($row->created_at)->format('d/m/Y H:i') }}</td>
                         <td>
-                            <span class="badge rounded-pill text-bg-light border">RAM : {{ $pr }}</span>
-                            <span class="badge rounded-pill text-bg-light border">STORAGE : {{ $ps }}</span>
-                            <span class="badge rounded-pill text-bg-light border">CPU : {{ $pc }}</span>
+                            <span class="badge rounded-pill text-bg-light border">RAM : {{ $row->prior_ram ?? '-' }}</span>
+                            <span class="badge rounded-pill text-bg-light border">STORAGE : {{ $row->prior_storage ?? '-' }}</span>
+                            <span class="badge rounded-pill text-bg-light border">CPU : {{ $row->prior_processor ?? '-' }}</span>
                         </td>
                         <td class="text-muted-sm">
                             <span title="{{ $summary }}">{{ \Illuminate\Support\Str::limit($summary, 140) }}</span>

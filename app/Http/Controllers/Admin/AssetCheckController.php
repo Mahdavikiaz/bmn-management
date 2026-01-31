@@ -73,7 +73,6 @@ class AssetCheckController extends Controller
 
     private function findSparepartPrice(string $category, string $type, int $size): ?float
     {
-        // Cari harga sparepart yang cocok
         $price = Sparepart::where('category', $category)
             ->where('sparepart_type', strtoupper($type))
             ->where('size', $size)
@@ -134,12 +133,11 @@ class AssetCheckController extends Controller
         return count($rows) ? implode("\n", $rows) : '-';
     }
 
-    // STORAGE TEXT GENERATOR
+    // Rules Storage
     private function buildStorageActionRaw(string $baseActionRaw, ?string $storageType, int $currentStorageGb): string
     {
         $actions = [];
 
-        // base actions dari DB
         $base = trim((string) $baseActionRaw);
         if ($base !== '' && $base !== '-') {
             foreach (preg_split("/\r\n|\n|\r/", $base) ?: [] as $ln) {
@@ -148,14 +146,12 @@ class AssetCheckController extends Controller
             }
         }
 
-        // HDD -> ganti SSD
         if (strtoupper((string) $storageType) === 'HDD') {
-            array_unshift($actions, 'Ganti jadi SSD untuk performa lebih baik');
+            array_unshift($actions, 'Ganti jadi SSD');
         }
 
-        // kapasitas maksimal
         if ($currentStorageGb >= self::STORAGE_MAX_GB) {
-            array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus software/file tidak terpakai');
+            array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan');
         }
 
         $actions = $this->uniqueLines($actions);
@@ -163,6 +159,135 @@ class AssetCheckController extends Controller
         return count($actions) ? implode("\n", $actions) : '-';
     }
 
+    private function resolveRamUpgradeMeta(Asset $asset, AssetsSpecifications $spec, int $priorRam): array
+    {
+        $meta = ['type' => null, 'size' => 0];
+
+        if ($priorRam <= 0) return $meta;
+
+        // ambil dari recommendations (kalau ada yang isi parameter)
+        $rows = Recommendation::where('category', 'RAM')
+            ->where('priority_level', $priorRam)
+            ->orderBy('id_recommendation')
+            ->get(['target_type', 'size_mode', 'target_size_gb', 'target_multiplier']);
+
+        // ambil size terbesar (kalau ada lebih dari satu)
+        $bestSize = 0;
+        $bestType = null;
+
+        foreach ($rows as $r) {
+            $mode = $r->size_mode ? trim((string)$r->size_mode) : null;
+            if (!$mode) continue;
+
+            $type = $r->target_type ? strtoupper(trim((string)$r->target_type)) : null;
+
+            $size = 0;
+            if ($mode === 'fixed') {
+                $size = (int) ($r->target_size_gb ?? 0);
+            } elseif ($mode === 'multiplier') {
+                // untuk RAM biasanya tidak dipakai, tapi kalau diisi biar tetap support:
+                $mul = (float) ($r->target_multiplier ?? 0);
+                if ($mul > 0) $size = (int) round(((int)$spec->ram) * $mul);
+            }
+
+            if ($size > $bestSize) {
+                $bestSize = $size;
+                $bestType = $type;
+            }
+        }
+
+        // fallback kalau admin belum isi parameter
+        if ($bestSize <= 0) {
+            $map = [3 => 4, 4 => 8, 5 => 16];
+            $bestSize = $map[$priorRam] ?? 0;
+            $bestType = 'SAME_AS_SPEC';
+        }
+
+        if ($bestType === 'SAME_AS_SPEC' || !$bestType) {
+            $bestType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
+        }
+
+        $meta['type'] = $bestType;
+        $meta['size'] = max(0, (int)$bestSize);
+
+        return $meta;
+    }
+
+    private function resolveStorageUpgradeMeta(AssetsSpecifications $spec, int $priorStorage): array
+    {
+        $meta = ['type' => null, 'size' => 0];
+        if ($priorStorage <= 0) return $meta;
+
+        $currentType = $this->getStorageTypeFromSpec($spec);
+        $currentSize = (int) $spec->storage;
+        if (!$currentType || $currentSize <= 0) return $meta;
+
+        // ambil dari recommendations (kalau ada parameter)
+        $rows = Recommendation::where('category', 'STORAGE')
+            ->where('priority_level', $priorStorage)
+            ->orderBy('id_recommendation')
+            ->get(['target_type', 'size_mode', 'target_size_gb', 'target_multiplier']);
+
+        $bestType = null;
+        $bestSize = 0;
+
+        foreach ($rows as $r) {
+            $mode = $r->size_mode ? trim((string)$r->size_mode) : null;
+            if (!$mode) continue;
+
+            $type = $r->target_type ? strtoupper(trim((string)$r->target_type)) : null;
+            $size = 0;
+
+            if ($mode === 'fixed') {
+                $size = (int) ($r->target_size_gb ?? 0);
+            } elseif ($mode === 'multiplier') {
+                $mul = (float) ($r->target_multiplier ?? 0);
+                if ($mul > 0) $size = (int) round($currentSize * $mul);
+            }
+
+            // pilih size terbesar untuk estimasi
+            if ($size > $bestSize) {
+                $bestSize = $size;
+                $bestType = $type;
+            }
+
+            // kalau size sama, prefer SSD/NVME daripada HDD
+            if ($size === $bestSize && $size > 0) {
+                $pref = ['NVME' => 3, 'SSD' => 2, 'HDD' => 1, null => 0];
+                $curScore = $pref[$bestType] ?? 0;
+                $newScore = $pref[$type] ?? 0;
+                if ($newScore > $curScore) $bestType = $type;
+            }
+        }
+
+        // fallback kalau belum ada parameter dari admin
+        if ($bestSize <= 0) {
+            // priority 4-5 => x2, selain itu pakai size sekarang
+            if (in_array($priorStorage, [4, 5], true)) {
+                $bestSize = $currentSize * 2;
+            } else {
+                $bestSize = $currentSize;
+            }
+        }
+
+        if (!$bestType || $bestType === 'SAME_AS_SPEC') {
+            $bestType = $currentType;
+        }
+
+        // jika device HDD => rekomendasi estimasi type SSD
+        if (strtoupper($currentType) === 'HDD') {
+            $bestType = 'SSD';
+        }
+
+        if ($bestSize > self::STORAGE_MAX_GB) $bestSize = self::STORAGE_MAX_GB;
+
+        $meta['type'] = $bestType;
+        $meta['size'] = max(0, (int)$bestSize);
+
+        return $meta;
+    }
+
+    // INDEX
     public function index(Request $request)
     {
         $this->authorize('viewAny', PerformanceReport::class);
@@ -171,16 +296,13 @@ class AssetCheckController extends Controller
         $typeId = $request->get('id_type');
 
         $assetsQuery = Asset::query()
-            ->with([
-                'latestPerformanceReport',
-                'type',
-            ])
+            ->with(['latestPerformanceReport', 'type'])
             ->withCount('performanceReports');
 
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
-                  ->orWhere('device_name', 'like', "%{$q}%");
+                    ->orWhere('device_name', 'like', "%{$q}%");
             });
         }
 
@@ -198,6 +320,7 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.index', compact('assets', 'types'));
     }
 
+    // CREATE
     public function create(Asset $asset)
     {
         $this->authorize('create', PerformanceReport::class);
@@ -216,16 +339,14 @@ class AssetCheckController extends Controller
 
         $categories = ['RAM', 'STORAGE', 'CPU'];
 
-        return view('admin.asset_checks.create', compact(
-            'asset', 'latestSpec', 'questions', 'categories'
-        ));
+        return view('admin.asset_checks.create', compact('asset', 'latestSpec', 'questions', 'categories'));
     }
 
+    // STORE
     public function store(Request $request, Asset $asset)
     {
         $this->authorize('create', PerformanceReport::class);
 
-        // Validasi Input
         $request->validate([
             'category_storage' => 'nullable|in:HDD,SSD,NVME',
             'owner_asset'      => 'required|string|max:255',
@@ -236,11 +357,12 @@ class AssetCheckController extends Controller
             'answers'          => 'required|array|min:1',
         ]);
 
-        // Validasi kelengkapan jawaban
         $allQuestions = IndicatorQuestion::select('id_question', 'category')->get();
         foreach ($allQuestions as $q) {
             if (!$request->filled("answers.{$q->id_question}")) {
-                return back()->withErrors(['answers' => 'Semua pertanyaan wajib dijawab.'])->withInput();
+                return back()
+                    ->withErrors(['answers' => 'Semua pertanyaan wajib dijawab.'])
+                    ->withInput();
             }
         }
 
@@ -250,10 +372,21 @@ class AssetCheckController extends Controller
             ->get();
 
         if ($selectedOptions->count() !== count($selectedOptionIds)) {
-            return back()->withErrors(['answers' => 'Ada jawaban yang tidak valid.'])->withInput();
+            return back()
+                ->withErrors(['answers' => 'Ada jawaban yang tidak valid.'])
+                ->withInput();
         }
 
-        // Hitung Rata-rata & Priority Level
+        $mapAnswers = $request->input('answers', []);
+        foreach ($selectedOptions as $opt) {
+            $qid = $opt->id_question;
+            if (!isset($mapAnswers[$qid]) || (int)$mapAnswers[$qid] !== (int)$opt->id_option) {
+                return back()
+                    ->withErrors(['answers' => 'Ada jawaban yang tidak cocok dengan pertanyaan.'])
+                    ->withInput();
+            }
+        }
+
         $avgByCat = $selectedOptions
             ->groupBy(fn($o) => $o->question->category)
             ->map(fn($items) => round($items->avg('star_value'), 2));
@@ -268,18 +401,17 @@ class AssetCheckController extends Controller
         $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
-        // Ambil Teks Rekomendasi yg Action dari DB untuk display
+        // ACTION
         $ramActionRaw         = $this->getRecommendationActionRaw('RAM', $priorRam);
         $cpuActionRaw         = $this->getRecommendationActionRaw('CPU', $priorCpu);
         $storageBaseActionRaw = $this->getRecommendationActionRaw('STORAGE', $priorStorage);
 
-        // Persiapan data Spec
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
             ->first();
+
         $specPayload = $this->buildSpecPayload($request, $asset);
 
-        // Mulai Transaksi Simpen
         $report = DB::transaction(function () use (
             $asset,
             $latestSpec,
@@ -294,7 +426,7 @@ class AssetCheckController extends Controller
         ) {
             $now = now();
 
-            // Simpen/Cek Spec Baru
+            // spec
             if ($this->isSameSpec($latestSpec, $specPayload)) {
                 $spec = $latestSpec;
             } else {
@@ -303,7 +435,7 @@ class AssetCheckController extends Controller
                 ]));
             }
 
-            // Format Teks Rekomendasi
+            // STORAGE action
             $storageType = $this->getStorageTypeFromSpec($spec);
             $currentStorageGb = (int) $spec->storage;
 
@@ -313,61 +445,28 @@ class AssetCheckController extends Controller
                 $currentStorageGb
             );
 
+            // simpan action
             $recRamFinal     = $this->asBullets($ramActionRaw);
             $recCpuFinal     = $this->asBullets($cpuActionRaw);
             $recStorageFinal = $this->asBullets($storageActionRawFinal);
 
             // ESTIMASI HARGA
+
+            // RAM
             $upgradeRamPrice = null;
-            $ramType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
-            
-            // cari harga hanya jika tipe RAM diketahui & priority level memenuhi syarat
-            if ($ramType && $priorRam >= 3) {
-                $ramSizeNeeded = 0;
-                
-                if ($priorRam === 3) {
-                    $ramSizeNeeded = 4;
-                } elseif ($priorRam === 4) {
-                    $ramSizeNeeded = 8;
-                } elseif ($priorRam === 5) {
-                    $ramSizeNeeded = 16;
-                }
-
-                if ($ramSizeNeeded > 0) {
-                    $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramType, $ramSizeNeeded);
-                }
+            $ramMeta = $this->resolveRamUpgradeMeta($asset, $spec, $priorRam);
+            if (!empty($ramMeta['type']) && !empty($ramMeta['size'])) {
+                $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramMeta['type'], (int)$ramMeta['size']);
             }
 
-            // HARGA STORAGE
+            // STORAGE
             $upgradeStoragePrice = null;
-            $currentType = $storageType ? strtoupper($storageType) : null;
-            
-            if ($currentType) {
-                // Tentukan Target Tipe
-                $targetType = ($currentType === 'HDD') ? 'SSD' : $currentType;
-
-                // Tentukan Target Size
-                $targetSize = $currentStorageGb;
-                if ($priorStorage >= 4) {
-                    $targetSize = $currentStorageGb * 2;
-                }
-
-                // Max Storage
-                if ($targetSize > self::STORAGE_MAX_GB) {
-                    $targetSize = self::STORAGE_MAX_GB;
-                }
-
-                // Cek apakah butuh upgrade
-                $isTypeChange = ($currentType === 'HDD' && $targetType === 'SSD');
-                $isSizeChange = ($targetSize > $currentStorageGb);
-
-                if (($isTypeChange || $isSizeChange) && $targetSize > 0) {
-                    // Cari harga berdasarkan target type & target size
-                    $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $targetType, $targetSize);
-                }
+            $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
+            if (!empty($stoMeta['type']) && !empty($stoMeta['size'])) {
+                $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $stoMeta['type'], (int)$stoMeta['size']);
             }
 
-            // Create Performance Report
+            // Simpan Report
             $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
@@ -377,12 +476,10 @@ class AssetCheckController extends Controller
                 'prior_storage' => $priorStorage,
                 'prior_processor' => $priorCpu,
 
-                // Teks rekomendasi
                 'recommendation_ram' => $recRamFinal,
                 'recommendation_storage' => $recStorageFinal,
                 'recommendation_processor' => $recCpuFinal,
 
-                // Harga hasil kalkulasi
                 'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
                 'upgrade_storage_price' => $this->priceOrZero($upgradeStoragePrice),
 
@@ -390,7 +487,6 @@ class AssetCheckController extends Controller
                 'updated_at' => $now,
             ]);
 
-            // Simpen Detail Jawaban
             foreach ($selectedOptions as $opt) {
                 IndicatorAnswer::create([
                     'id_option' => $opt->id_option,
@@ -408,6 +504,7 @@ class AssetCheckController extends Controller
             ->with('success', 'Pengecekan asset berhasil diproses.');
     }
 
+    // SHOW
     public function show(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('view', $report);
@@ -429,6 +526,7 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.show', compact('asset', 'report', 'latestSpec', 'history'));
     }
 
+    // DESTROY REPORT
     public function destroyReport(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('delete', $report);
@@ -444,6 +542,7 @@ class AssetCheckController extends Controller
             ->with('success', 'Report pengecekan berhasil dihapus.');
     }
 
+    // HISTORY
     public function history(Asset $asset)
     {
         $this->authorize('viewAny', PerformanceReport::class);
