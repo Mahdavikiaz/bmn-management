@@ -54,7 +54,14 @@
     }
     .rec-block-title .badge{ font-weight:700; }
 
-    .rec-block-content{ white-space:pre-line; color:#212529; line-height:1.45rem; font-size:.85rem; text-align: justify; text-justify: inter-word;}
+    .rec-block-content{
+        white-space:pre-line;
+        color:#212529;
+        line-height:1.45rem;
+        font-size:.85rem;
+        text-align: justify;
+        text-justify: inter-word;
+    }
     .rec-block-content.text-muted{ color:#6c757d !important; }
 
     .rec-divider{ border-top:1px dashed #e9ecef; margin:12px 0; }
@@ -77,6 +84,19 @@
     if ($spec?->is_hdd)  $storageTypeBadges[] = 'HDD';
     if ($spec?->is_ssd)  $storageTypeBadges[] = 'SSD';
     if ($spec?->is_nvme) $storageTypeBadges[] = 'NVMe';
+
+    // Tentukan target_type STORAGE yang dipakai untuk ambil explanation
+    $storageTargetType = null;
+    if ($spec) {
+        if ($spec->is_nvme) {
+            $storageTargetType = 'NVME';
+        } elseif ($spec->is_ssd || $spec->is_hdd) {
+            $storageTargetType = 'SSD';
+        }
+    }
+
+    $ramTargetType = 'SAME_AS_SPEC';
+    $cpuTargetType = 'SAME_AS_SPEC';
 
     // ===== PRIORITY META =====
     $prioMeta = function($p){
@@ -110,23 +130,35 @@
         return ($t === '' || $t === '-') ? '-' : $t;
     };
 
-    // ambil semua explanation berdasarkan category + priority_level
-    $getExplanationByPriority = function(string $category, int $priority) {
+    // Ambil explanation berdasarkan category, priority_level, target_type
+    $getOneExplanation = function(string $category, int $priority, ?string $targetType = null): string {
         if ($priority <= 0) return '-';
 
-        $rows = Recommendation::where('category', $category)
-            ->where('priority_level', $priority)
+        $q = Recommendation::where('category', $category)
+            ->where('priority_level', $priority);
+
+        if ($targetType) {
+            $q->where(function($w) use ($targetType) {
+                $w->where('target_type', $targetType)
+                  ->orWhere('target_type', 'SAME_AS_SPEC');
+            });
+        }
+
+        $rows = $q->orderByRaw("
+                CASE
+                    WHEN target_type = ? THEN 0
+                    WHEN target_type = 'SAME_AS_SPEC' THEN 1
+                    ELSE 2
+                END
+            ", [$targetType ?? ''])
             ->orderBy('id_recommendation')
-            ->pluck('explanation')
-            ->map(fn($x) => trim((string) $x))
-            ->filter(fn($x) => $x !== '')
-            ->values()
-            ->all();
+            ->get(['explanation', 'target_type']);
 
-        if (!count($rows)) return '-';
+        $exp = $rows->pluck('explanation')
+            ->map(fn($x) => trim((string)$x))
+            ->first(fn($x) => $x !== '');
 
-        // jadikan bullet
-        return "• " . implode("\n• ", $rows);
+        return $exp ?: '-';
     };
 
     // Ambil action
@@ -134,10 +166,10 @@
     $stoActionUi = $valOrDash($report->recommendation_storage);
     $cpuActionUi = $valOrDash($report->recommendation_processor);
 
-    // Explanation by priority
-    $ramExplain = $getExplanationByPriority('RAM', (int)($report->prior_ram ?? 0));
-    $stoExplain = $getExplanationByPriority('STORAGE', (int)($report->prior_storage ?? 0));
-    $cpuExplain = $getExplanationByPriority('CPU', (int)($report->prior_processor ?? 0));
+    // Explanation
+    $ramExplain = $getOneExplanation('RAM', (int)($report->prior_ram ?? 0), $ramTargetType);
+    $stoExplain = $getOneExplanation('STORAGE', (int)($report->prior_storage ?? 0), $storageTargetType);
+    $cpuExplain = $getOneExplanation('CPU', (int)($report->prior_processor ?? 0), $cpuTargetType);
 
     // PRIORITY META
     $mRam = $prioMeta((int)($report->prior_ram ?? 0));
@@ -358,7 +390,7 @@
                             <div class="rec-block-title">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
-                            <div class="rec-block-content">{{ $ramExplain }}</div>
+                            <div class="rec-block-content {{ $ramExplain === '-' ? 'text-muted' : '' }}">{{ $ramExplain }}</div>
                         </div>
                     </div>
 
@@ -377,7 +409,7 @@
                             <div class="rec-block-title">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
-                            <div class="rec-block-content">{{ $stoExplain }}</div>
+                            <div class="rec-block-content {{ $stoExplain === '-' ? 'text-muted' : '' }}">{{ $stoExplain }}</div>
                         </div>
                     </div>
 
@@ -396,7 +428,7 @@
                             <div class="rec-block-title">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
-                            <div class="rec-block-content text-muted">{{ $cpuExplain }}</div>
+                            <div class="rec-block-content {{ $cpuExplain === '-' ? 'text-muted' : '' }}">{{ $cpuExplain }}</div>
                         </div>
                     </div>
                 </div>
