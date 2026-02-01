@@ -358,7 +358,7 @@
                             <div class="rec-block-title">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
-                            <div class="rec-block-content text-muted">{{ $ramExplain }}</div>
+                            <div class="rec-block-content">{{ $ramExplain }}</div>
                         </div>
                     </div>
 
@@ -377,7 +377,7 @@
                             <div class="rec-block-title">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
-                            <div class="rec-block-content text-muted">{{ $stoExplain }}</div>
+                            <div class="rec-block-content">{{ $stoExplain }}</div>
                         </div>
                     </div>
 

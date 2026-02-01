@@ -8,7 +8,8 @@
         <ul class="nav flex-column gap-1">
 
             <li class="nav-item">
-                <a href="#" class="nav-link text-dark">
+                <a href="{{ route('admin.dashboard.index') }}" 
+                    class="nav-link {{ request()->is('admin/dashboard*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-speedometer2"></i>
                     Dashboard
                 </a>

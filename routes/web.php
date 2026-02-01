@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\RecommendationController;
 use App\Http\Controllers\Admin\IndicatorQuestionController;
 use App\Http\Controllers\Admin\AssetCheckController;
 use App\Http\Controllers\Admin\AssetTypeController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ReportController;
 
 Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
@@ -105,6 +106,8 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/reports/export/all/excel', [ReportController::class, 'exportAllExcel'])
             ->name('reports.export.all.excel');
+        
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
     });
 
 });
