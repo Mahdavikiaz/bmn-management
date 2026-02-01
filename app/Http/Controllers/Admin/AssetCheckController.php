@@ -30,9 +30,17 @@ class AssetCheckController extends Controller
         return $v === '' ? null : $v;
     }
 
-    private function buildSpecPayload(Request $request, Asset $asset): array
+    private function getStorageTypeFromSpec(AssetsSpecifications $spec): ?string
     {
-        $storageType = $request->input('category_storage');
+        if ($spec->is_nvme) return 'NVME';
+        if ($spec->is_ssd)  return 'SSD';
+        if ($spec->is_hdd)  return 'HDD';
+        return null;
+    }
+
+    private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null): array
+    {
+        $storageType = $storageTypeOverride ?: $request->input('category_storage');
 
         return [
             'id_asset'    => $asset->id_asset,
@@ -63,14 +71,6 @@ class AssetCheckController extends Controller
         );
     }
 
-    private function getStorageTypeFromSpec(AssetsSpecifications $spec): ?string
-    {
-        if ($spec->is_nvme) return 'NVME';
-        if ($spec->is_ssd)  return 'SSD';
-        if ($spec->is_hdd)  return 'HDD';
-        return null;
-    }
-
     private function findSparepartPrice(string $category, string $type, int $size): ?float
     {
         $price = Sparepart::where('category', $category)
@@ -79,8 +79,7 @@ class AssetCheckController extends Controller
             ->orderBy('price')
             ->value('price');
 
-        if ($price === null) return null;
-        return (float) $price;
+        return $price === null ? null : (float) $price;
     }
 
     private function priceOrZero(?float $price): float
@@ -97,7 +96,6 @@ class AssetCheckController extends Controller
         $lines = array_values(array_filter(array_map('trim', $lines), fn($x) => $x !== ''));
 
         if (!count($lines)) return '-';
-
         return "• " . implode("\n• ", $lines);
     }
 
@@ -116,7 +114,6 @@ class AssetCheckController extends Controller
         return $out;
     }
 
-    // Ambil ACTION dari tabel recommendations (berdasarkan category + priority_level)
     private function getRecommendationActionRaw(string $cat, int $priorLevel): string
     {
         if ($priorLevel <= 0) return '-';
@@ -133,7 +130,6 @@ class AssetCheckController extends Controller
         return count($rows) ? implode("\n", $rows) : '-';
     }
 
-    // Rules Storage
     private function buildStorageActionRaw(string $baseActionRaw, ?string $storageType, int $currentStorageGb): string
     {
         $actions = [];
@@ -155,23 +151,19 @@ class AssetCheckController extends Controller
         }
 
         $actions = $this->uniqueLines($actions);
-
         return count($actions) ? implode("\n", $actions) : '-';
     }
 
     private function resolveRamUpgradeMeta(Asset $asset, AssetsSpecifications $spec, int $priorRam): array
     {
         $meta = ['type' => null, 'size' => 0];
-
         if ($priorRam <= 0) return $meta;
 
-        // ambil dari recommendations (kalau ada yang isi parameter)
         $rows = Recommendation::where('category', 'RAM')
             ->where('priority_level', $priorRam)
             ->orderBy('id_recommendation')
             ->get(['target_type', 'size_mode', 'target_size_gb', 'target_multiplier']);
 
-        // ambil size terbesar (kalau ada lebih dari satu)
         $bestSize = 0;
         $bestType = null;
 
@@ -185,7 +177,6 @@ class AssetCheckController extends Controller
             if ($mode === 'fixed') {
                 $size = (int) ($r->target_size_gb ?? 0);
             } elseif ($mode === 'multiplier') {
-                // untuk RAM biasanya tidak dipakai, tapi kalau diisi biar tetap support:
                 $mul = (float) ($r->target_multiplier ?? 0);
                 if ($mul > 0) $size = (int) round(((int)$spec->ram) * $mul);
             }
@@ -196,7 +187,6 @@ class AssetCheckController extends Controller
             }
         }
 
-        // fallback kalau admin belum isi parameter
         if ($bestSize <= 0) {
             $map = [3 => 4, 4 => 8, 5 => 16];
             $bestSize = $map[$priorRam] ?? 0;
@@ -222,7 +212,6 @@ class AssetCheckController extends Controller
         $currentSize = (int) $spec->storage;
         if (!$currentType || $currentSize <= 0) return $meta;
 
-        // ambil dari recommendations (kalau ada parameter)
         $rows = Recommendation::where('category', 'STORAGE')
             ->where('priority_level', $priorStorage)
             ->orderBy('id_recommendation')
@@ -236,8 +225,8 @@ class AssetCheckController extends Controller
             if (!$mode) continue;
 
             $type = $r->target_type ? strtoupper(trim((string)$r->target_type)) : null;
-            $size = 0;
 
+            $size = 0;
             if ($mode === 'fixed') {
                 $size = (int) ($r->target_size_gb ?? 0);
             } elseif ($mode === 'multiplier') {
@@ -245,24 +234,35 @@ class AssetCheckController extends Controller
                 if ($mul > 0) $size = (int) round($currentSize * $mul);
             }
 
-            // pilih size terbesar untuk estimasi
+            if ($size <= 0) continue;
+
             if ($size > $bestSize) {
                 $bestSize = $size;
                 $bestType = $type;
+                continue;
             }
 
-            // kalau size sama, prefer SSD/NVME daripada HDD
-            if ($size === $bestSize && $size > 0) {
-                $pref = ['NVME' => 3, 'SSD' => 2, 'HDD' => 1, null => 0];
-                $curScore = $pref[$bestType] ?? 0;
-                $newScore = $pref[$type] ?? 0;
-                if ($newScore > $curScore) $bestType = $type;
+            // size sama
+            if ($size === $bestSize) {
+                $candidate = $type;
+
+                // SAME_AS_SPEC > currentType > other
+                $score = function($t) use ($currentType) {
+                    $t = strtoupper((string)$t);
+                    if ($t === 'SAME_AS_SPEC') return 3;
+                    if ($t === strtoupper($currentType)) return 2;
+                    if (in_array($t, ['SSD','NVME','HDD'], true)) return 1;
+                    return 0;
+                };
+
+                if ($score($candidate) > $score($bestType)) {
+                    $bestType = $candidate;
+                }
             }
         }
 
-        // fallback kalau belum ada parameter dari admin
+        // fallback size
         if ($bestSize <= 0) {
-            // priority 4-5 => x2, selain itu pakai size sekarang
             if (in_array($priorStorage, [4, 5], true)) {
                 $bestSize = $currentSize * 2;
             } else {
@@ -270,11 +270,12 @@ class AssetCheckController extends Controller
             }
         }
 
+        // resolve type
         if (!$bestType || $bestType === 'SAME_AS_SPEC') {
             $bestType = $currentType;
         }
 
-        // jika device HDD => rekomendasi estimasi type SSD
+        // HDD selalu ke SSD
         if (strtoupper($currentType) === 'HDD') {
             $bestType = 'SSD';
         }
@@ -410,7 +411,13 @@ class AssetCheckController extends Controller
             ->orderByDesc('datetime')
             ->first();
 
-        $specPayload = $this->buildSpecPayload($request, $asset);
+        // ambil storage type dari latest spec kalo user tidak isi category_storage
+        $storageTypeForPayload = $request->input('category_storage');
+        if (!$storageTypeForPayload && $latestSpec) {
+            $storageTypeForPayload = $this->getStorageTypeFromSpec($latestSpec);
+        }
+
+        $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload);
 
         $report = DB::transaction(function () use (
             $asset,
@@ -451,15 +458,12 @@ class AssetCheckController extends Controller
             $recStorageFinal = $this->asBullets($storageActionRawFinal);
 
             // ESTIMASI HARGA
-
-            // RAM
             $upgradeRamPrice = null;
             $ramMeta = $this->resolveRamUpgradeMeta($asset, $spec, $priorRam);
             if (!empty($ramMeta['type']) && !empty($ramMeta['size'])) {
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramMeta['type'], (int)$ramMeta['size']);
             }
 
-            // STORAGE
             $upgradeStoragePrice = null;
             $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
             if (!empty($stoMeta['type']) && !empty($stoMeta['size'])) {
