@@ -96,7 +96,7 @@
     }
 
     $ramTargetType = 'SAME_AS_SPEC';
-    $cpuTargetType = 'SAME_AS_SPEC';
+    $cpuTargetType = null;
 
     // ===== PRIORITY META =====
     $prioMeta = function($p){
