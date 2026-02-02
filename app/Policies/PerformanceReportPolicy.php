@@ -13,7 +13,7 @@ class PerformanceReportPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isUser();
     }
 
     /**
@@ -21,7 +21,7 @@ class PerformanceReportPolicy
      */
     public function view(User $user, PerformanceReport $performanceReport): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isUser();
     }
 
     /**
@@ -29,7 +29,7 @@ class PerformanceReportPolicy
      */
     public function create(User $user): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isUser();
     }
 
     /**
@@ -37,7 +37,7 @@ class PerformanceReportPolicy
      */
     public function update(User $user, PerformanceReport $performanceReport): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() || $user->isUser();
     }
 
     /**
