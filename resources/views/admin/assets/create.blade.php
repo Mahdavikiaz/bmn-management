@@ -83,8 +83,15 @@
 
                             <div class="col-12">
                                 <label class="form-label">Tipe RAM</label>
-                                <input type="text" name="ram_type" class="form-control"
-                                       value="{{ old('ram_type') }}" required>
+                                <select name="ram_type" class="form-select @error('ram_type') is-invalid @enderror">
+                                    <option value="">Pilih Tipe RAM</option>
+                                    @foreach(['DDR3','DDR4','DDR5'] as $t)
+                                        <option value="{{ $t }}" {{ old('ram_type', $asset->ram_type ?? '') === $t ? 'selected' : '' }}>
+                                            {{ $t }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('ram_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
                             <div class="col-12">

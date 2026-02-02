@@ -79,7 +79,7 @@ class AssetController extends Controller
             'nup' => ['required', 'string', 'max:255'],
             'device_name' => ['required', 'string', 'max:255'],
             'gpu' => ['required', 'string', 'max:255'],
-            'ram_type' => ['required', 'string', 'max:255'],
+            'ram_type' => ['required', 'in:DDR3,DDR4,DDR5'],
             'procurement_year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             // Specs (opsional)
@@ -169,7 +169,7 @@ class AssetController extends Controller
 
             'device_name' => ['required', 'string', 'max:255'],
             'gpu' => ['required', 'string', 'max:255'],
-            'ram_type' => ['required', 'string', 'max:255'],
+            'ram_type' => ['required', 'in:DDR3,DDR4,DDR5'],
             'procurement_year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
         ]);
 
