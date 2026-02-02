@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -80,10 +81,17 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required',
-            'role' => 'required|in:admin,user'
+            'role' => 'required|in:admin,user',
+            'password' => 'nullable|min:6'
         ]);
 
-        $user->update($request->only('name', 'role'));
+         $data = $request->only('name', 'role');
+
+        if ($request->filled('password')) {
+            $data['password'] = Hash::make($request->password);
+        }
+
+        $user->update($data);
 
         return redirect()
             ->route('admin.users.index')
