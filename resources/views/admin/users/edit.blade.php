@@ -41,6 +41,35 @@
                 </small>
             </div>
 
+            {{-- Password --}}
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+
+                <input type="password"
+                    name="password"
+                    id="password"
+                    class="form-control @error('password') is-invalid @enderror"
+                    placeholder="Masukkan password baru"
+                    disabled>
+
+                @error('password')
+                <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+
+                <div class="form-check mt-2">
+                    <input class="form-check-input"
+                        type="checkbox"
+                        id="changePassword">
+                    <label class="form-check-label" for="changePassword">
+                        Ubah Password
+                    </label>
+                </div>
+
+                <small class="text-muted">
+                    Password lama tidak ditampilkan demi keamanan
+                </small>
+            </div>
+
             {{-- Role --}}
             <div class="mb-4">
                 <label class="form-label">Peran</label>
@@ -73,5 +102,19 @@
         </form>
     </div>
 </div>
+<script>
+    const checkbox = document.getElementById('changePassword');
+    const passwordInput = document.getElementById('password');
+
+    checkbox.addEventListener('change', function () {
+        if (this.checked) {
+            passwordInput.disabled = false;
+            passwordInput.focus();
+        } else {
+            passwordInput.disabled = true;
+            passwordInput.value = '';
+        }
+    });
+</script>
 
 @endsection
