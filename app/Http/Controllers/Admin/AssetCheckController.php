@@ -20,9 +20,11 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class AssetCheckController extends Controller
 {
     use AuthorizesRequests;
-
+    
+    // Batas maksimum kapasitas storage yang akan dipakai dalam rekomendasi dan estimasi harga upgrade.
     private const STORAGE_MAX_GB = 2048;
-
+    
+    // Untuk merapikan input string supaya bisa dibandingkan
     private function norm(?string $v): ?string
     {
         if ($v === null) return null;
@@ -30,6 +32,7 @@ class AssetCheckController extends Controller
         return $v === '' ? null : $v;
     }
 
+    // Untuk mengambil tipe storage dari spesifikasi asset
     private function getStorageTypeFromSpec(AssetsSpecifications $spec): ?string
     {
         if ($spec->is_nvme) return 'NVME';
@@ -37,7 +40,8 @@ class AssetCheckController extends Controller
         if ($spec->is_hdd)  return 'HDD';
         return null;
     }
-
+    
+    // Bikin payload untuk asset specifications dari input form
     private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null): array
     {
         $storageType = $storageTypeOverride ?: $request->input('category_storage');
@@ -55,6 +59,7 @@ class AssetCheckController extends Controller
         ];
     }
 
+    // Membandingkan spec asset yang udah tersimpan dengan input baru
     private function isSameSpec(?AssetsSpecifications $latest, array $payload): bool
     {
         if (!$latest) return false;
@@ -71,6 +76,7 @@ class AssetCheckController extends Controller
         );
     }
 
+    // Menentukan harga sparepart dari database
     private function findSparepartPrice(string $category, string $type, int $size): ?float
     {
         $price = Sparepart::where('category', $category)
@@ -82,11 +88,13 @@ class AssetCheckController extends Controller
         return $price === null ? null : (float) $price;
     }
 
+    // Untuk mencegah error formating harga saat ditampilkan di UI
     private function priceOrZero(?float $price): float
     {
         return $price === null ? 0.0 : (float) $price;
     }
 
+    // Mengubah isi teks kolom action menjadi format bullets di UI
     private function asBullets(string $text): string
     {
         $t = trim($text);
@@ -99,6 +107,7 @@ class AssetCheckController extends Controller
         return "• " . implode("\n• ", $lines);
     }
 
+    // Memastikan tidak ada action yang sama muncul 2x
     private function uniqueLines(array $lines): array
     {
         $seen = [];
@@ -114,6 +123,7 @@ class AssetCheckController extends Controller
         return $out;
     }
 
+    // Membaca kolom action di tabel recommendations berdasarkan category dan priority level, lalu digabung jadi teks multiline
     private function getRecommendationActionRaw(string $cat, int $priorLevel): string
     {
         if ($priorLevel <= 0) return '-';
@@ -130,10 +140,12 @@ class AssetCheckController extends Controller
         return count($rows) ? implode("\n", $rows) : '-';
     }
 
+    // Rule tambahan untuk storage
     private function buildStorageActionRaw(string $baseActionRaw, ?string $storageType, int $currentStorageGb): string
     {
         $actions = [];
 
+        // ambil semua action dari master
         $base = trim((string) $baseActionRaw);
         if ($base !== '' && $base !== '-') {
             foreach (preg_split("/\r\n|\n|\r/", $base) ?: [] as $ln) {
@@ -142,18 +154,22 @@ class AssetCheckController extends Controller
             }
         }
 
+        // kalau tipe storage hdd kasih rekomendasi ganti jadi ssd
         if (strtoupper((string) $storageType) === 'HDD') {
             array_unshift($actions, 'Ganti jadi SSD');
         }
 
+        // kalau kapasitas storage di spec sudah maks
         if ($currentStorageGb >= self::STORAGE_MAX_GB) {
             array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan');
         }
 
+        // semua action digabung dan dibuat unik
         $actions = $this->uniqueLines($actions);
         return count($actions) ? implode("\n", $actions) : '-';
     }
 
+    // Untuk menentukan target upgrade RAM
     private function resolveRamUpgradeMeta(Asset $asset, AssetsSpecifications $spec, int $priorRam): array
     {
         $meta = ['type' => null, 'size' => 0];
@@ -203,6 +219,7 @@ class AssetCheckController extends Controller
         return $meta;
     }
 
+    // Untuk menentukan target upgrade storage
     private function resolveStorageUpgradeMeta(AssetsSpecifications $spec, int $priorStorage): array
     {
         $meta = ['type' => null, 'size' => 0];
