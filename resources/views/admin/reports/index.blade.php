@@ -48,10 +48,10 @@
     {{-- KANAN : EXPORT --}}
     <div class="d-flex gap-2 flex-shrink-0">
         <a href="{{ route('admin.reports.export.all.excel') }}" class="btn btn-outline-success">
-            <i class="bi bi-file-earmark-excel"></i> Export Excel
+            <i class="bi bi-file-earmark-excel"></i> Export Excel (All)
         </a>
         <a href="{{ route('admin.reports.export.all.pdf') }}" class="btn btn-outline-danger">
-            <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            <i class="bi bi-file-earmark-pdf"></i> Export PDF (All)
         </a>
     </div>
 

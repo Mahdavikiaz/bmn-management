@@ -67,7 +67,7 @@ class AssetsReportExport extends StringValueBinder implements
     {
         return [
             'Kode BMN',
-            'Kategori (Type Name)',
+            'Kategori Asset',
             'Nama Device',
             'GPU',
             'Tipe RAM',
