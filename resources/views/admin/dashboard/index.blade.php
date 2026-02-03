@@ -174,7 +174,7 @@
                 <div class="stat-row">
                     <div class="stat-icon" style="background:#fff1f2;color:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
                     <div>
-                        <div class="text-muted-sm">Perlu Tindaklanjut</div>
+                        <div class="text-muted-sm">Perlu Tindak Lanjut</div>
                         <div class="fs-4 fw-bold">{{ $urgentCount }}</div>
                         <div class="text-muted-sm mt-1">Berdasarkan average priority</div>
                     </div>
