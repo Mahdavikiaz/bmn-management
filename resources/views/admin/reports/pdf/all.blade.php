@@ -70,13 +70,15 @@
         return $lines[0] ?? '-';
     };
 
-    $combineSummary = function (?string $ramRec, ?string $stoRec) use ($summarizeRec): string {
+    $combineSummary = function (?string $ramRec, ?string $stoRec, ?string $procRec) use ($summarizeRec): string {
         $ram = $summarizeRec($ramRec);
         $sto = $summarizeRec($stoRec);
+        $pro = $summarizeRec($procRec);
 
         $parts = [];
         if ($ram !== '-') $parts[] = "RAM: {$ram}";
         if ($sto !== '-') $parts[] = "Storage: {$sto}";
+        if ($pro !== '-') $parts[] = "CPU: {$pro}";
 
         return count($parts) ? implode("\n", $parts) : '-';
     };
@@ -124,7 +126,7 @@
         @php
             $r = $asset->latestPerformanceReport;
 
-            $summary = $combineSummary($r?->recommendation_ram, $r?->recommendation_storage);
+            $summary = $combineSummary($r?->recommendation_ram, $r?->recommendation_storage, $r?->recommendation_processor);
 
             $ramPrice = $safeFloat($r?->upgrade_ram_price);
             $stoPrice = $safeFloat($r?->upgrade_storage_price);
