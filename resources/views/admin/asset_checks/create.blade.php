@@ -7,11 +7,11 @@
     <div>
         <h4 class="mb-1">Lakukan Pengecekan</h4>
         <div class="text-muted">
-            {{ $asset->device_name }} | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
+            {{ $asset->device_name }} ({{ $asset->type?->type_name }}) | Kode BMN: <strong>{{ $asset->bmn_code }}</strong>
         </div>
     </div>
 
-    <a href="{{ route('admin.asset-checks.index') }}" class="btn btn-outline-secondary">
+    <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Kembali
     </a>
 </div>

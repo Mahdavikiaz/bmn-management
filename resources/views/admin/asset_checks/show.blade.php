@@ -187,7 +187,7 @@
     </div>
 
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.asset-checks.index') }}"
+        <a href="{{ url()->previous() }}"
            class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
             <i class="bi bi-arrow-left"></i> Kembali
         </a>
@@ -366,6 +366,16 @@
                                 <span class="{{ $mCpu['badgeClass'] }} me-2">{{ $mCpu['value'] }}</span>
                                 <span class="text-muted-sm"><strong>{{ $mCpu['label'] }}</strong> - {{ $mCpu['desc'] }}</span>
                             </div>
+                            <div class="prio-desc">
+                                <span class="text-muted-sm">
+                                    Estimasi Harga Upgrade :
+                                    @if ($mCpu >= 4)
+                                        <strong>Seharga Perangkat Baru</strong>
+                                    @else
+                                        <strong>-</strong>
+                                    @endif
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -377,14 +387,14 @@
                             <i class="bi bi-memory"></i> Rekomendasi RAM
                         </div>
                         <div class="rec-box">
-                            <div class="rec-block-title">
+                            <div class="rec-block-title mb-2">
                                 <span class="badge text-bg-primary">Tindakan</span>
                             </div>
                             <div class="rec-block-content {{ $ramActionUi === '-' ? 'text-muted' : '' }}">{{ $ramActionUi }}</div>
 
                             <div class="rec-divider"></div>
 
-                            <div class="rec-block-title">
+                            <div class="rec-block-title mb-2">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
                             <div class="rec-block-content {{ $ramExplain === '-' ? 'text-muted' : '' }}">{{ $ramExplain }}</div>
@@ -396,14 +406,14 @@
                             <i class="bi bi-hdd-stack"></i> Rekomendasi Storage
                         </div>
                         <div class="rec-box">
-                            <div class="rec-block-title">
+                            <div class="rec-block-title mb-2">
                                 <span class="badge text-bg-primary">Tindakan</span>
                             </div>
                             <div class="rec-block-content {{ $stoActionUi === '-' ? 'text-muted' : '' }}">{{ $stoActionUi }}</div>
 
                             <div class="rec-divider"></div>
 
-                            <div class="rec-block-title">
+                            <div class="rec-block-title mb-2">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
                             <div class="rec-block-content {{ $stoExplain === '-' ? 'text-muted' : '' }}">{{ $stoExplain }}</div>
@@ -415,14 +425,14 @@
                             <i class="bi bi-cpu"></i> Rekomendasi CPU
                         </div>
                         <div class="rec-box">
-                            <div class="rec-block-title">
+                            <div class="rec-block-title mb-2">
                                 <span class="badge text-bg-primary">Tindakan</span>
                             </div>
                             <div class="rec-block-content {{ $cpuActionUi === '-' ? 'text-muted' : '' }}">{{ $cpuActionUi }}</div>
 
                             <div class="rec-divider"></div>
 
-                            <div class="rec-block-title">
+                            <div class="rec-block-title mb-2">
                                 <span class="badge text-bg-light border">Penjelasan</span>
                             </div>
                             <div class="rec-block-content {{ $cpuExplain === '-' ? 'text-muted' : '' }}">{{ $cpuExplain }}</div>
