@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Sparepart')
+@section('title', 'SIMANIS | Edit Sparepart')
 
 @section('content')
 

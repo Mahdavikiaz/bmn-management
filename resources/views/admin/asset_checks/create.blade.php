@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Lakukan Pengecekan')
+@section('title', 'SIMANIS | Melakukan Pengecekan Asset')
 
 @section('content')
 <div class="d-flex justify-content-between align-items-start mb-3">

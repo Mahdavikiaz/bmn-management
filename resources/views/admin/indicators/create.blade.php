@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Indicator')
+@section('title', 'SIMANIS | Tambah Indikator')
 
 @section('content')
 
 <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-        <h4 class="mb-1">Tambah Indikator</h4>
+        <h4 class="mb-1">Tambah Indikator Penilaian</h4>
         <small class="text-muted">
             Form untuk menambahkan indikator pertanyaan untuk penilaian perangkat.
         </small>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pengecekan Asset')
+@section('title', 'SIMANIS | Pengecekan Asset')
 
 @section('content')
 

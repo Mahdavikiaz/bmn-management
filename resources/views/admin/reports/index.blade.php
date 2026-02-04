@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Report Asset')
+@section('title', 'SIMANIS | Report Asset')
 
 @section('content')
 

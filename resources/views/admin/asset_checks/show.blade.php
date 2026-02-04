@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Hasil Pengecekan')
+@section('title', 'SIMANIS | Hasil Pengecekan Asset')
 
 @section('content')
 
@@ -365,9 +365,6 @@
                             <div class="d-flex align-items-center justify-content mb-4">
                                 <span class="{{ $mCpu['badgeClass'] }} me-2">{{ $mCpu['value'] }}</span>
                                 <span class="text-muted-sm"><strong>{{ $mCpu['label'] }}</strong> - {{ $mCpu['desc'] }}</span>
-                            </div>
-                            <div class="prio-desc">
-                                <span class="text-muted-sm">Estimasi Harga Upgrade : <strong>-</strong></span>
                             </div>
                         </div>
                     </div>

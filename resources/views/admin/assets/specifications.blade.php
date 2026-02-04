@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Kelola Spesifikasi')
+@section('title', 'SIMANIS | Kelola Spesifikasi')
 
 @section('content')
     <style>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Daftar Indikator')
+@section('title', 'SIMANIS | Daftar Indikator')
 
 @section('content')
 
