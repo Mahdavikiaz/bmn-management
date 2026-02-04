@@ -56,7 +56,7 @@ class AssetSpecificationController extends Controller
         // Kalau field kosong, ambil dari latestSpec (kalau ada aja)
         $newOwnerAsset = filled($validated['owner_asset'] ?? null)
             ? $validated['owner_asset']
-            : ($latestSpec->processor ?? null);
+            : ($latestSpec->owner_asset ?? null);
 
         $newProcessor = filled($validated['processor'] ?? null)
             ? $validated['processor']
