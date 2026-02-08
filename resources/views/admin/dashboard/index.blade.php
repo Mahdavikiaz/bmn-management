@@ -8,13 +8,70 @@
     .card-soft{ border:1px solid #eef2f7; border-radius:14px; }
     .text-muted-sm{ color:#6c757d; font-size:.85rem; }
 
-    .stat-icon{
-        width:42px; height:42px; border-radius:12px;
-        display:flex; align-items:center; justify-content:center;
-        background:#f1f5ff; color:#0d6efd; font-size:1.1rem;
-        flex:0 0 auto;
+    .stat-card{
+        position: relative;
+        overflow: hidden;
+        border-radius:14px;
+        background:#fff;
+        border:1px solid #eef2f7;
     }
-    .stat-row{ display:flex; gap:12px; align-items:flex-start; }
+    .stat-card .card-body{
+        padding:16px 16px;
+    }
+
+    .stat-card::before{
+        content:"";
+        position:absolute;
+        left:0; top:0;
+        width:4px; height:100%;
+        background: var(--accent, #6f42c1);
+        border-top-left-radius:14px;
+        border-bottom-left-radius:14px;
+    }
+
+    .stat-flex{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+    }
+
+    .stat-left{
+        min-width:0;
+    }
+    .stat-label{
+        font-size:.9rem;
+        color:#6c757d;
+        margin-bottom:4px;
+    }
+    .stat-value{
+        font-size:1.4rem;
+        font-weight:700;
+        line-height:1.2;
+        margin-bottom:4px;
+    }
+    .stat-desc{
+        font-size:.85rem;
+        color:#6c757d;
+        margin:0;
+    }
+
+    .stat-right{
+        flex:0 0 auto;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        width:54px;
+        height:54px;
+        border-radius:14px;
+        background: rgba(111,66,193,.08);
+        color: var(--accent, #6f42c1);
+        font-size:1.35rem;
+    }
+
+    .stat-right i{
+        transform: translateY(1px);
+    }
 
     .pill{
         display:inline-flex; align-items:center; gap:8px;
@@ -75,6 +132,7 @@
 
     @media (max-width: 992px){
         .summary-text{ max-width: 240px; }
+        .stat-right{ width:48px; height:48px; }
     }
 </style>
 
@@ -124,14 +182,16 @@
 {{-- Summary Cards --}}
 <div class="row g-3 mb-3">
     <div class="col-md-3">
-        <div class="card card-soft shadow-sm">
+        <div class="stat-card shadow-sm" style="--accent:#6f42c1;">
             <div class="card-body">
-                <div class="stat-row">
-                    <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
-                    <div>
-                        <div class="text-muted-sm">Total Asset</div>
-                        <div class="fs-4 fw-bold">{{ $totalAssets }}</div>
-                        <div class="text-muted-sm mt-1">Jumlah asset yang terdaftar</div>
+                <div class="stat-flex">
+                    <div class="stat-left">
+                        <div class="stat-label">Total Asset</div>
+                        <div class="stat-value">{{ $totalAssets }}</div>
+                        <p class="stat-desc">Jumlah asset yang terdaftar</p>
+                    </div>
+                    <div class="stat-right" title="Trend">
+                        <i class="bi bi-box-seam"></i>
                     </div>
                 </div>
             </div>
@@ -139,14 +199,16 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card card-soft shadow-sm">
+        <div class="stat-card shadow-sm" style="--accent:#198754;">
             <div class="card-body">
-                <div class="stat-row">
-                    <div class="stat-icon" style="background:#ecfdf3;color:#198754;"><i class="bi bi-check2-circle"></i></div>
-                    <div>
-                        <div class="text-muted-sm">Sudah Dicek</div>
-                        <div class="fs-4 fw-bold">{{ $checkedCount }}</div>
-                        <div class="text-muted-sm mt-1">Punya report pengecekan</div>
+                <div class="stat-flex">
+                    <div class="stat-left">
+                        <div class="stat-label">Sudah Dicek</div>
+                        <div class="stat-value">{{ $checkedCount }}</div>
+                        <p class="stat-desc">Punya report pengecekan</p>
+                    </div>
+                    <div class="stat-right" title="Trend" style="background:rgba(25,135,84,.10);">
+                        <i class="bi bi-check2-circle"></i>
                     </div>
                 </div>
             </div>
@@ -154,14 +216,16 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card card-soft shadow-sm">
+        <div class="stat-card shadow-sm" style="--accent:#6b7280;">
             <div class="card-body">
-                <div class="stat-row">
-                    <div class="stat-icon" style="background:#f3f4f6;color:#6b7280;"><i class="bi bi-clock-history"></i></div>
-                    <div>
-                        <div class="text-muted-sm">Belum Dicek</div>
-                        <div class="fs-4 fw-bold">{{ $uncheckedCount }}</div>
-                        <div class="text-muted-sm mt-1">Perlu dilakukan pengecekan</div>
+                <div class="stat-flex">
+                    <div class="stat-left">
+                        <div class="stat-label">Belum Dicek</div>
+                        <div class="stat-value">{{ $uncheckedCount }}</div>
+                        <p class="stat-desc">Perlu dilakukan pengecekan</p>
+                    </div>
+                    <div class="stat-right" title="Trend" style="background:rgba(107,114,128,.10);">
+                        <i class="bi bi-clock-history"></i>
                     </div>
                 </div>
             </div>
@@ -169,14 +233,16 @@
     </div>
 
     <div class="col-md-3">
-        <div class="card card-soft shadow-sm">
+        <div class="stat-card shadow-sm" style="--accent:#dc3545;">
             <div class="card-body">
-                <div class="stat-row">
-                    <div class="stat-icon" style="background:#fff1f2;color:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
-                    <div>
-                        <div class="text-muted-sm">Perlu Tindak Lanjut</div>
-                        <div class="fs-4 fw-bold">{{ $urgentCount }}</div>
-                        <div class="text-muted-sm mt-1">Berdasarkan average priority</div>
+                <div class="stat-flex">
+                    <div class="stat-left">
+                        <div class="stat-label">Perlu Tindak Lanjut</div>
+                        <div class="stat-value">{{ $urgentCount }}</div>
+                        <p class="stat-desc">Berdasarkan average priority</p>
+                    </div>
+                    <div class="stat-right" title="Trend" style="background:rgba(220,53,69,.10);">
+                        <i class="bi bi-exclamation-triangle"></i>
                     </div>
                 </div>
             </div>
@@ -287,13 +353,6 @@
                 @forelse($assets as $i => $a)
                     @php
                         $avg = (float)($a->avg_priority ?? 0);
-                        $ramRec = $pickFirstLine($a->recommendation_ram ?? null);
-                        $stoRec = $pickFirstLine($a->recommendation_storage ?? null);
-
-                        $summaryParts = [];
-                        if ($ramRec !== '-') $summaryParts[] = "RAM: {$ramRec}";
-                        if ($stoRec !== '-') $summaryParts[] = "Storage: {$stoRec}";
-                        $summary = count($summaryParts) ? implode("\n", $summaryParts) : '-';
 
                         $estRam = (float)($a->upgrade_ram_price ?? 0);
                         $estSto = (float)($a->upgrade_storage_price ?? 0);
