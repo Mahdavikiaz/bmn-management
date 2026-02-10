@@ -186,8 +186,8 @@
             <div class="card-body">
                 <div class="stat-flex">
                     <div class="stat-left">
-                        <div class="stat-label">Total Asset</div>
-                        <div class="stat-value">{{ $totalAssets }}</div>
+                        <div class="stat-label mb-2">Total Asset</div>
+                        <div class="stat-value mb-2">{{ $totalAssets }}</div>
                         <p class="stat-desc">Jumlah asset yang terdaftar</p>
                     </div>
                     <div class="stat-right" title="Trend">
@@ -203,8 +203,8 @@
             <div class="card-body">
                 <div class="stat-flex">
                     <div class="stat-left">
-                        <div class="stat-label">Sudah Dicek</div>
-                        <div class="stat-value">{{ $checkedCount }}</div>
+                        <div class="stat-label mb-2">Sudah Dicek</div>
+                        <div class="stat-value mb-2">{{ $checkedCount }}</div>
                         <p class="stat-desc">Punya report pengecekan</p>
                     </div>
                     <div class="stat-right" title="Trend" style="background:rgba(25,135,84,.10);">
@@ -220,8 +220,8 @@
             <div class="card-body">
                 <div class="stat-flex">
                     <div class="stat-left">
-                        <div class="stat-label">Belum Dicek</div>
-                        <div class="stat-value">{{ $uncheckedCount }}</div>
+                        <div class="stat-label mb-2">Belum Dicek</div>
+                        <div class="stat-value mb-2">{{ $uncheckedCount }}</div>
                         <p class="stat-desc">Perlu dilakukan pengecekan</p>
                     </div>
                     <div class="stat-right" title="Trend" style="background:rgba(107,114,128,.10);">
@@ -237,8 +237,8 @@
             <div class="card-body">
                 <div class="stat-flex">
                     <div class="stat-left">
-                        <div class="stat-label">Perlu Tindak Lanjut</div>
-                        <div class="stat-value">{{ $urgentCount }}</div>
+                        <div class="stat-label mb-2">Perlu Tindak Lanjut</div>
+                        <div class="stat-value mb-2">{{ $urgentCount }}</div>
                         <p class="stat-desc">Berdasarkan average priority</p>
                     </div>
                     <div class="stat-right" title="Trend" style="background:rgba(220,53,69,.10);">

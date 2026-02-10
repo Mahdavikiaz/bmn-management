@@ -76,10 +76,8 @@
                             {{ $types->firstItem() + $loop->index }}
                         </td>
 
-                        <td>
-                            <span class="badge bg-secondary-subtle text-dark fw-semibold">
-                                {{ $type->type_code }}
-                            </span>
+                        <td class="fw-normal">
+                            {{ $type->type_code }}
                         </td>
 
                         <td class="fw-normal">
