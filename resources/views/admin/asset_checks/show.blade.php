@@ -77,7 +77,7 @@
 @php
     use App\Models\Recommendation;
 
-    // ===== SPEC =====
+    // SPEC
     $spec = $latestSpec ?? null;
 
     $storageTypeBadges = [];
@@ -85,20 +85,21 @@
     if ($spec?->is_ssd)  $storageTypeBadges[] = 'SSD';
     if ($spec?->is_nvme) $storageTypeBadges[] = 'NVMe';
 
-    // Tentukan target_type STORAGE yang dipakai untuk ambil explanation
+    // Target type STORAGE
     $storageTargetType = null;
     if ($spec) {
-        if ($spec->is_nvme) {
-            $storageTargetType = 'NVME';
-        } elseif ($spec->is_ssd || $spec->is_hdd) {
-            $storageTargetType = 'SSD';
-        }
+        if ($spec->is_nvme)      $storageTargetType = 'NVME';
+        elseif ($spec->is_ssd)   $storageTargetType = 'SSD';
+        elseif ($spec->is_hdd)   $storageTargetType = 'HDD';
     }
 
-    $ramTargetType = 'SAME_AS_SPEC';
+    // biarin null supaya fallback bisa jalan
+    $ramTargetType = null;
+
+    // CPU: kalau gaada target_type, biarin null
     $cpuTargetType = null;
 
-    // ===== PRIORITY META =====
+    // PRIORITY META
     $prioMeta = function($p){
         $map = [
             0 => ['prio-badge prio-nd', 'Belum dinilai', 'Belum ada penilaian untuk kategori ini.'],
@@ -130,35 +131,47 @@
         return ($t === '' || $t === '-') ? '-' : $t;
     };
 
-    // Ambil explanation berdasarkan category, priority_level, target_type
     $getOneExplanation = function(string $category, int $priority, ?string $targetType = null): string {
         if ($priority <= 0) return '-';
 
-        $q = Recommendation::where('category', $category)
+        $base = Recommendation::query()
+            ->where('category', $category)
             ->where('priority_level', $priority);
 
-        if ($targetType) {
-            $q->where(function($w) use ($targetType) {
-                $w->where('target_type', $targetType)
-                  ->orWhere('target_type', 'SAME_AS_SPEC');
-            });
+        // 1) target type (kalau ada)
+        if (!empty($targetType)) {
+            $exp = (clone $base)
+                ->where('target_type', $targetType)
+                ->orderBy('id_recommendation')
+                ->value('explanation');
+
+            $exp = trim((string)$exp);
+            if ($exp !== '') return $exp;
         }
 
-        $rows = $q->orderByRaw("
-                CASE
-                    WHEN target_type = ? THEN 0
-                    WHEN target_type = 'SAME_AS_SPEC' THEN 1
-                    ELSE 2
-                END
-            ", [$targetType ?? ''])
+        // 2) SAME_AS_SPEC
+        $exp = (clone $base)
+            ->where('target_type', 'SAME_AS_SPEC')
             ->orderBy('id_recommendation')
-            ->get(['explanation', 'target_type']);
+            ->value('explanation');
 
-        $exp = $rows->pluck('explanation')
-            ->map(fn($x) => trim((string)$x))
-            ->first(fn($x) => $x !== '');
+        $exp = trim((string)$exp);
+        if ($exp !== '') return $exp;
 
-        return $exp ?: '-';
+        // 3) fallback: apa saja
+        $exp = (clone $base)
+            ->orderByRaw("
+                CASE
+                    WHEN target_type IS NULL THEN 2
+                    WHEN target_type = '' THEN 2
+                    ELSE 1
+                END
+            ")
+            ->orderBy('id_recommendation')
+            ->value('explanation');
+
+        $exp = trim((string)$exp);
+        return $exp !== '' ? $exp : '-';
     };
 
     // Ambil action
@@ -369,7 +382,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    @if ($mCpu >= 4)
+                                    @if ((int)$mCpu['value'] >= 4)
                                         <strong>Seharga Perangkat Baru</strong>
                                     @else
                                         <strong>-</strong>
