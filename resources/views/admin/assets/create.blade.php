@@ -78,7 +78,7 @@
                             <div class="col-12">
                                 <label class="form-label">GPU</label>
                                 <input type="text" name="gpu" class="form-control"
-                                       value="{{ old('gpu') }}" required>
+                                       value="{{ old('gpu') }}">
                             </div>
 
                             <div class="col-12">

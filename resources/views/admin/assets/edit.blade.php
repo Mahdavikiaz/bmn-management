@@ -55,23 +55,24 @@
                                        value="{{ old('device_name', $asset->device_name) }}" required>
                             </div>
 
-                            <div class="col-12">
-                                <label class="form-label">Tipe Device</label>
-                                <select name="id_type" class="form-select" required>
-                                    <option value="" disabled {{ old('id_type') ? 'selected' : '' }}>Pilih tipe asset</option>
-                                    @foreach($types as $t)
-                                        <option value="{{ $t->id_type }}"
-                                            {{ (string)old('id_type') === (string)$t->id_type ? 'selected' : '' }}>
-                                            {{ $t->type_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                         <div class="col-12">
+                            <label class="form-label">Tipe Device</label>
+                            <select name="id_type" class="form-select" required>
+                                <option value="">-- Pilih tipe asset --</option>
+
+                                @foreach($types as $t)
+                                    <option value="{{ $t->id_type }}"
+                                        {{ old('id_type', $asset->id_type) == $t->id_type ? 'selected' : '' }}>
+                                        {{ $t->type_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
 
                             <div class="col-12">
                                 <label class="form-label">GPU</label>
                                 <input type="text" name="gpu" class="form-control"
-                                       value="{{ old('gpu', $asset->gpu) }}" required>
+                                       value="{{ old('gpu', $asset->gpu) }}">
                             </div>
 
                             <div class="col-12">

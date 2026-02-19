@@ -142,8 +142,8 @@
                             {{ $asset->type?->type_name ?? '-' }}
                         </td>
 
-                        <td>{{ $asset->gpu }}</td>
-                        <td>{{ $asset->ram_type }}</td>
+                        <td>{{ $asset->gpu ?? '-'}}</td>
+                        <td>{{ $asset->ram_type ?? '-'}}</td>
                         <td>{{ $asset->procurement_year }}</td>
 
                         {{-- SPESIFIKASI --}}

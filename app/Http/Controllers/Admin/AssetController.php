@@ -78,8 +78,8 @@ class AssetController extends Controller
             'id_type' => ['required', 'exists:asset_types,id_type'],
             'nup' => ['required', 'string', 'max:255'],
             'device_name' => ['required', 'string', 'max:255'],
-            'gpu' => ['required', 'string', 'max:255'],
-            'ram_type' => ['required', 'in:DDR3,DDR4,DDR5'],
+            'gpu' => ['nullable', 'string', 'max:255'],
+            'ram_type' => ['nullable', 'in:DDR3,DDR4,DDR5'],
             'procurement_year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
 
             // Specs (opsional)
@@ -112,8 +112,8 @@ class AssetController extends Controller
                 'bmn_code' => $bmnCode,
 
                 'device_name' => $validated['device_name'],
-                'gpu' => $validated['gpu'],
-                'ram_type' => $validated['ram_type'],
+                'gpu' => $validated['gpu'] ?? null,
+                'ram_type' => $validated['ram_type'] ?? null,
                 'procurement_year' => $validated['procurement_year'],
             ]);
 
@@ -168,8 +168,8 @@ class AssetController extends Controller
             'nup' => ['required', 'string', 'max:255'],
 
             'device_name' => ['required', 'string', 'max:255'],
-            'gpu' => ['required', 'string', 'max:255'],
-            'ram_type' => ['required', 'in:DDR3,DDR4,DDR5'],
+            'gpu' => ['nullable', 'string', 'max:255'],
+            'ram_type' => ['nullable', 'in:DDR3,DDR4,DDR5'],
             'procurement_year' => ['required', 'integer', 'min:1900', 'max:' . date('Y')],
         ]);
 
@@ -194,8 +194,8 @@ class AssetController extends Controller
                 'bmn_code' => $bmnCode,
 
                 'device_name' => $validated['device_name'],
-                'gpu' => $validated['gpu'],
-                'ram_type' => $validated['ram_type'],
+                'gpu' => $validated['gpu'] ?? null,
+                'ram_type' => $validated['ram_type'] ?? null,
                 'procurement_year' => $validated['procurement_year'],
             ]);
         });
