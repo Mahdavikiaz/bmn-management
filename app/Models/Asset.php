@@ -17,8 +17,8 @@ class Asset extends Model
         'nup',
         'bmn_code',
         'device_name',
-        // 'gpu',
-        // 'ram_type',
+        'gpu',
+        'ram_type',
         'procurement_year',
     ];
 

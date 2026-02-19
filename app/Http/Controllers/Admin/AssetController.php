@@ -194,8 +194,8 @@ class AssetController extends Controller
                 'bmn_code' => $bmnCode,
 
                 'device_name' => $validated['device_name'],
-                'gpu' => $validated['gpu'] ?? null,
-                'ram_type' => $validated['ram_type'] ?? null,
+                'gpu' => $validated['gpu'] ?? '',
+                'ram_type' => $validated['ram_type'] ?? '',
                 'procurement_year' => $validated['procurement_year'],
             ]);
         });

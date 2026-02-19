@@ -86,7 +86,7 @@
 
                     <tr>
                         <td>{{ ($assets->currentPage()-1)*$assets->perPage() + $loop->iteration }}</td>
-                        <td class="fw-semibold">{{ $asset->bmn_code ?? '-' }}</td>
+                        <td class="fw-normal">{{ $asset->bmn_code ?? '-' }}</td>
                         <td>{{ $asset->device_name ?? '-' }}</td>
                         <td>{{ $asset->type?->type_name ?? '-' }}</td>
 
