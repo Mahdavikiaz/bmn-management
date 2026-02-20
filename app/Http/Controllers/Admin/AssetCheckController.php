@@ -20,10 +20,10 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 class AssetCheckController extends Controller
 {
     use AuthorizesRequests;
-    
+
     // Batas maksimum kapasitas storage yang akan dipakai dalam rekomendasi dan estimasi harga upgrade.
     private const STORAGE_MAX_GB = 2048;
-    
+
     // Untuk merapikan input string supaya bisa dibandingkan
     private function norm(?string $v): ?string
     {
@@ -40,7 +40,7 @@ class AssetCheckController extends Controller
         if ($spec->is_hdd)  return 'HDD';
         return null;
     }
-    
+
     // Bikin payload untuk asset specifications dari input form
     private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null): array
     {
@@ -164,7 +164,7 @@ class AssetCheckController extends Controller
             array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan');
         }
 
-        // semua action digabung dan dibuat unik
+        // semua action digabung
         $actions = $this->uniqueLines($actions);
         return count($actions) ? implode("\n", $actions) : '-';
     }
@@ -420,8 +420,8 @@ class AssetCheckController extends Controller
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
         // ACTION
-        $ramActionRaw         = $this->getRecommendationActionRaw('RAM', $priorRam);
-        $cpuActionRaw         = $this->getRecommendationActionRaw('CPU', $priorCpu);
+        $ramActionRaw = $this->getRecommendationActionRaw('RAM', $priorRam);
+        $cpuActionRaw = $this->getRecommendationActionRaw('CPU', $priorCpu);
         $storageBaseActionRaw = $this->getRecommendationActionRaw('STORAGE', $priorStorage);
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
@@ -475,16 +475,21 @@ class AssetCheckController extends Controller
             $recStorageFinal = $this->asBullets($storageActionRawFinal);
 
             // ESTIMASI HARGA
+
+            // RAM
             $upgradeRamPrice = null;
             $ramMeta = $this->resolveRamUpgradeMeta($asset, $spec, $priorRam);
             if (!empty($ramMeta['type']) && !empty($ramMeta['size'])) {
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramMeta['type'], (int)$ramMeta['size']);
             }
 
+            // STORAGE: hanya hitung kalau priority 4 atau 5
             $upgradeStoragePrice = null;
-            $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
-            if (!empty($stoMeta['type']) && !empty($stoMeta['size'])) {
-                $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $stoMeta['type'], (int)$stoMeta['size']);
+            if (in_array($priorStorage, [4, 5], true)) {
+                $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
+                if (!empty($stoMeta['type']) && !empty($stoMeta['size'])) {
+                    $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $stoMeta['type'], (int)$stoMeta['size']);
+                }
             }
 
             // Simpan Report
@@ -502,7 +507,11 @@ class AssetCheckController extends Controller
                 'recommendation_processor' => $recCpuFinal,
 
                 'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
-                'upgrade_storage_price' => $this->priceOrZero($upgradeStoragePrice),
+
+                // STORAGE: kalau < 4 simpan NULL
+                'upgrade_storage_price' => in_array($priorStorage, [4, 5], true)
+                    ? $this->priceOrZero($upgradeStoragePrice)
+                    : null,
 
                 'created_at' => $now,
                 'updated_at' => $now,

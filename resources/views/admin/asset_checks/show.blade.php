@@ -95,19 +95,17 @@
 
     // biarin null supaya fallback bisa jalan
     $ramTargetType = null;
-
-    // CPU: kalau gaada target_type, biarin null
     $cpuTargetType = null;
 
     // PRIORITY META
     $prioMeta = function($p){
         $map = [
-            0 => ['prio-badge prio-nd', 'Belum dinilai', 'Belum ada penilaian untuk kategori ini.'],
-            1 => ['prio-badge prio-1', 'Rendah',       'Tidak perlu tindakan apa-apa.'],
+            0 => ['prio-badge prio-nd', 'Belum dinilai','Belum ada penilaian untuk kategori ini.'],
+            1 => ['prio-badge prio-1', 'Rendah', 'Tidak perlu tindakan apa-apa.'],
             2 => ['prio-badge prio-2', 'Cukup rendah', 'Pantau saja, belum perlu tindakan.'],
-            3 => ['prio-badge prio-3', 'Sedang',       'Perlu dipertimbangkan untuk ditindaklanjuti.'],
-            4 => ['prio-badge prio-4', 'Tinggi',       'Perlu tindakan (disarankan upgrade/penanganan).'],
-            5 => ['prio-badge prio-5', 'Sangat tinggi','Harus segera ditindaklanjuti.'],
+            3 => ['prio-badge prio-3', 'Sedang', 'Perlu dipertimbangkan untuk ditindaklanjuti.'],
+            4 => ['prio-badge prio-4', 'Tinggi', 'Perlu tindakan (disarankan upgrade/penanganan).'],
+            5 => ['prio-badge prio-5', 'Sangat tinggi', 'Harus segera ditindaklanjuti.'],
         ];
         $p = (int) $p;
         if (!isset($map[$p])) $p = 0;
@@ -158,15 +156,8 @@
         $exp = trim((string)$exp);
         if ($exp !== '') return $exp;
 
-        // 3) fallback: apa saja
+        // 3) fallback: ambil yang tersedia
         $exp = (clone $base)
-            ->orderByRaw("
-                CASE
-                    WHEN target_type IS NULL THEN 2
-                    WHEN target_type = '' THEN 2
-                    ELSE 1
-                END
-            ")
             ->orderBy('id_recommendation')
             ->value('explanation');
 
@@ -174,20 +165,28 @@
         return $exp !== '' ? $exp : '-';
     };
 
-    // Ambil action
+    // PRIORITY VALUE
+    $pRam = (int)($report->prior_ram ?? 0);
+    $pSto = (int)($report->prior_storage ?? 0);
+    $pCpu = (int)($report->prior_processor ?? 0);
+
+    // ACTION UI
     $ramActionUi = $valOrDash($report->recommendation_ram);
     $stoActionUi = $valOrDash($report->recommendation_storage);
     $cpuActionUi = $valOrDash($report->recommendation_processor);
 
-    // Explanation
-    $ramExplain = $getOneExplanation('RAM', (int)($report->prior_ram ?? 0), $ramTargetType);
-    $stoExplain = $getOneExplanation('STORAGE', (int)($report->prior_storage ?? 0), $storageTargetType);
-    $cpuExplain = $getOneExplanation('CPU', (int)($report->prior_processor ?? 0), $cpuTargetType);
+    // EXPLANATION
+    $ramExplain = $getOneExplanation('RAM', $pRam, $ramTargetType);
+    $stoExplain = $getOneExplanation('STORAGE', $pSto, $storageTargetType);
+    $cpuExplain = $getOneExplanation('CPU', $pCpu, $cpuTargetType);
 
     // PRIORITY META
-    $mRam = $prioMeta((int)($report->prior_ram ?? 0));
-    $mSto = $prioMeta((int)($report->prior_storage ?? 0));
-    $mCpu = $prioMeta((int)($report->prior_processor ?? 0));
+    $mRam = $prioMeta($pRam);
+    $mSto = $prioMeta($pSto);
+    $mCpu = $prioMeta($pCpu);
+
+    // Storage hanya tampil kalau prior_storage >= 4
+    $stoUpgradeUi = ($pSto >= 4) ? $fmtPrice($report->upgrade_storage_price) : '-';
 @endphp
 
 {{-- HEADER --}}
@@ -350,6 +349,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
+                                    {{-- RAM dibiarkan sesuai request (tetap tampil) --}}
                                     <strong>{{ $fmtPrice($report->upgrade_ram_price) }}</strong>
                                 </span>
                             </div>
@@ -366,7 +366,8 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    <strong>{{ $fmtPrice($report->upgrade_storage_price) }}</strong>
+                                    {{-- STORAGE hanya tampil kalau priority >= 4 --}}
+                                    <strong>{{ $stoUpgradeUi }}</strong>
                                 </span>
                             </div>
                         </div>
@@ -382,7 +383,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    @if ((int)$mCpu['value'] >= 4)
+                                    @if ($pCpu >= 4)
                                         <strong>Seharga Perangkat Baru</strong>
                                     @else
                                         <strong>-</strong>
@@ -490,12 +491,10 @@
                             $t = trim((string) $txt);
                             if ($t === '' || $t === '-') return null;
 
-                            // ambil baris pertama
                             $t = preg_replace("/\r\n|\r/", "\n", $t);
                             $lines = array_values(array_filter(array_map('trim', explode("\n", $t))));
                             $first = $lines[0] ?? $t;
 
-                            // bersihkan bullet di depan
                             $first = ltrim($first, "• \t-");
                             return trim($first) ?: null;
                         };
