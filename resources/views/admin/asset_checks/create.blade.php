@@ -197,7 +197,7 @@
                     <div class="col-12">
                         <label class="form-label">Catatan Keluhan (opsional)</label>
                         <textarea name="issue_note" class="form-control" rows="4"
-                                  placeholder="Contoh: Keyboard pada laptop tidak berfungsi optimal...">{{ old('issue_note') }}</textarea>
+                                  placeholder="Contoh: Keyboard pada laptop tidak berfungsi optimal...">{{ old('issue_note', $latestSpec->issue_note ?? '') }}</textarea>
                     </div>
 
                     <div class="col-12">
