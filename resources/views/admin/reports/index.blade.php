@@ -131,7 +131,7 @@
         </div>
     </div>
 
-        {{-- PAGINATION --}}
+    {{-- PAGINATION --}}
     @if(method_exists($assets, 'links'))
         <div class="d-flex flex-column align-items-center mt-4 gap-2">
 
