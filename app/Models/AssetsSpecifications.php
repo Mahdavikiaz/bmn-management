@@ -24,6 +24,8 @@ class AssetsSpecifications extends Model
         'is_hdd',
         'is_ssd',
         'is_nvme',
+        'issue_note',
+        'issue_image_uri',
         'datetime',
     ];
 

@@ -72,13 +72,36 @@
     .table-modern tbody td{
         font-size:.95rem; border-top:1px solid #eef2f7; vertical-align:middle;
     }
+
+    /* ===== preview foto keluhan ===== */
+    .issue-img-wrap{
+        display:inline-block;
+        padding:8px;
+        border:1px solid #eef2f7;
+        border-radius:12px;
+        background:#f8f9fa;
+    }
+    .issue-img{
+        display:block;
+        max-width: 320px;
+        max-height: 220px; 
+        width:auto;
+        height:auto;
+        object-fit: contain;
+        border-radius:10px;
+        background:#fff;
+    }
 </style>
 
 @php
     use App\Models\Recommendation;
+    use Illuminate\Support\Str;
 
-    // SPEC
+    // SPEC (untuk section "Spesifikasi Saat Ini")
     $spec = $latestSpec ?? null;
+
+    // SPEC yang dipakai report (untuk keluhan & foto)
+    $specReport = $report->spec ?? null;
 
     $storageTypeBadges = [];
     if ($spec?->is_hdd)  $storageTypeBadges[] = 'HDD';
@@ -93,7 +116,6 @@
         elseif ($spec->is_hdd)   $storageTargetType = 'HDD';
     }
 
-    // biarin null supaya fallback bisa jalan
     $ramTargetType = null;
     $cpuTargetType = null;
 
@@ -136,7 +158,6 @@
             ->where('category', $category)
             ->where('priority_level', $priority);
 
-        // 1) target type (kalau ada)
         if (!empty($targetType)) {
             $exp = (clone $base)
                 ->where('target_type', $targetType)
@@ -147,7 +168,6 @@
             if ($exp !== '') return $exp;
         }
 
-        // 2) SAME_AS_SPEC
         $exp = (clone $base)
             ->where('target_type', 'SAME_AS_SPEC')
             ->orderBy('id_recommendation')
@@ -156,7 +176,6 @@
         $exp = trim((string)$exp);
         if ($exp !== '') return $exp;
 
-        // 3) fallback: ambil yang tersedia
         $exp = (clone $base)
             ->orderBy('id_recommendation')
             ->value('explanation');
@@ -187,6 +206,21 @@
 
     // Storage hanya tampil kalau prior_storage >= 4
     $stoUpgradeUi = ($pSto >= 4) ? $fmtPrice($report->upgrade_storage_price) : '-';
+
+    // Keluhan & Foto (dari spec report)
+    $issueNote = trim((string)($specReport->issue_note ?? ''));
+    $issueNoteUi = $issueNote !== '' ? $issueNote : '-';
+
+    $issueImageUriRaw = trim((string)($specReport->issue_image_uri ?? ''));
+    $issueImageUi = null;
+
+    if ($issueImageUriRaw !== '') {
+        if (Str::startsWith($issueImageUriRaw, ['http://','https://','/storage/'])) {
+            $issueImageUi = $issueImageUriRaw;
+        } else {
+            $issueImageUi = asset('storage/' . ltrim($issueImageUriRaw, '/'));
+        }
+    }
 @endphp
 
 {{-- HEADER --}}
@@ -199,7 +233,7 @@
     </div>
 
     <div class="d-flex gap-2">
-        <a href="{{ url()->previous() }}"
+        <a href="{{ route('admin.asset-checks.index') }}"
            class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
             <i class="bi bi-arrow-left"></i> Kembali
         </a>
@@ -349,7 +383,6 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{-- RAM dibiarkan sesuai request (tetap tampil) --}}
                                     <strong>{{ $fmtPrice($report->upgrade_ram_price) }}</strong>
                                 </span>
                             </div>
@@ -366,7 +399,6 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    {{-- STORAGE hanya tampil kalau priority >= 4 --}}
                                     <strong>{{ $stoUpgradeUi }}</strong>
                                 </span>
                             </div>
@@ -395,7 +427,7 @@
                 </div>
 
                 {{-- RECOMMENDATIONS --}}
-                <div class="row g-3 mt-1">
+                <div class="row g-3 mt-4">
                     <div class="col-md-4">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
                             <i class="bi bi-memory"></i> Rekomendasi RAM
@@ -454,6 +486,35 @@
                     </div>
                 </div>
 
+                {{-- KELUHAN & FOTO (preview kecil + tombol buka) --}}
+                <div class="mt-4">
+                    <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-left-text"></i> Keluhan / Catatan Tambahan
+                    </div>
+                    <div class="p-3 border rounded-4 bg-white">
+                        <div class="{{ $issueNoteUi === '-' ? 'text-muted' : '' }}">
+                            {{ $issueNoteUi }}
+                        </div>
+                    </div>
+
+                    <div class="fw-semibold mt-3 mb-2 d-flex align-items-center gap-2">
+                        <i class="bi bi-image"></i> Foto Keluhan
+                    </div>
+                    <div class="p-3 border rounded-4 bg-white">
+                        @if($issueImageUi)
+                            <div class="issue-img-wrap">
+                                <img src="{{ $issueImageUi }}" alt="Foto Keluhan" class="issue-img">
+                            </div>
+
+                            <div class="mt-3">
+                                <a href="{{ $issueImageUi }}" target="_blank" class="btn btn-sm btn-outline-primary mb-3">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> Lihat foto</a>
+                            </div>
+                        @else
+                            <div class="text-muted">-</div>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
     </div>

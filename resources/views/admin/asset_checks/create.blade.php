@@ -22,7 +22,9 @@
     </div>
 @endif
 
-<form method="POST" action="{{ route('admin.asset-checks.store', $asset->id_asset) }}">
+<form method="POST"
+      action="{{ route('admin.asset-checks.store', $asset->id_asset) }}"
+      enctype="multipart/form-data">
 @csrf
 
 <div class="card shadow-sm">
@@ -35,10 +37,18 @@
                     <i class="bi bi-cpu"></i> Spesifikasi
                 </button>
             </li>
+
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="tab-q" data-bs-toggle="tab"
                         data-bs-target="#pane-q" type="button" role="tab">
                     <i class="bi bi-ui-checks"></i> Pertanyaan Indikator
+                </button>
+            </li>
+
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-issue" data-bs-toggle="tab"
+                        data-bs-target="#pane-issue" type="button" role="tab">
+                    <i class="bi bi-chat-left-text"></i> Keluhan Tambahan (Opsional)
                 </button>
             </li>
         </ul>
@@ -149,7 +159,7 @@
                                                        required>
                                                 <div>
                                                     <div class="fw-semibold">
-                                                        {{ $label }}. {{ $opt->option ?? '-' }}</span>
+                                                        {{ $label }}. {{ $opt->option ?? '-' }}
                                                     </div>
                                                 </div>
                                             </label>
@@ -164,12 +174,48 @@
                 @endforeach
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="document.querySelector('#tab-spec').click()">
+                        <i class="bi bi-arrow-left"></i> Kembali
+                    </button>
+                    <button type="button" class="btn btn-primary"
+                            onclick="document.querySelector('#tab-issue').click()">
+                        Lanjut ke Keluhan Tambahan <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
+
+            </div>
+
+            {{-- TAB ISSUE / KELUHAN --}}
+            <div class="tab-pane fade" id="pane-issue" role="tabpanel">
+
+                <div class="text-muted small mb-3">
+                    Isi field di bawah ini jika ada keluhan/permasalahan lain terkait device. Foto digunakan untuk validasi kondisi fisik.
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Catatan Keluhan (opsional)</label>
+                        <textarea name="issue_note" class="form-control" rows="4"
+                                  placeholder="Contoh: Keyboard pada laptop tidak berfungsi optimal...">{{ old('issue_note') }}</textarea>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Upload Foto Keluhan (opsional)</label>
+                        {{-- tidak auto-load dari spec lama --}}
+                        <input type="file" name="issue_image" class="form-control" accept="image/*">
+                        <div class="form-text mt-2">
+                            Format: JPG/JPEG/PNG. Maksimal 5MB.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4 gap-2">
                     <a href="{{ route('admin.asset-checks.index') }}" class="btn btn-secondary">Batal</a>
                     <button class="btn btn-primary">
                         <i class="bi bi-save me-1"></i> Proses Pengecekan
                     </button>
                 </div>
-
             </div>
 
         </div>

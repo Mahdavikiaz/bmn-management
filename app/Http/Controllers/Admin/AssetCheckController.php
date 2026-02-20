@@ -15,16 +15,16 @@ use App\Models\Sparepart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class AssetCheckController extends Controller
 {
     use AuthorizesRequests;
 
-    // Batas maksimum kapasitas storage yang akan dipakai dalam rekomendasi dan estimasi harga upgrade.
     private const STORAGE_MAX_GB = 2048;
 
-    // Untuk merapikan input string supaya bisa dibandingkan
     private function norm(?string $v): ?string
     {
         if ($v === null) return null;
@@ -32,7 +32,6 @@ class AssetCheckController extends Controller
         return $v === '' ? null : $v;
     }
 
-    // Untuk mengambil tipe storage dari spesifikasi asset
     private function getStorageTypeFromSpec(AssetsSpecifications $spec): ?string
     {
         if ($spec->is_nvme) return 'NVME';
@@ -41,25 +40,27 @@ class AssetCheckController extends Controller
         return null;
     }
 
-    // Bikin payload untuk asset specifications dari input form
-    private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null): array
+    private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null, ?string $issueImageUri = null): array
     {
         $storageType = $storageTypeOverride ?: $request->input('category_storage');
 
         return [
-            'id_asset'    => $asset->id_asset,
-            'owner_asset' => $this->norm($request->owner_asset),
-            'processor'   => $this->norm($request->processor),
-            'ram'         => (int) $request->ram,
-            'storage'     => (int) $request->storage,
-            'os_version'  => $this->norm($request->os_version),
-            'is_hdd'      => $storageType === 'HDD',
-            'is_ssd'      => $storageType === 'SSD',
-            'is_nvme'     => $storageType === 'NVME',
+            'id_asset'        => $asset->id_asset,
+            'owner_asset'     => $this->norm($request->owner_asset),
+            'processor'       => $this->norm($request->processor),
+            'ram'             => (int) $request->ram,
+            'storage'         => (int) $request->storage,
+            'os_version'      => $this->norm($request->os_version),
+            'is_hdd'          => $storageType === 'HDD',
+            'is_ssd'          => $storageType === 'SSD',
+            'is_nvme'         => $storageType === 'NVME',
+
+            // tambahan keluhan (opsional)
+            'issue_note'      => $this->norm($request->input('issue_note')),
+            'issue_image_uri' => $issueImageUri, // URL hasil upload (atau null)
         ];
     }
 
-    // Membandingkan spec asset yang udah tersimpan dengan input baru
     private function isSameSpec(?AssetsSpecifications $latest, array $payload): bool
     {
         if (!$latest) return false;
@@ -76,7 +77,6 @@ class AssetCheckController extends Controller
         );
     }
 
-    // Menentukan harga sparepart dari database
     private function findSparepartPrice(string $category, string $type, int $size): ?float
     {
         $price = Sparepart::where('category', $category)
@@ -88,13 +88,11 @@ class AssetCheckController extends Controller
         return $price === null ? null : (float) $price;
     }
 
-    // Untuk mencegah error formating harga saat ditampilkan di UI
     private function priceOrZero(?float $price): float
     {
         return $price === null ? 0.0 : (float) $price;
     }
 
-    // Mengubah isi teks kolom action menjadi format bullets di UI
     private function asBullets(string $text): string
     {
         $t = trim($text);
@@ -107,7 +105,6 @@ class AssetCheckController extends Controller
         return "• " . implode("\n• ", $lines);
     }
 
-    // Memastikan tidak ada action yang sama muncul 2x
     private function uniqueLines(array $lines): array
     {
         $seen = [];
@@ -123,7 +120,6 @@ class AssetCheckController extends Controller
         return $out;
     }
 
-    // Membaca kolom action di tabel recommendations berdasarkan category dan priority level, lalu digabung jadi teks multiline
     private function getRecommendationActionRaw(string $cat, int $priorLevel): string
     {
         if ($priorLevel <= 0) return '-';
@@ -140,12 +136,10 @@ class AssetCheckController extends Controller
         return count($rows) ? implode("\n", $rows) : '-';
     }
 
-    // Rule tambahan untuk storage
     private function buildStorageActionRaw(string $baseActionRaw, ?string $storageType, int $currentStorageGb): string
     {
         $actions = [];
 
-        // ambil semua action dari master
         $base = trim((string) $baseActionRaw);
         if ($base !== '' && $base !== '-') {
             foreach (preg_split("/\r\n|\n|\r/", $base) ?: [] as $ln) {
@@ -154,22 +148,18 @@ class AssetCheckController extends Controller
             }
         }
 
-        // kalau tipe storage hdd kasih rekomendasi ganti jadi ssd
         if (strtoupper((string) $storageType) === 'HDD') {
             array_unshift($actions, 'Ganti jadi SSD');
         }
 
-        // kalau kapasitas storage di spec sudah maks
         if ($currentStorageGb >= self::STORAGE_MAX_GB) {
             array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan');
         }
 
-        // semua action digabung
         $actions = $this->uniqueLines($actions);
         return count($actions) ? implode("\n", $actions) : '-';
     }
 
-    // Untuk menentukan target upgrade RAM
     private function resolveRamUpgradeMeta(Asset $asset, AssetsSpecifications $spec, int $priorRam): array
     {
         $meta = ['type' => null, 'size' => 0];
@@ -219,7 +209,6 @@ class AssetCheckController extends Controller
         return $meta;
     }
 
-    // Untuk menentukan target upgrade storage
     private function resolveStorageUpgradeMeta(AssetsSpecifications $spec, int $priorStorage): array
     {
         $meta = ['type' => null, 'size' => 0];
@@ -258,44 +247,16 @@ class AssetCheckController extends Controller
                 $bestType = $type;
                 continue;
             }
-
-            // size sama
-            if ($size === $bestSize) {
-                $candidate = $type;
-
-                // SAME_AS_SPEC > currentType > other
-                $score = function($t) use ($currentType) {
-                    $t = strtoupper((string)$t);
-                    if ($t === 'SAME_AS_SPEC') return 3;
-                    if ($t === strtoupper($currentType)) return 2;
-                    if (in_array($t, ['SSD','NVME','HDD'], true)) return 1;
-                    return 0;
-                };
-
-                if ($score($candidate) > $score($bestType)) {
-                    $bestType = $candidate;
-                }
-            }
         }
 
-        // fallback size
         if ($bestSize <= 0) {
-            if (in_array($priorStorage, [4, 5], true)) {
-                $bestSize = $currentSize * 2;
-            } else {
-                $bestSize = $currentSize;
-            }
+            if (in_array($priorStorage, [4, 5], true)) $bestSize = $currentSize * 2;
+            else $bestSize = $currentSize;
         }
 
-        // resolve type
-        if (!$bestType || $bestType === 'SAME_AS_SPEC') {
-            $bestType = $currentType;
-        }
+        if (!$bestType || $bestType === 'SAME_AS_SPEC') $bestType = $currentType;
 
-        // HDD selalu ke SSD
-        if (strtoupper($currentType) === 'HDD') {
-            $bestType = 'SSD';
-        }
+        if (strtoupper($currentType) === 'HDD') $bestType = 'SSD';
 
         if ($bestSize > self::STORAGE_MAX_GB) $bestSize = self::STORAGE_MAX_GB;
 
@@ -305,7 +266,6 @@ class AssetCheckController extends Controller
         return $meta;
     }
 
-    // INDEX
     public function index(Request $request)
     {
         $this->authorize('viewAny', PerformanceReport::class);
@@ -338,7 +298,6 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.index', compact('assets', 'types'));
     }
 
-    // CREATE
     public function create(Asset $asset)
     {
         $this->authorize('create', PerformanceReport::class);
@@ -360,7 +319,6 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.create', compact('asset', 'latestSpec', 'questions', 'categories'));
     }
 
-    // STORE
     public function store(Request $request, Asset $asset)
     {
         $this->authorize('create', PerformanceReport::class);
@@ -373,6 +331,8 @@ class AssetCheckController extends Controller
             'storage'          => 'required|integer|min:0',
             'os_version'       => 'nullable|string|max:255',
             'answers'          => 'required|array|min:1',
+            'issue_note'       => 'nullable|string|max:5000',
+            'issue_image'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
         $allQuestions = IndicatorQuestion::select('id_question', 'category')->get();
@@ -419,22 +379,35 @@ class AssetCheckController extends Controller
         $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
-        // ACTION
-        $ramActionRaw = $this->getRecommendationActionRaw('RAM', $priorRam);
-        $cpuActionRaw = $this->getRecommendationActionRaw('CPU', $priorCpu);
+        $ramActionRaw         = $this->getRecommendationActionRaw('RAM', $priorRam);
+        $cpuActionRaw         = $this->getRecommendationActionRaw('CPU', $priorCpu);
         $storageBaseActionRaw = $this->getRecommendationActionRaw('STORAGE', $priorStorage);
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
             ->first();
 
-        // ambil storage type dari latest spec kalo user tidak isi category_storage
         $storageTypeForPayload = $request->input('category_storage');
         if (!$storageTypeForPayload && $latestSpec) {
             $storageTypeForPayload = $this->getStorageTypeFromSpec($latestSpec);
         }
 
-        $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload);
+        // Upload foto (opsional)
+        $issueImageUri = null;
+        if ($request->hasFile('issue_image')) {
+            $file = $request->file('issue_image');
+
+            $dir = 'asset_issues/' . $asset->id_asset . '/' . now()->format('Y-m');
+            $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
+
+            // simpan ke storage public (utk sementara)
+            $path = $file->storeAs($dir, $filename, 'public');
+
+            // simpan sebagai URL agar bisa langsung dipakai
+            $issueImageUri = Storage::disk('public')->url($path);
+        }
+
+        $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload, $issueImageUri);
 
         $report = DB::transaction(function () use (
             $asset,
@@ -450,8 +423,10 @@ class AssetCheckController extends Controller
         ) {
             $now = now();
 
-            // spec
-            if ($this->isSameSpec($latestSpec, $specPayload)) {
+            // karena keluhan bersifat historis, buat row baru jika ada issue_note / issue_image_uri
+            $hasIssue = !empty($specPayload['issue_note']) || !empty($specPayload['issue_image_uri']);
+
+            if (!$hasIssue && $this->isSameSpec($latestSpec, $specPayload)) {
                 $spec = $latestSpec;
             } else {
                 $spec = AssetsSpecifications::create(array_merge($specPayload, [
@@ -459,7 +434,6 @@ class AssetCheckController extends Controller
                 ]));
             }
 
-            // STORAGE action
             $storageType = $this->getStorageTypeFromSpec($spec);
             $currentStorageGb = (int) $spec->storage;
 
@@ -469,12 +443,9 @@ class AssetCheckController extends Controller
                 $currentStorageGb
             );
 
-            // simpan action
             $recRamFinal     = $this->asBullets($ramActionRaw);
             $recCpuFinal     = $this->asBullets($cpuActionRaw);
             $recStorageFinal = $this->asBullets($storageActionRawFinal);
-
-            // ESTIMASI HARGA
 
             // RAM
             $upgradeRamPrice = null;
@@ -483,7 +454,7 @@ class AssetCheckController extends Controller
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramMeta['type'], (int)$ramMeta['size']);
             }
 
-            // STORAGE: hanya hitung kalau priority 4 atau 5
+            // STORAGE hanya hitung kalau priority 4 atau 5
             $upgradeStoragePrice = null;
             if (in_array($priorStorage, [4, 5], true)) {
                 $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
@@ -492,7 +463,6 @@ class AssetCheckController extends Controller
                 }
             }
 
-            // Simpan Report
             $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
@@ -508,7 +478,6 @@ class AssetCheckController extends Controller
 
                 'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
 
-                // STORAGE: kalau < 4 simpan NULL
                 'upgrade_storage_price' => in_array($priorStorage, [4, 5], true)
                     ? $this->priceOrZero($upgradeStoragePrice)
                     : null,
@@ -534,14 +503,11 @@ class AssetCheckController extends Controller
             ->with('success', 'Pengecekan asset berhasil diproses.');
     }
 
-    // SHOW
     public function show(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('view', $report);
 
-        if ((int)$report->id_asset !== (int)$asset->id_asset) {
-            abort(404);
-        }
+        if ((int)$report->id_asset !== (int)$asset->id_asset) abort(404);
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
@@ -556,14 +522,11 @@ class AssetCheckController extends Controller
         return view('admin.asset_checks.show', compact('asset', 'report', 'latestSpec', 'history'));
     }
 
-    // DESTROY REPORT
     public function destroyReport(Asset $asset, PerformanceReport $report)
     {
         $this->authorize('delete', $report);
 
-        if ((int)$report->id_asset !== (int)$asset->id_asset) {
-            abort(404);
-        }
+        if ((int)$report->id_asset !== (int)$asset->id_asset) abort(404);
 
         $report->delete();
 
@@ -572,7 +535,6 @@ class AssetCheckController extends Controller
             ->with('success', 'Report pengecekan berhasil dihapus.');
     }
 
-    // HISTORY
     public function history(Asset $asset)
     {
         $this->authorize('viewAny', PerformanceReport::class);
