@@ -39,6 +39,24 @@
             background: #fff;
         }
 
+            .footer-signature {
+        position: fixed;
+        bottom: 40px;
+        right: 60px;
+        text-align: center;
+        width: 260px;
+    }
+
+    .footer-signature .printed {
+        font-size: 11px;
+    }
+
+    .signature-name {
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 60px; /* INI YANG BUAT SPACE */
+    }
+
         a { color: #0d6efd; text-decoration: underline; }
     </style>
 </head>
@@ -119,7 +137,6 @@
 @endphp
 
 <div class="title">Report Pengecekan Asset</div>
-<div class="muted">Dicetak: {{ now()->format('d/m/Y H:i') }}</div>
 
 <table>
     <tr><th>Kode BMN</th><td>{{ $asset->bmn_code ?? '-' }}</td></tr>
@@ -194,7 +211,20 @@
             <div class="muted">-</div>
         @endif
     </div>
-</div>
+    </div> <!-- penutup box terakhir -->
+
+    <div class="footer-signature">
+        <div class="printed">
+            Dibuat pada tanggal {{ now()->format('d/m/Y') }}
+        </div>
+
+        <div class="signature-name">
+            ( Oleh Tim Prakom BPS DKI Jakarta )
+        </div>
+    </div>
+
+</body>
+</html>
 
 </body>
 </html>
