@@ -54,10 +54,8 @@ class AssetCheckController extends Controller
             'is_hdd'          => $storageType === 'HDD',
             'is_ssd'          => $storageType === 'SSD',
             'is_nvme'         => $storageType === 'NVME',
-
-            // tambahan keluhan (opsional)
             'issue_note'      => $this->norm($request->input('issue_note')),
-            'issue_image_uri' => $issueImageUri, // URL hasil upload (atau null)
+            'issue_image_uri' => $issueImageUri,
         ];
     }
 

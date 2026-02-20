@@ -18,7 +18,7 @@ class ReportController extends Controller
 
     public function index(Request $request)
     {
-$this->authorize('viewAny', PerformanceReport::class);
+        $this->authorize('viewAny', PerformanceReport::class);
 
         $q = trim((string) $request->get('q', ''));
         $typeId = $request->get('id_type');

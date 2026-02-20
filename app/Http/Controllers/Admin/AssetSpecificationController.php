@@ -336,7 +336,6 @@ class AssetCheckController extends Controller
 
         $categories = ['RAM', 'STORAGE', 'CPU'];
 
-        // issue_note & issue_image tidak di-load ke form
         return view('admin.asset_checks.create', compact('asset', 'latestSpec', 'questions', 'categories'));
     }
 
@@ -417,7 +416,7 @@ class AssetCheckController extends Controller
 
         $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload);
 
-        // keluhan/catatan tambahan opsional
+        // keluhan/catatan tambahan
         $issueNote = $this->norm($request->input('issue_note'));
         $issueImageUri = null;
 
@@ -427,7 +426,7 @@ class AssetCheckController extends Controller
             $dir = 'asset_issues/' . $asset->id_asset . '/' . now()->format('Y-m');
             $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
 
-            $path = $file->storeAs($dir, $filename, 'public'); // contoh: asset_issues/1/2026-02/xxx.jpg
+            $path = $file->storeAs($dir, $filename, 'public');
             $issueImageUri = asset('storage/' . $path);
         }
 
