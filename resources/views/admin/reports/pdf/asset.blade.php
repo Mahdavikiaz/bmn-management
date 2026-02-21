@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Report Asset</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color:#111; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color:#111; }
         .title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
         .muted { color: #666; }
 
@@ -19,12 +19,28 @@
             border-radius: 4px;
         }
 
+        .additional-box {
+            border: 1px solid #ddd;
+            padding: 9px;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+
         .section-title { font-weight: 700; margin-bottom: 6px; }
         .pre { white-space: pre-line; line-height: 1.4; }
 
         .row { margin-top: 6px; }
         .label { font-weight: 700; }
         .small { font-size: 10px; color:#444; }
+
+        /* Gap di atas label tindakan */
+        .action-label { margin-top: 10px; }
+
+        /* Penjelasan jadi justify */
+        .explain {
+            text-align: justify;
+            text-justify: inter-word;
+        }
 
         /* Preview image */
         .img-wrap { margin-top: 6px; }
@@ -39,25 +55,36 @@
             background: #fff;
         }
 
-            .footer-signature {
-        position: fixed;
-        bottom: 40px;
-        right: 60px;
-        text-align: center;
-        width: 260px;
-    }
-
-    .footer-signature .printed {
-        font-size: 11px;
-    }
-
-    .signature-name {
-        font-size: 11px;
-        font-weight: 600;
-        margin-top: 60px; /* INI YANG BUAT SPACE */
-    }
-
         a { color: #0d6efd; text-decoration: underline; }
+
+        /* ===== SIGNATURE ONLY LAST PAGE (DOMPDF FRIENDLY) ===== */
+
+        /* ruang kosong untuk “mendorong” signature ke bawah */
+        .signature-spacer{
+            height: 220px;              /* NAik/turunin angka ini */
+        }
+
+        /* signature block (flow normal) */
+        .footer-signature{
+            text-align: right;          /* pojok kanan */
+            page-break-inside: avoid;
+        }
+
+        .footer-signature .sign-box{
+            display: inline-block;
+            width: 260px;
+            text-align: center;         /* teks dalam kotak center */
+        }
+
+        .footer-signature .printed{
+            font-size: 11px;
+        }
+
+        .signature-name{
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 60px;           /* space tanda tangan */
+        }
     </style>
 </head>
 <body>
@@ -119,7 +146,6 @@
     $issueImageUri = isset($spec) ? trim((string)$spec->issue_image_uri) : '';
     $issueImageUri = $issueImageUri !== '' ? $issueImageUri : '';
 
-    // kalau file ada di public/storage, bisa render file path lokal
     $issueImageLocalPath = null;
     if ($issueImageUri !== '') {
         $path = parse_url($issueImageUri, PHP_URL_PATH);
@@ -165,30 +191,27 @@
 
     <div class="row">
         <div class="label">RAM</div>
-        <div class="label small">Tindakan</div>
+        <div class="pre explain">{{ $ramExplain }}</div>
+        <div class="label small action-label">Saran Tindakan untuk RAM :</div>
         <div class="pre">{{ $cleanBullets($report->recommendation_ram) }}</div>
-        <div class="label small" style="margin-top:6px;">Penjelasan</div>
-        <div class="pre">{{ $ramExplain }}</div>
     </div>
 
-    <div class="row" style="margin-top:10px;">
+    <div class="row" style="margin-top:20px;">
         <div class="label">Storage</div>
-        <div class="label small">Tindakan</div>
+        <div class="pre explain">{{ $stoExplain }}</div>
+        <div class="label small action-label">Saran Tindakan untuk Storage :</div>
         <div class="pre">{{ $cleanBullets($report->recommendation_storage) }}</div>
-        <div class="label small" style="margin-top:6px;">Penjelasan</div>
-        <div class="pre">{{ $stoExplain }}</div>
     </div>
 
-    <div class="row" style="margin-top:10px;">
+    <div class="row" style="margin-top:20px;">
         <div class="label">CPU</div>
-        <div class="label small">Tindakan</div>
+        <div class="pre explain">{{ $cpuExplain }}</div>
+        <div class="label small action-label">Saran Tindakan untuk CPU :</div>
         <div class="pre">{{ $cleanBullets($report->recommendation_processor) }}</div>
-        <div class="label small" style="margin-top:6px;">Penjelasan</div>
-        <div class="pre">{{ $cpuExplain }}</div>
     </div>
 </div>
 
-<div class="box">
+<div class="additional-box">
     <div class="section-title">Keluhan / Catatan Tambahan</div>
     <div class="pre">{{ $issueNote }}</div>
 
@@ -211,20 +234,22 @@
             <div class="muted">-</div>
         @endif
     </div>
-    </div> <!-- penutup box terakhir -->
+</div>
 
-    <div class="footer-signature">
+<!-- Spacer supaya signature “turun” ke kanan bawah halaman terakhir -->
+<div class="signature-spacer"></div>
+
+<div class="footer-signature">
+    <div class="sign-box">
         <div class="printed">
             Dibuat pada tanggal {{ now()->format('d/m/Y') }}
         </div>
 
         <div class="signature-name">
-            ( Oleh Tim Prakom BPS DKI Jakarta )
+            Oleh Tim Prakom BPS DKI Jakarta
         </div>
     </div>
-
-</body>
-</html>
+</div>
 
 </body>
 </html>
