@@ -6,7 +6,7 @@
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color:#111; }
         .title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .muted { color: #666; }
+        .muted { color: #666; margin-bottom: 8px; font-size: 9px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 8px; }
         th, td { border: 1px solid #ddd; padding: 7px; vertical-align: top; }
@@ -57,23 +57,21 @@
 
         a { color: #0d6efd; text-decoration: underline; }
 
-        /* ===== SIGNATURE ONLY LAST PAGE (DOMPDF FRIENDLY) ===== */
-
-        /* ruang kosong untuk “mendorong” signature ke bawah */
+        /* ===== SIGNATURE ONLY LAST PAGE ===== */
         .signature-spacer{
-            height: 220px;              /* NAik/turunin angka ini */
+            height: 220px; 
         }
 
-        /* signature block (flow normal) */
+        /* signature block */
         .footer-signature{
-            text-align: right;          /* pojok kanan */
+            text-align: right; 
             page-break-inside: avoid;
         }
 
         .footer-signature .sign-box{
             display: inline-block;
             width: 260px;
-            text-align: center;         /* teks dalam kotak center */
+            text-align: center;
         }
 
         .footer-signature .printed{
@@ -83,7 +81,7 @@
         .signature-name{
             font-size: 11px;
             font-weight: 600;
-            margin-top: 60px;           /* space tanda tangan */
+            margin-top: 60px;
         }
     </style>
 </head>
@@ -216,7 +214,7 @@
     <div class="pre">{{ $issueNote }}</div>
 
     <div class="row" style="margin-top:10px;">
-        <div class="label">Foto Keluhan</div>
+        <div class="label">Foto Kondisi Asset</div>
 
         @if($issueImageLocalPath)
             <div class="img-wrap">
@@ -237,7 +235,7 @@
 </div>
 
 <!-- Spacer supaya signature “turun” ke kanan bawah halaman terakhir -->
-<div class="signature-spacer"></div>
+{{-- <div class="signature-spacer"></div>
 
 <div class="footer-signature">
     <div class="sign-box">
@@ -249,7 +247,12 @@
             Oleh Tim Prakom BPS DKI Jakarta
         </div>
     </div>
-</div>
+</div> --}}
+
+<br>
+<br>
+<div class="muted">Dibuat pada : {{ now()->format('d/m/Y H:i') }},</div>
+<div class="muted">Oleh Tim Prakom BPS Provinsi DKI Jakarta</div>
 
 </body>
 </html>

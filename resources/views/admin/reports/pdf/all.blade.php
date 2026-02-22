@@ -97,8 +97,7 @@
 @endphp
 
 <div class="title">Rekap Report Pengecekan Asset</div>
-<div class="muted">Dicetak: {{ now()->format('d/m/Y H:i') }}</div>
-
+<br>
 <table>
     <thead>
         <tr>
@@ -115,9 +114,9 @@
 
             <th style="width: 85px;">Estimasi Upgrade RAM</th>
             <th style="width: 95px;">Estimasi Upgrade Storage</th>
-            <th style="width: 95px;">Total Estimasi</th>
+            <th style="width: 95px;">Total Estimasi Upgrade</th>
 
-            <th style="width: 90px;">Tanggal</th>
+            <th style="width: 90px;">Tanggal Pengecekan</th>
         </tr>
     </thead>
 
@@ -154,6 +153,8 @@
     @endforeach
     </tbody>
 </table>
+<br>
+<div class="muted">Dibuat oleh Tim Prakom BPS DKI Jakarta pada : {{ now()->format('d/m/Y H:i') }}</div>
 
 </body>
 </html>

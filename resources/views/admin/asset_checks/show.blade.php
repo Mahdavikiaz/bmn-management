@@ -486,7 +486,7 @@
                     </div>
                 </div>
 
-                {{-- KELUHAN & FOTO (preview kecil + tombol buka) --}}
+                {{-- KELUHAN & FOTO --}}
                 <div class="mt-4">
                     <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
                         <i class="bi bi-chat-left-text"></i> Keluhan / Catatan Tambahan
@@ -498,12 +498,12 @@
                     </div>
 
                     <div class="fw-semibold mt-3 mb-2 d-flex align-items-center gap-2">
-                        <i class="bi bi-image"></i> Foto Keluhan
+                        <i class="bi bi-image"></i> Foto Kondisi Asset
                     </div>
                     <div class="p-3 border rounded-4 bg-white">
                         @if($issueImageUi)
                             <div class="issue-img-wrap">
-                                <img src="{{ $issueImageUi }}" alt="Foto Keluhan" class="issue-img">
+                                <img src="{{ $issueImageUi }}" alt="Foto Kondisi Asset" class="issue-img">
                             </div>
 
                             <div class="mt-3">

@@ -77,6 +77,13 @@
                                required>
                     </div>
 
+                    <!-- GPU -->
+                    <div class="col-12">
+                        <label class="form-label">GPU</label>
+                        <input type="text" name="gpu" class="form-control"
+                               value="{{ old('gpu', $asset->gpu ?? '') }}">
+                    </div>
+
                     <div class="col-md-6">
                         <label class="form-label">RAM (GB)</label>
                         <input type="number" name="ram" class="form-control" min="0"
@@ -92,10 +99,13 @@
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label">OS Version (opsional)</label>
-                        <input type="text" name="os_version" class="form-control"
-                               value="{{ old('os_version', $latestSpec->os_version ?? '') }}"
-                               placeholder="Contoh: Windows 11 Pro">
+                        <label class="form-label">Tipe RAM</label>
+                        <select name="ram_type" class="form-select">
+                            <option value="">Pilih tipe RAM...</option>
+                            <option value="DDR3" {{ old('ram_type', $asset->ram_type ?? '') == 'DDR3' ? 'selected' : '' }}>DDR3</option>
+                            <option value="DDR4" {{ old('ram_type', $asset->ram_type ?? '') == 'DDR4' ? 'selected' : '' }}>DDR4</option>
+                            <option value="DDR5" {{ old('ram_type', $asset->ram_type ?? '') == 'DDR5' ? 'selected' : '' }}>DDR5</option>
+                        </select>
                     </div>
 
                     <div class="col-12">
@@ -103,6 +113,7 @@
                         @php
                             $oldType = old('category_storage');
                             $type = $oldType ?: (($latestSpec->is_nvme ?? false) ? 'NVME' : (($latestSpec->is_ssd ?? false) ? 'SSD' : (($latestSpec->is_hdd ?? false) ? 'HDD' : '')));
+
                         @endphp
                         <select name="category_storage" class="form-select">
                             <option value="">Pilih tipe...</option>
@@ -110,6 +121,13 @@
                             <option value="SSD" {{ $type==='SSD' ? 'selected' : '' }}>SSD</option>
                             <option value="NVME" {{ $type==='NVME' ? 'selected' : '' }}>NVMe</option>
                         </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">OS Version (opsional)</label>
+                        <input type="text" name="os_version" class="form-control"
+                               value="{{ old('os_version', $latestSpec->os_version ?? '') }}"
+                               placeholder="Contoh: Windows 11 Pro">
                     </div>
                 </div>
 
@@ -123,7 +141,6 @@
 
             {{-- TAB QUESTIONS --}}
             <div class="tab-pane fade" id="pane-q" role="tabpanel">
-
                 <div class="text-muted small mb-3">
                     Jawab semua pertanyaan. Setiap pilihan memiliki nilai bintang (A=5 … E=1).
                 </div>
@@ -188,7 +205,6 @@
 
             {{-- TAB ISSUE / KELUHAN --}}
             <div class="tab-pane fade" id="pane-issue" role="tabpanel">
-
                 <div class="text-muted small mb-3">
                     Isi field di bawah ini jika ada keluhan/permasalahan lain terkait device. Foto digunakan untuk validasi kondisi fisik.
                 </div>
@@ -202,7 +218,6 @@
 
                     <div class="col-12">
                         <label class="form-label">Upload Foto Keluhan (opsional)</label>
-                        {{-- tidak auto-load dari spec lama --}}
                         <input type="file" name="issue_image" class="form-control" accept="image/*">
                         <div class="form-text mt-2">
                             Format: JPG/JPEG/PNG. Maksimal 5MB.

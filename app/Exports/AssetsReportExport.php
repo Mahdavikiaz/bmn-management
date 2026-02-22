@@ -94,6 +94,8 @@ class AssetsReportExport extends StringValueBinder implements
             'Estimasi Upgrade RAM',
             'Estimasi Upgrade Storage',
             'Total Estimasi Harga Upgrade',
+            'Catatan/Keluhan Tambahan',
+            'Foto Kondisi Asset',
         ];
     }
 
@@ -140,7 +142,9 @@ class AssetsReportExport extends StringValueBinder implements
 
             $this->fmtPrice($r?->upgrade_ram_price),
             $this->fmtPrice($r?->upgrade_storage_price),
-            $this->fmtPrice(($r?->upgrade_ram_price + $r?->upgrade_storage_price))
+            $this->fmtPrice(($r?->upgrade_ram_price + $r?->upgrade_storage_price)),
+            $spec?->issue_note ?? '-',
+            $spec?->issue_image_uri ?? '-',
         ];
     }
 

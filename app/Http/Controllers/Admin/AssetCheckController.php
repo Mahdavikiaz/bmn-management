@@ -328,6 +328,8 @@ class AssetCheckController extends Controller
             'ram'              => 'required|integer|min:0',
             'storage'          => 'required|integer|min:0',
             'os_version'       => 'nullable|string|max:255',
+            'gpu'              => 'nullable|string|max:255',
+            'ram_type'         => 'nullable|in:DDR3,DDR4,DDR5',
             'answers'          => 'required|array|min:1',
             'issue_note'       => 'nullable|string|max:5000',
             'issue_image'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
@@ -406,6 +408,12 @@ class AssetCheckController extends Controller
         }
 
         $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload, $issueImageUri);
+
+        // Update atau Insert data GPU dan RAM Type ke dalam tabel Asset
+        $asset->update([ 
+            'gpu' => $this->norm($request->gpu),
+            'ram_type' => $this->norm($request->ram_type),
+        ]);
 
         $report = DB::transaction(function () use (
             $asset,
