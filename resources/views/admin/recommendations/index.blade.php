@@ -91,9 +91,9 @@
 </style>
 
 <div class="mb-3">
-    <h4 class="mb-1">Daftar Rekomendasi</h4>
+    <h4 class="mb-3">Daftar Rekomendasi</h4>
     <div class="text-muted small">
-        Menampilkan daftar rekomendasi
+        Menampilkan daftar rekomendasi yang akan diberikan setelah pengecekan asset
     </div>
 </div>
 

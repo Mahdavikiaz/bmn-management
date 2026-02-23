@@ -41,8 +41,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
-        <h4 class="mb-1">Daftar Tipe Asset</h4>
-        <div class="text-muted small">Menampilkan daftar tipe asset</div>
+        <h4 class="mb-3">Daftar Tipe Asset</h4>
+        <div class="text-muted small">Menampilkan daftar kategori tipe asset</div>
     </div>
 
     <div class="d-flex gap-2">

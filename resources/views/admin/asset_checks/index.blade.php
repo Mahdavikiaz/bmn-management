@@ -58,9 +58,9 @@
 </style>
 
 <div class="mb-3">
-    <h4 class="mb-1">Pengecekan Asset</h4>
+    <h4 class="mb-3">Pengecekan Asset</h4>
     <div class="text-muted small">
-        Menampilkan pengecekan asset
+        Halaman untuk melakukan pengecekan pada asset
     </div>
 </div>
 

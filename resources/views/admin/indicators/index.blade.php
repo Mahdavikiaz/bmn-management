@@ -57,9 +57,9 @@
 </style>
 
 <div class="mb-3">
-    <h4 class="mb-1">Daftar Indikator</h4>
+    <h4 class="mb-3">Daftar Indikator</h4>
     <div class="text-muted small">
-        Menampilkan daftar indikator
+        Menampilkan daftar indikator penilaian untuk asset
     </div>
 </div>
 

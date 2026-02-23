@@ -11,9 +11,9 @@
 
 <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
 
-    {{-- KIRI : TITLE + FILTER --}}
+    {{-- TITLE + FILTER --}}
     <div class="flex-grow-1">
-        <h4 class="mb-2">Report Hasil Pengecekan Asset</h4>
+        <h4 class="mb-3">Report Hasil Pengecekan Asset</h4>
         <div class="text-muted small mb-3">
             Menampilkan asset yang sudah memiliki report (hasil pengecekan terakhir).
         </div>

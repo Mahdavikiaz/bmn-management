@@ -39,7 +39,7 @@
     </style>
 
     <div class="mb-3">
-        <h4 class="mb-1">Daftar User</h4>
+        <h4 class="mb-3">Daftar User</h4>
         <div class="text-muted small">
             Menampilkan daftar user
         </div>
