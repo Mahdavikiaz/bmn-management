@@ -1,7 +1,13 @@
 <aside class="bg-white border-end vh-100 d-flex flex-column sidebar">
 
-    <div class="p-3 fw-bold fs-5 text-center text-primary">
-        SIMANIS
+    <div class="p-3 d-flex align-items-center justify-content-center gap-2">
+        <img src="{{ asset('images/logo3.png') }}"
+            alt="Logo"
+            style="height: 40px; width: auto;">
+
+        <span class="fw-bold fs-5 text-primary">
+            SIMANIS
+        </span>
     </div>
 
     <div class="flex-grow-1 p-3">

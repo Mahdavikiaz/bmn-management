@@ -59,12 +59,12 @@
 
         /* ===== SIGNATURE ONLY LAST PAGE ===== */
         .signature-spacer{
-            height: 220px; 
+            height: 220px;
         }
 
         /* signature block */
         .footer-signature{
-            text-align: right; 
+            text-align: right;
             page-break-inside: avoid;
         }
 
@@ -252,7 +252,7 @@
 <br>
 <br>
 <div class="muted">Dibuat pada : {{ now()->format('d/m/Y H:i') }},</div>
-<div class="muted">Oleh Tim Prakom BPS Provinsi DKI Jakarta</div>
+<div class="muted">Oleh Tim IT BPS Provinsi DKI Jakarta</div>
 
 </body>
 </html>
