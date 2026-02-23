@@ -4,577 +4,157 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
-use App\Models\AssetType;
 use App\Models\AssetsSpecifications;
-use App\Models\IndicatorAnswer;
-use App\Models\IndicatorOption;
-use App\Models\IndicatorQuestion;
-use App\Models\PerformanceReport;
-use App\Models\Recommendation;
-use App\Models\Sparepart;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
-class AssetCheckController extends Controller
+class AssetSpecificationController extends Controller
 {
     use AuthorizesRequests;
 
-    private const STORAGE_MAX_GB = 2048;
-
-    private function norm(?string $v): ?string
+    public function index(Asset $asset)
     {
-        if ($v === null) return null;
-        $v = trim($v);
-        return $v === '' ? null : $v;
-    }
+        $this->authorize('update', $asset);
 
-    private function getStorageTypeFromSpec(AssetsSpecifications $spec): ?string
-    {
-        if ($spec->is_nvme) return 'NVME';
-        if ($spec->is_ssd)  return 'SSD';
-        if ($spec->is_hdd)  return 'HDD';
-        return null;
-    }
-
-    private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null): array
-    {
-        $storageType = $storageTypeOverride ?: $request->input('category_storage');
-
-        return [
-            'id_asset'    => $asset->id_asset,
-            'owner_asset' => $this->norm($request->owner_asset),
-            'processor'   => $this->norm($request->processor),
-            'ram'         => (int) $request->ram,
-            'storage'     => (int) $request->storage,
-            'os_version'  => $this->norm($request->os_version),
-            'is_hdd'      => $storageType === 'HDD',
-            'is_ssd'      => $storageType === 'SSD',
-            'is_nvme'     => $storageType === 'NVME',
-        ];
-    }
-
-    // Membandingkan spec asset yang udah tersimpan dengan input baru
-    private function isSameSpec(?AssetsSpecifications $latest, array $payload): bool
-    {
-        if (!$latest) return false;
-
-        return (
-            $this->norm($latest->owner_asset)  === $payload['owner_asset'] &&
-            $this->norm($latest->processor)    === $payload['processor'] &&
-            (int) $latest->ram                 === (int) $payload['ram'] &&
-            (int) $latest->storage             === (int) $payload['storage'] &&
-            $this->norm($latest->os_version)   === $payload['os_version'] &&
-            (bool) $latest->is_hdd             === (bool) $payload['is_hdd'] &&
-            (bool) $latest->is_ssd             === (bool) $payload['is_ssd'] &&
-            (bool) $latest->is_nvme            === (bool) $payload['is_nvme']
-        );
-    }
-
-    private function findSparepartPrice(string $category, string $type, int $size): ?float
-    {
-        $price = Sparepart::where('category', $category)
-            ->where('sparepart_type', strtoupper($type))
-            ->where('size', $size)
-            ->orderBy('price')
-            ->value('price');
-
-        return $price === null ? null : (float) $price;
-    }
-
-    private function priceOrZero(?float $price): float
-    {
-        return $price === null ? 0.0 : (float) $price;
-    }
-
-    private function asBullets(string $text): string
-    {
-        $t = trim($text);
-        if ($t === '' || $t === '-') return '-';
-
-        $lines = preg_split("/\r\n|\n|\r/", $t) ?: [$t];
-        $lines = array_values(array_filter(array_map('trim', $lines), fn($x) => $x !== ''));
-
-        if (!count($lines)) return '-';
-        return "• " . implode("\n• ", $lines);
-    }
-
-    private function uniqueLines(array $lines): array
-    {
-        $seen = [];
-        $out = [];
-        foreach ($lines as $ln) {
-            $ln = trim((string) $ln);
-            if ($ln === '' || $ln === '-') continue;
-            $key = mb_strtolower($ln);
-            if (isset($seen[$key])) continue;
-            $seen[$key] = true;
-            $out[] = $ln;
-        }
-        return $out;
-    }
-
-    private function getRecommendationActionRaw(string $cat, int $priorLevel): string
-    {
-        if ($priorLevel <= 0) return '-';
-
-        $rows = Recommendation::where('category', $cat)
-            ->where('priority_level', $priorLevel)
-            ->orderBy('id_recommendation')
-            ->pluck('action')
-            ->map(fn($x) => trim((string) $x))
-            ->filter(fn($x) => $x !== '')
-            ->values()
-            ->all();
-
-        return count($rows) ? implode("\n", $rows) : '-';
-    }
-
-    private function buildStorageActionRaw(string $baseActionRaw, ?string $storageType, int $currentStorageGb): string
-    {
-        $actions = [];
-
-        $base = trim((string) $baseActionRaw);
-        if ($base !== '' && $base !== '-') {
-            foreach (preg_split("/\r\n|\n|\r/", $base) ?: [] as $ln) {
-                $ln = trim($ln);
-                if ($ln !== '') $actions[] = $ln;
-            }
-        }
-
-        if (strtoupper((string) $storageType) === 'HDD') {
-            array_unshift($actions, 'Ganti jadi SSD');
-        }
-
-        if ($currentStorageGb >= self::STORAGE_MAX_GB) {
-            array_unshift($actions, 'Kapasitas Storage sudah maksimal, silakan hapus berbagai software yang tidak digunakan');
-        }
-
-        $actions = $this->uniqueLines($actions);
-        return count($actions) ? implode("\n", $actions) : '-';
-    }
-
-    private function resolveRamUpgradeMeta(Asset $asset, AssetsSpecifications $spec, int $priorRam): array
-    {
-        $meta = ['type' => null, 'size' => 0];
-        if ($priorRam <= 0) return $meta;
-
-        $rows = Recommendation::where('category', 'RAM')
-            ->where('priority_level', $priorRam)
-            ->orderBy('id_recommendation')
-            ->get(['target_type', 'size_mode', 'target_size_gb', 'target_multiplier']);
-
-        $bestSize = 0;
-        $bestType = null;
-
-        foreach ($rows as $r) {
-            $mode = $r->size_mode ? trim((string)$r->size_mode) : null;
-            if (!$mode) continue;
-
-            $type = $r->target_type ? strtoupper(trim((string)$r->target_type)) : null;
-
-            $size = 0;
-            if ($mode === 'fixed') {
-                $size = (int) ($r->target_size_gb ?? 0);
-            } elseif ($mode === 'multiplier') {
-                $mul = (float) ($r->target_multiplier ?? 0);
-                if ($mul > 0) $size = (int) round(((int)$spec->ram) * $mul);
-            }
-
-            if ($size > $bestSize) {
-                $bestSize = $size;
-                $bestType = $type;
-            }
-        }
-
-        if ($bestSize <= 0) {
-            $map = [3 => 4, 4 => 8, 5 => 16];
-            $bestSize = $map[$priorRam] ?? 0;
-            $bestType = 'SAME_AS_SPEC';
-        }
-
-        if ($bestType === 'SAME_AS_SPEC' || !$bestType) {
-            $bestType = $asset->ram_type ? strtoupper($asset->ram_type) : null;
-        }
-
-        $meta['type'] = $bestType;
-        $meta['size'] = max(0, (int)$bestSize);
-
-        return $meta;
-    }
-
-    private function resolveStorageUpgradeMeta(AssetsSpecifications $spec, int $priorStorage): array
-    {
-        $meta = ['type' => null, 'size' => 0];
-        if ($priorStorage <= 0) return $meta;
-
-        $currentType = $this->getStorageTypeFromSpec($spec);
-        $currentSize = (int) $spec->storage;
-        if (!$currentType || $currentSize <= 0) return $meta;
-
-        $rows = Recommendation::where('category', 'STORAGE')
-            ->where('priority_level', $priorStorage)
-            ->orderBy('id_recommendation')
-            ->get(['target_type', 'size_mode', 'target_size_gb', 'target_multiplier']);
-
-        $bestType = null;
-        $bestSize = 0;
-
-        foreach ($rows as $r) {
-            $mode = $r->size_mode ? trim((string)$r->size_mode) : null;
-            if (!$mode) continue;
-
-            $type = $r->target_type ? strtoupper(trim((string)$r->target_type)) : null;
-
-            $size = 0;
-            if ($mode === 'fixed') {
-                $size = (int) ($r->target_size_gb ?? 0);
-            } elseif ($mode === 'multiplier') {
-                $mul = (float) ($r->target_multiplier ?? 0);
-                if ($mul > 0) $size = (int) round($currentSize * $mul);
-            }
-
-            if ($size <= 0) continue;
-
-            if ($size > $bestSize) {
-                $bestSize = $size;
-                $bestType = $type;
-                continue;
-            }
-
-            if ($size === $bestSize) {
-                $candidate = $type;
-
-                $score = function($t) use ($currentType) {
-                    $t = strtoupper((string)$t);
-                    if ($t === 'SAME_AS_SPEC') return 3;
-                    if ($t === strtoupper($currentType)) return 2;
-                    if (in_array($t, ['SSD','NVME','HDD'], true)) return 1;
-                    return 0;
-                };
-
-                if ($score($candidate) > $score($bestType)) {
-                    $bestType = $candidate;
-                }
-            }
-        }
-
-        if ($bestSize <= 0) {
-            if (in_array($priorStorage, [4, 5], true)) {
-                $bestSize = $currentSize * 2;
-            } else {
-                $bestSize = $currentSize;
-            }
-        }
-
-        if (!$bestType || $bestType === 'SAME_AS_SPEC') {
-            $bestType = $currentType;
-        }
-
-        if (strtoupper($currentType) === 'HDD') {
-            $bestType = 'SSD';
-        }
-
-        if ($bestSize > self::STORAGE_MAX_GB) $bestSize = self::STORAGE_MAX_GB;
-
-        $meta['type'] = $bestType;
-        $meta['size'] = max(0, (int)$bestSize);
-
-        return $meta;
-    }
-
-    public function index(Request $request)
-    {
-        $this->authorize('viewAny', PerformanceReport::class);
-
-        $q = trim((string) $request->get('q', ''));
-        $typeId = $request->get('id_type');
-
-        $assetsQuery = Asset::query()
-            ->with(['latestPerformanceReport', 'type'])
-            ->withCount('performanceReports');
-
-        if ($q !== '') {
-            $assetsQuery->where(function ($w) use ($q) {
-                $w->where('bmn_code', 'like', "%{$q}%")
-                    ->orWhere('device_name', 'like', "%{$q}%");
-            });
-        }
-
-        if (!empty($typeId)) {
-            $assetsQuery->where('id_type', (int) $typeId);
-        }
-
-        $assets = $assetsQuery
-            ->latest('id_asset')
-            ->paginate(10)
-            ->withQueryString();
-
-        $types = AssetType::orderBy('type_name')->get();
-
-        return view('admin.asset_checks.index', compact('assets', 'types'));
-    }
-
-    public function create(Asset $asset)
-    {
-        $this->authorize('create', PerformanceReport::class);
-
-        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
+        // Get history specs terbaru
+        $specs = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
-            ->first();
-
-        $questions = IndicatorQuestion::with(['options' => function ($q) {
-            $q->orderBy('label');
-        }])
-            ->orderBy('category')
-            ->orderBy('id_question')
-            ->get()
-            ->groupBy('category');
-
-        $categories = ['RAM', 'STORAGE', 'CPU'];
-
-        return view('admin.asset_checks.create', compact('asset', 'latestSpec', 'questions', 'categories'));
-    }
-
-    public function store(Request $request, Asset $asset)
-    {
-        $this->authorize('create', PerformanceReport::class);
-
-        $request->validate([
-            'category_storage' => 'nullable|in:HDD,SSD,NVME',
-            'owner_asset'      => 'required|string|max:255',
-            'processor'        => 'required|string|max:255',
-            'ram'              => 'required|integer|min:0',
-            'storage'          => 'required|integer|min:0',
-            'os_version'       => 'nullable|string|max:255',
-            'answers'          => 'required|array|min:1',
-            'issue_note'       => 'nullable|string|max:5000',
-            'issue_image'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:4096',
-        ]);
-
-        $allQuestions = IndicatorQuestion::select('id_question', 'category')->get();
-        foreach ($allQuestions as $q) {
-            if (!$request->filled("answers.{$q->id_question}")) {
-                return back()
-                    ->withErrors(['answers' => 'Semua pertanyaan wajib dijawab.'])
-                    ->withInput();
-            }
-        }
-
-        $selectedOptionIds = array_values($request->input('answers', []));
-        $selectedOptions = IndicatorOption::with('question')
-            ->whereIn('id_option', $selectedOptionIds)
             ->get();
 
-        if ($selectedOptions->count() !== count($selectedOptionIds)) {
-            return back()
-                ->withErrors(['answers' => 'Ada jawaban yang tidak valid.'])
-                ->withInput();
-        }
+        // Spec terbaru bisa null
+        $latestSpec = $specs->first();
 
-        $mapAnswers = $request->input('answers', []);
-        foreach ($selectedOptions as $opt) {
-            $qid = $opt->id_question;
-            if (!isset($mapAnswers[$qid]) || (int)$mapAnswers[$qid] !== (int)$opt->id_option) {
+        return view('admin.assets.specifications', compact('asset', 'latestSpec', 'specs'));
+    }
+
+    // Simpan spec baru buat history, row lama ga keubah
+    public function store(Request $request, Asset $asset)
+    {
+        $this->authorize('update', $asset);
+
+        // Ambil versi terbaru (bisa null)
+        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
+            ->orderByDesc('datetime')
+            ->first();
+
+        $validated = $request->validate([
+            'owner_asset' => ['nullable', 'string', 'max:255'],
+            'processor' => ['nullable', 'string', 'max:255'],
+            'ram' => ['nullable', 'integer', 'min:0'],
+            'storage' => ['nullable', 'integer', 'min:0'],
+            'os_version' => ['nullable', 'string', 'max:255'],
+            'is_hdd' => ['nullable', 'boolean'],
+            'is_ssd' => ['nullable', 'boolean'],
+            'is_nvme' => ['nullable', 'boolean'],
+        ]);
+
+        // Checkbox kalau ga dicentang field ga terkirim
+        $inputIsHdd  = $request->boolean('is_hdd');
+        $inputIsSsd  = $request->boolean('is_ssd');
+        $inputIsNvme = $request->boolean('is_nvme');
+
+        // Kalau field kosong, ambil dari latestSpec (kalau ada aja)
+        $newOwnerAsset = filled($validated['owner_asset'] ?? null)
+            ? $validated['owner_asset']
+            : ($latestSpec->processor ?? null);
+
+        $newProcessor = filled($validated['processor'] ?? null)
+            ? $validated['processor']
+            : ($latestSpec->processor ?? null);
+
+        // ram/storage bisa 0
+        $newRam = array_key_exists('ram', $validated) && $validated['ram'] !== null
+            ? (int)$validated['ram']
+            : ($latestSpec->ram ?? null);
+
+        $newStorage = array_key_exists('storage', $validated) && $validated['storage'] !== null
+            ? (int)$validated['storage']
+            : ($latestSpec->storage ?? null);
+
+        $newOs = filled($validated['os_version'] ?? null)
+            ? $validated['os_version']
+            : ($latestSpec->os_version ?? null);
+
+        // Checkbox karena form akan prefill (checked sesuai latest), ambil dari input aja
+        $newIsHdd  = $inputIsHdd;
+        $newIsSsd  = $inputIsSsd;
+        $newIsNvme = $inputIsNvme;
+
+        // Kalau belum ada latest, minimal harus isi 1 field (biar ga semua null)
+        if (!$latestSpec) {
+            $hasAny =
+                !is_null($newOwnerAsset) ||
+                !is_null($newProcessor) ||
+                !is_null($newRam) ||
+                !is_null($newStorage) ||
+                !is_null($newOs) ||
+                $newIsHdd || $newIsSsd || $newIsNvme;
+
+            if (!$hasAny) {
                 return back()
-                    ->withErrors(['answers' => 'Ada jawaban yang tidak cocok dengan pertanyaan.'])
+                    ->withErrors(['spec' => 'Isi minimal 1 field spesifikasi sebelum menyimpan.'])
+                    ->withInput();
+            }
+        } else {
+            // kalau udah ada latest, cek apakah ada perubahan dari latest
+            $isSame =
+                ($newOwnerAsset ?? '') === ($latestSpec->owner_asset ?? '') &&
+                ($newProcessor ?? '') === ($latestSpec->processor ?? '') &&
+                (int)($newRam ?? 0) === (int)($latestSpec->ram ?? 0) &&
+                (int)($newStorage ?? 0) === (int)($latestSpec->storage ?? 0) &&
+                ($newOs ?? '') === ($latestSpec->os_version ?? '') &&
+                (bool)$newIsHdd === (bool)$latestSpec->is_hdd &&
+                (bool)$newIsSsd === (bool)$latestSpec->is_ssd &&
+                (bool)$newIsNvme === (bool)$latestSpec->is_nvme;
+
+            if ($isSame) {
+                return back()
+                    ->withErrors(['spec' => 'Tidak ada perubahan. Silakan ubah minimal 1 field sebelum menyimpan versi baru.'])
                     ->withInput();
             }
         }
 
-        $avgByCat = $selectedOptions
-            ->groupBy(fn($o) => $o->question->category)
-            ->map(fn($items) => round($items->avg('star_value'), 2));
-
-        $prior = function (?float $avg): int {
-            if ($avg === null) return 0;
-            $p = (int) ceil((5 - $avg) + 1);
-            return max(1, min(5, $p));
-        };
-
-        $priorRam     = $prior($avgByCat['RAM'] ?? null);
-        $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
-        $priorCpu     = $prior($avgByCat['CPU'] ?? null);
-
-        // ACTION
-        $ramActionRaw         = $this->getRecommendationActionRaw('RAM', $priorRam);
-        $cpuActionRaw         = $this->getRecommendationActionRaw('CPU', $priorCpu);
-        $storageBaseActionRaw = $this->getRecommendationActionRaw('STORAGE', $priorStorage);
-
-        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
-            ->orderByDesc('datetime')
-            ->first();
-
-        // ambil storage type dari latest spec kalo user tidak isi category_storage
-        $storageTypeForPayload = $request->input('category_storage');
-        if (!$storageTypeForPayload && $latestSpec) {
-            $storageTypeForPayload = $this->getStorageTypeFromSpec($latestSpec);
-        }
-
-        $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload);
-
-        // keluhan/catatan tambahan
-        $issueNote = $this->norm($request->input('issue_note'));
-        $issueImageUri = null;
-
-        if ($request->hasFile('issue_image')) {
-            $file = $request->file('issue_image');
-
-            $dir = 'asset_issues/' . $asset->id_asset . '/' . now()->format('Y-m');
-            $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
-
-            $path = $file->storeAs($dir, $filename, 'public');
-            $issueImageUri = asset('storage/' . $path);
-        }
-
-        $hasIssueInput = !empty($issueNote) || !empty($issueImageUri);
-
-        $report = DB::transaction(function () use (
-            $asset,
-            $latestSpec,
-            $specPayload,
-            $selectedOptions,
-            $priorRam,
-            $priorStorage,
-            $priorCpu,
-            $ramActionRaw,
-            $cpuActionRaw,
-            $storageBaseActionRaw,
-            $issueNote,
-            $issueImageUri,
-            $hasIssueInput
-        ) {
-            $now = now();
-
-            if (!$hasIssueInput && $this->isSameSpec($latestSpec, $specPayload)) {
-                $spec = $latestSpec;
-            } else {
-                $spec = AssetsSpecifications::create(array_merge($specPayload, [
-                    'issue_note' => $issueNote,
-                    'issue_image_uri' => $issueImageUri,
-                    'datetime' => $now,
-                ]));
-            }
-
-            // STORAGE action
-            $storageType = $this->getStorageTypeFromSpec($spec);
-            $currentStorageGb = (int) $spec->storage;
-
-            $storageActionRawFinal = $this->buildStorageActionRaw(
-                $storageBaseActionRaw,
-                $storageType,
-                $currentStorageGb
-            );
-
-            // simpan action
-            $recRamFinal     = $this->asBullets($ramActionRaw);
-            $recCpuFinal     = $this->asBullets($cpuActionRaw);
-            $recStorageFinal = $this->asBullets($storageActionRawFinal);
-
-            // ESTIMASI HARGA
-            $upgradeRamPrice = null;
-            $ramMeta = $this->resolveRamUpgradeMeta($asset, $spec, $priorRam);
-            if (!empty($ramMeta['type']) && !empty($ramMeta['size'])) {
-                $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramMeta['type'], (int)$ramMeta['size']);
-            }
-
-            $upgradeStoragePrice = null;
-            if (in_array($priorStorage, [4, 5], true)) {
-                $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
-                if (!empty($stoMeta['type']) && !empty($stoMeta['size'])) {
-                    $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $stoMeta['type'], (int)$stoMeta['size']);
-                }
-            }
-
-            $report = PerformanceReport::create([
-                'id_user' => Auth::id(),
-                'id_asset' => $asset->id_asset,
-                'id_spec' => $spec->id_spec,
-
-                'prior_ram' => $priorRam,
-                'prior_storage' => $priorStorage,
-                'prior_processor' => $priorCpu,
-
-                'recommendation_ram' => $recRamFinal,
-                'recommendation_storage' => $recStorageFinal,
-                'recommendation_processor' => $recCpuFinal,
-
-                'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
-
-                'upgrade_storage_price' => in_array($priorStorage, [4, 5], true)
-                    ? $this->priceOrZero($upgradeStoragePrice)
-                    : null,
-
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
-
-            foreach ($selectedOptions as $opt) {
-                IndicatorAnswer::create([
-                    'id_option' => $opt->id_option,
-                    'id_spec' => $spec->id_spec,
-                    'star_rating' => $opt->star_value,
-                    'datetime' => $now,
-                ]);
-            }
-
-            return $report;
-        });
+        AssetsSpecifications::create([
+            'id_asset' => $asset->id_asset,
+            'owner_asset' => $newOwnerAsset ?? '',
+            'processor' => $newProcessor ?? '',
+            'ram' => $newRam ?? 0,
+            'storage' => $newStorage ?? 0,
+            'os_version' => $newOs ?? '',
+            'is_hdd' => (bool)$newIsHdd,
+            'is_ssd' => (bool)$newIsSsd,
+            'is_nvme' => (bool)$newIsNvme,
+            'datetime' => now(),
+        ]);
 
         return redirect()
-            ->route('admin.asset-checks.show', [$asset->id_asset, $report->id_report])
-            ->with('success', 'Pengecekan asset berhasil diproses.');
+            ->route('admin.assets.specifications.index', $asset->id_asset)
+            ->with('success', 'Spesifikasi berhasil ditambahkan (versi baru).');
     }
 
-    public function show(Asset $asset, PerformanceReport $report)
+    // Hapus versi-versi spec lama
+    public function destroy(Asset $asset, AssetsSpecifications $spec)
     {
-        $this->authorize('view', $report);
+        $this->authorize('update', $asset);
 
-        if ((int)$report->id_asset !== (int)$asset->id_asset) {
+        // Validasi spec dengan assetnya
+        if ($spec->id_asset != $asset->id_asset) {
             abort(404);
         }
 
-        $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
+        // Supaya versi terbaru ga sengaja keapus
+        $latest = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
             ->first();
-
-        $report->load(['asset', 'spec', 'user']);
-
-        $history = PerformanceReport::where('id_asset', $asset->id_asset)
-            ->latest()
-            ->paginate(10);
-
-        return view('admin.asset_checks.show', compact('asset', 'report', 'latestSpec', 'history'));
-    }
-
-    public function destroyReport(Asset $asset, PerformanceReport $report)
-    {
-        $this->authorize('delete', $report);
-
-        if ((int)$report->id_asset !== (int)$asset->id_asset) {
-            abort(404);
+        
+        if ($latest && $spec->id_spec === $latest->id_spec) {
+            return back()->withErrors(['spec' => 'Versi terbaru tidak bisa dihapus. Buat versi baru terlebih dahulu, lalu hapus versi lama.']);
         }
 
-        $report->delete();
+        $spec->delete();
 
         return redirect()
-            ->route('admin.asset-checks.history', $asset->id_asset)
-            ->with('success', 'Report pengecekan berhasil dihapus.');
-    }
-
-    public function history(Asset $asset)
-    {
-        $this->authorize('viewAny', PerformanceReport::class);
-
-        $latest = PerformanceReport::where('id_asset', $asset->id_asset)->latest()->first();
-
-        $history = PerformanceReport::where('id_asset', $asset->id_asset)
-            ->latest()
-            ->paginate(10);
-
-        return view('admin.asset_checks.history', compact('asset', 'latest', 'history'));
+            ->route('admin.assets.specifications.index', $asset->id_asset)
+            ->with('success', 'Versi spesifikasi berhasil dihapus.');
     }
 }

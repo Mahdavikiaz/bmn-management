@@ -177,7 +177,7 @@
                         <div class="spec-icon"><i class="bi bi-nvidia"></i></div>
                         <div>
                             <div class="spec-label">GPU</div>
-                            <div class="spec-value fw-semibold">{{ $asset->gpu }}</div>
+                            <div class="spec-value fw-semibold">{{ $asset->gpu ?: '-' }}</div>
                         </div>
                     </div>
 
@@ -185,7 +185,7 @@
                         <div class="spec-icon"><i class="bi bi-device-hdd"></i></div>
                         <div>
                             <div class="spec-label">Tipe RAM</div>
-                            <div class="spec-value fw-semibold">{{ $asset->ram_type }}</div>
+                            <div class="spec-value fw-semibold">{{ $asset->ram_type ?: '-' }}</div>
                         </div>
                     </div>
 
