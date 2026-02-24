@@ -270,11 +270,13 @@ class AssetCheckController extends Controller
 
         $q = trim((string) $request->get('q', ''));
         $typeId = $request->get('id_type');
+        $statusCheck = $request->get('status_check');
 
         $assetsQuery = Asset::query()
             ->with(['latestPerformanceReport', 'type'])
             ->withCount('performanceReports');
 
+        // Filter berdasarkan hasil pencarian
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
@@ -282,8 +284,16 @@ class AssetCheckController extends Controller
             });
         }
 
+        // Filter berdasarkan tipe asset
         if (!empty($typeId)) {
             $assetsQuery->where('id_type', (int) $typeId);
+        }
+
+        // FIlter berdasarkan status check
+        if ($statusCheck === 'checked') {
+            $assetsQuery->has('performanceReports');
+        } elseif ($statusCheck === 'unchecked') {
+            $assetsQuery->doesntHave('performanceReports');
         }
 
         $assets = $assetsQuery

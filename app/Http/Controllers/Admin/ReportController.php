@@ -22,6 +22,7 @@ class ReportController extends Controller
 
         $q = trim((string) $request->get('q', ''));
         $typeId = $request->get('id_type');
+        $statusCheck = $request->get('status_check');
 
         $assetsQuery = Asset::query()
             ->with([
@@ -30,6 +31,7 @@ class ReportController extends Controller
             ])
             ->withCount('performanceReports');
 
+        // Filter berdasarkan hasil pencarian
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
@@ -37,8 +39,16 @@ class ReportController extends Controller
             });
         }
 
+        // FIlter berdasarkan tipe asset
         if (!empty($typeId)) {
             $assetsQuery->where('id_type', (int) $typeId);
+        }
+
+        // Filter berdasarkan status pengecekan
+        if ($statusCheck === 'checked') {
+            $assetsQuery->has('performanceReports');
+        } elseif ($statusCheck === 'unchecked') {
+            $assetsQuery->doesntHave('performanceReports');
         }
 
         $assets = $assetsQuery

@@ -174,8 +174,8 @@
 
 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
     <div>
-        <h4 class="mb-1">Dashboard</h4>
-        <div class="text-muted-sm">Ringkasan untuk monitoring asset.</div>
+        <h4 class="mb-3">Dashboard</h4>
+        <div class="text-muted-sm">Ringkasan terkait monitoring asset.</div>
     </div>
 </div>
 

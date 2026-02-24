@@ -27,12 +27,18 @@
                    value="{{ request('q') }}">
 
             <select name="id_type" class="form-select" style="max-width: 180px;">
-                <option value="">Semua Kategori</option>
+                <option value="">Semua Tipe Asset</option>
                 @foreach($types as $t)
                     <option value="{{ $t->id_type }}" {{ request('id_type') == $t->id_type ? 'selected' : '' }}>
                         {{ $t->type_name }}
                     </option>
                 @endforeach
+            </select>
+
+            <select name="status_check" class="form-select" style="max-width: 240px;">
+                <option value="">Semua Status Pengecekan</option>
+                <option value="checked" {{ request('status_check') == 'checked' ? 'selected' : '' }}>Sudah Dicek</option>
+                <option value="unchecked" {{ request('status_check') == 'unchecked' ? 'selected' : '' }}>Belum Dicek</option>
             </select>
 
             <button class="btn btn-primary">
