@@ -176,10 +176,21 @@
     <div>RAM: {{ $pRam ?: '-' }} | Storage: {{ $pSto ?: '-' }} | CPU: {{ $pCpu ?: '-' }}</div>
 </div>
 
+@php
+    $isCpuHighPriority = in_array($pCpu, [4,5]);
+@endphp
+
 <div class="box">
     <div class="section-title">Estimasi Harga Upgrade</div>
     <div>RAM: {{ $fmt($report->upgrade_ram_price) }}</div>
     <div>Storage: {{ $fmt($report->upgrade_storage_price) }}</div>
+    <div>CPU:
+        @if ($isCpuHighPriority)
+            Seharga Perangkat Baru
+        @else
+            -
+        @endif
+    </div>
     <br>
     <div><strong>Total :</strong> {{ $fmt(((float)$report->upgrade_ram_price) + ((float)$report->upgrade_storage_price)) }}</div>
 </div>
