@@ -42,7 +42,7 @@
         }
 
         .login-right {
-            background-image: url('https://pontas.id/wp-content/uploads/2017/11/Badan-Pusat-Statistik.jpeg');
+            background-image: url("images/Badan-Pusat-Statistik.jpeg");
             background-size: cover;
             background-position: center;
             position: relative;
