@@ -224,8 +224,8 @@
     <div class="section-title">Keluhan / Catatan Tambahan</div>
     <div class="pre">{{ $issueNote }}</div>
 
-    <div class="row" style="margin-top:10px;">
-        <div class="label">Foto Kondisi Asset</div>
+    <div class="row" style="margin-top:20px;">
+        <div class="label" style="margin-bottom: 6px;">Foto Kondisi Asset</div>
 
         @if($issueImageLocalPath)
             <div class="img-wrap">
