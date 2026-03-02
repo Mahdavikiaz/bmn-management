@@ -1,7 +1,7 @@
 <aside class="bg-white border-end vh-100 d-flex flex-column sidebar">
 
     <div class="p-3 d-flex align-items-center justify-content-center gap-2">
-        <img src="{{ asset('images/logo3.png') }}"
+        <img src="{{ asset('images/logo_fix.png') }}"
             alt="Logo"
             style="height: 40px; width: auto;">
 

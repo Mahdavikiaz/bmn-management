@@ -163,7 +163,7 @@
 
                 <div class="text-center mt-4">
                     <small class="text-muted">
-                        Copyright ©BPS Provinsi DKI Jakarta
+                        Copyright ©Tim IT BPS Provinsi DKI Jakarta
                     </small>
                 </div>
 
