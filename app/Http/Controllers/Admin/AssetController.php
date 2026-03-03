@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\AssetsAllExport;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetsSpecifications;
@@ -212,5 +214,18 @@ class AssetController extends Controller
         $asset->delete();
 
         return back()->with('success', 'Asset berhasil dihapus.');
+    }
+
+    // Export data semua asset dalam bentuk file excel
+    public function exportAll(Request $request)
+    {
+        $this->authorize('viewAny', Asset::class);
+
+        $idType = $request->filled('id_type') ? (int) $request->id_type : null;
+        $q = $request->filled('q') ? (string) $request->q : null;
+
+        $filename = 'assets_all_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new AssetsAllExport($idType, $q), $filename);
     }
 }

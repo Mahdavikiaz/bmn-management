@@ -29,6 +29,13 @@ Route::middleware(['auth'])->group(function () {
         // ASSETS (Admin + User)
         Route::middleware('can:viewAny,App\Models\Asset')->group(function () {
 
+            /**
+             * EXPORT ALL ASSETS (Excel) - halaman data asset
+             * Penting: taruh sebelum resource('assets') agar tidak ketabrak assets/{asset}
+             */
+            Route::get('assets/export/excel', [AssetController::class, 'exportAll'])
+                ->name('assets.export.all.excel');
+
             Route::resource('assets', AssetController::class);
 
             Route::get('assets/{asset}/specifications', [AssetSpecificationController::class, 'index'])
