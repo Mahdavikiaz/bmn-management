@@ -36,7 +36,7 @@ class AssetsAllExport extends StringValueBinder implements
             ->with(['type', 'latestSpecification'])
             ->orderBy('id_asset');
 
-        // OPTIONAL: kalau mau export ikut filter halaman (id_type & q)
+        // export ikut filter dari halaman (id_type dan q)
         if (!is_null($this->idType)) {
             $query->where('id_type', $this->idType);
         }
@@ -105,7 +105,7 @@ class AssetsAllExport extends StringValueBinder implements
     {
         $col = $cell->getColumn();
 
-        // Kolom A = Kode BMN (dipaksa string)
+        // Kolom A = Kode BMN (jadi string)
         if ($col === 'A') {
             $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
             return true;
@@ -123,6 +123,6 @@ class AssetsAllExport extends StringValueBinder implements
 
     public function chunkSize(): int
     {
-        return 1000; // aman untuk data besar
+        return 1000;
     }
 }
