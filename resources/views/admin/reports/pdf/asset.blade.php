@@ -133,10 +133,14 @@
     $pRam = (int)($report->prior_ram ?? 0);
     $pSto = (int)($report->prior_storage ?? 0);
     $pCpu = (int)($report->prior_processor ?? 0);
+    $pBaterai = (int)($report->prior_baterai ?? 0);
+    $pCharger = (int)($report->prior_charger ?? 0);
 
     $ramExplain = $getOneExplanation('RAM', $pRam, null);
     $stoExplain = $getOneExplanation('STORAGE', $pSto, $storageTargetType);
     $cpuExplain = $getOneExplanation('CPU', $pCpu, null);
+    $bateraiExplain = $getOneExplanation('BATERAI', $pBaterai, null);
+    $chargerExplain = $getOneExplanation('CHARGER', $pCharger, null);
 
     $issueNote = isset($spec) ? trim((string)$spec->issue_note) : '';
     $issueNote = $issueNote !== '' ? $issueNote : '-';
@@ -173,7 +177,9 @@
 
 <div class="box">
     <div class="section-title">Priority Level</div>
-    <div>RAM: {{ $pRam ?: '-' }} | Storage: {{ $pSto ?: '-' }} | CPU: {{ $pCpu ?: '-' }}</div>
+    <div>
+        RAM: {{ $pRam ?: '-' }} | Storage: {{ $pSto ?: '-' }} | CPU: {{ $pCpu ?: '-' }} | Baterai: {{ $pBaterai ?: '-' }} | Charger: {{ $pCharger ?: '-' }}
+    </div>
 </div>
 
 @php
@@ -191,8 +197,9 @@
             -
         @endif
     </div>
+    <div>Baterai: {{ $fmt($report->upgrade_baterai_price) }}</div>
     <br>
-    <div><strong>Total :</strong> {{ $fmt(((float)$report->upgrade_ram_price) + ((float)$report->upgrade_storage_price)) }}</div>
+    <div><strong>Total :</strong> {{ $fmt(((float)($report->upgrade_ram_price ?? 0)) + ((float)($report->upgrade_storage_price ?? 0)) + ((float)($report->upgrade_baterai_price ?? 0))) }}</div>
 </div>
 
 <div class="box">
@@ -217,6 +224,19 @@
         <div class="pre explain">{{ $cpuExplain }}</div>
         <div class="label small action-label">Saran Tindakan untuk CPU :</div>
         <div class="pre">{{ $cleanBullets($report->recommendation_processor) }}</div>
+    </div>
+    <div class="row" style="margin-top:20px;">
+        <div class="label">Baterai</div>
+        <div class="pre explain">{{ $bateraiExplain }}</div>
+        <div class="label small action-label">Saran Tindakan untuk Baterai :</div>
+        <div class="pre">{{ $cleanBullets($report->recommendation_baterai) }}</div>
+    </div>
+
+    <div class="row" style="margin-top:20px;">
+        <div class="label">Charger</div>
+        <div class="pre explain">{{ $chargerExplain }}</div>
+        <div class="label small action-label">Saran Tindakan untuk Charger :</div>
+        <div class="pre">{{ $cleanBullets($report->recommendation_charger) }}</div>
     </div>
 </div>
 

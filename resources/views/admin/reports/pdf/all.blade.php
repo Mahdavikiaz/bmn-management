@@ -70,15 +70,19 @@
         return $lines[0] ?? '-';
     };
 
-    $combineSummary = function (?string $ramRec, ?string $stoRec, ?string $procRec) use ($summarizeRec): string {
+    $combineSummary = function (?string $ramRec, ?string $stoRec, ?string $procRec, ?string $batRec, ?string $chaRec) use ($summarizeRec): string {
         $ram = $summarizeRec($ramRec);
         $sto = $summarizeRec($stoRec);
         $pro = $summarizeRec($procRec);
+        $bat = $summarizeRec($batRec);
+        $cha = $summarizeRec($chaRec);
 
         $parts = [];
         if ($ram !== '-') $parts[] = "RAM: {$ram}";
         if ($sto !== '-') $parts[] = "Storage: {$sto}";
         if ($pro !== '-') $parts[] = "CPU: {$pro}";
+        if ($bat !== '-') $parts[] = "Baterai: {$bat}";
+        if ($cha !== '-') $parts[] = "Charger: {$cha}";
 
         return count($parts) ? implode("\n", $parts) : '-';
     };
@@ -109,11 +113,14 @@
             <th style="width: 38px;">Priority Level<br>RAM</th>
             <th style="width: 48px;">Priority Level<br>Storage</th>
             <th style="width: 38px;">Priority Level<br>CPU</th>
+            <th style="width: 38px;">Priority Level<br>Baterai</th>
+            <th style="width: 38px;">Priority Level<br>Charger</th>
 
             <th style="width: 230px;">Ringkasan Rekomendasi</th>
 
             <th style="width: 85px;">Estimasi Upgrade RAM</th>
             <th style="width: 95px;">Estimasi Upgrade Storage</th>
+            <th style="width: 95px;">Estimasi Upgrade Baterai</th>
             <th style="width: 95px;">Total Estimasi Upgrade</th>
 
             <th style="width: 90px;">Tanggal Pengecekan</th>
@@ -125,11 +132,12 @@
         @php
             $r = $asset->latestPerformanceReport;
 
-            $summary = $combineSummary($r?->recommendation_ram, $r?->recommendation_storage, $r?->recommendation_processor);
+            $summary = $combineSummary($r?->recommendation_ram, $r?->recommendation_storage, $r?->recommendation_processor, $r?->recommendation_baterai, $r?->recommendation_charger);
 
             $ramPrice = $safeFloat($r?->upgrade_ram_price);
             $stoPrice = $safeFloat($r?->upgrade_storage_price);
-            $totalPrice = $ramPrice + $stoPrice;
+            $batPrice = $safeFloat($r?->upgrade_baterai_price);
+            $totalPrice = $ramPrice + $stoPrice + $batPrice ;
         @endphp
 
         <tr>
@@ -141,11 +149,14 @@
             <td>{{ $r?->prior_ram ?? '-' }}</td>
             <td>{{ $r?->prior_storage ?? '-' }}</td>
             <td>{{ $r?->prior_processor ?? '-' }}</td>
+            <td>{{ $r?->prior_baterai ?? '-' }}</td>
+            <td>{{ $r?->prior_charger ?? '-' }}</td>
 
             <td class="small pre summary">{{ $summary }}</td>
 
             <td class="num">{{ $fmtMoney($ramPrice) }}</td>
             <td class="num">{{ $fmtMoney($stoPrice) }}</td>
+            <td class="num">{{ $fmtMoney($batPrice) }}</td>
             <td class="num">{{ $fmtMoney($totalPrice) }}</td>
 
             <td>{{ optional($r?->created_at)->format('d/m/Y H:i') ?? '-' }}</td>
