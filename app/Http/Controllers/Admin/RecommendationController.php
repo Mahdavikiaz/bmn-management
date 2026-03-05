@@ -40,7 +40,7 @@ class RecommendationController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $categories = ['RAM', 'STORAGE', 'CPU'];
+        $categories = ['RAM', 'STORAGE', 'CPU', 'BATERAI', 'CHARGER'];
         $priorities = [1, 2, 3, 4, 5];
 
         return view('admin.recommendations.index', compact(
@@ -54,7 +54,7 @@ class RecommendationController extends Controller
     {
         $this->authorize('create', Recommendation::class);
 
-        $categories = ['RAM', 'STORAGE', 'CPU'];
+        $categories = ['RAM', 'STORAGE', 'CPU', 'BATERAI', 'CHARGER'];
         $priorities = [1, 2, 3, 4, 5];
 
         return view('admin.recommendations.create', compact('categories', 'priorities'));
@@ -65,7 +65,7 @@ class RecommendationController extends Controller
         $this->authorize('create', Recommendation::class);
 
         $validated = $request->validate([
-            'category' => ['required', 'in:RAM,STORAGE,CPU'],
+            'category' => ['required', 'in:RAM,STORAGE,CPU,BATERAI,CHARGER'],
             'priority_level' => ['required', 'integer', 'min:1', 'max:5'],
             'action' => ['required', 'string'],
             'explanation' => ['nullable', 'string'],
@@ -102,7 +102,7 @@ class RecommendationController extends Controller
     {
         $this->authorize('update', $recommendation);
 
-        $categories = ['RAM', 'STORAGE', 'CPU'];
+        $categories = ['RAM', 'STORAGE', 'CPU', 'BATERAI', 'CHARGER'];
         $priorities = [1, 2, 3, 4, 5];
 
         return view('admin.recommendations.edit', compact('recommendation', 'categories', 'priorities'));
@@ -113,7 +113,7 @@ class RecommendationController extends Controller
         $this->authorize('update', $recommendation);
 
         $validated = $request->validate([
-            'category' => ['required', 'in:RAM,STORAGE,CPU'],
+            'category' => ['required', 'in:RAM,STORAGE,CPU,BATERAI,CHARGER'],
             'priority_level' => ['required', 'integer', 'min:1', 'max:5'],
             'action' => ['required', 'string'],
             'explanation' => ['required', 'string'],

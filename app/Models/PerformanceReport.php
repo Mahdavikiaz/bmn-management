@@ -17,11 +17,16 @@ class PerformanceReport extends Model
         'prior_ram',
         'prior_storage',
         'prior_processor',
+        'prior_baterai',
+        'prior_charger',
         'recommendation_ram',
         'recommendation_storage',
         'recommendation_processor',
+        'recommendation_baterai',
+        'recommendation_charger',
         'upgrade_ram_price',
         'upgrade_storage_price',
+        'upgrade_baterai_price',
         'datetime',
     ];
 
@@ -29,6 +34,7 @@ class PerformanceReport extends Model
         'datetime' => 'datetime',
         'upgrade_ram_price' => 'decimal:0',
         'upgrade_storage_price' => 'decimal:0',
+        'upgrade_baterai_price' => 'decimal:0',
     ];
 
     public function asset()

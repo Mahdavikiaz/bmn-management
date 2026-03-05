@@ -6,10 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Sparepart;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\Rule;
 
 class SparepartController extends Controller
 {
     use AuthorizesRequests;
+
+    private function categoryTypes(): array
+    {
+        return [
+            'RAM'     => ['DDR3', 'DDR4', 'DDR5'],
+            'STORAGE' => ['SSD', 'HDD', 'NVME'],
+            'BATERAI' => ['BATTERY'],
+            'CHARGER' => ['ADAPTER'],
+        ];
+    }
+
+    private function requiresSize(?string $category): bool
+    {
+        return in_array(strtoupper((string)$category), ['RAM', 'STORAGE'], true);
+    }
 
     public function index(Request $request)
     {
@@ -17,17 +33,14 @@ class SparepartController extends Controller
 
         $query = Sparepart::query();
 
-        // filter category
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
 
-        // filter type
         if ($request->filled('sparepart_type')) {
             $query->where('sparepart_type', $request->sparepart_type);
         }
 
-        // search nama
         if ($request->filled('q')) {
             $q = $request->q;
             $query->where('sparepart_name', 'like', "%{$q}%");
@@ -37,8 +50,8 @@ class SparepartController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $categories = ['RAM', 'STORAGE'];
-        $types = ['DDR3', 'DDR4', 'DDR5', 'SSD', 'HDD', 'NVME'];
+        $categories = array_keys($this->categoryTypes());
+        $types = collect($this->categoryTypes())->flatten()->unique()->values()->all();
 
         return view('admin.spareparts.index', compact('spareparts', 'categories', 'types'));
     }
@@ -47,23 +60,37 @@ class SparepartController extends Controller
     {
         $this->authorize('create', Sparepart::class);
 
-        $categories = ['RAM', 'STORAGE'];
-        $types = ['DDR3', 'DDR4', 'DDR5', 'SSD', 'HDD', 'NVME'];
+        $categories = array_keys($this->categoryTypes());
+        $typesByCategory = $this->categoryTypes();
 
-        return view('admin.spareparts.create', compact('categories', 'types'));
+        return view('admin.spareparts.create', compact('categories', 'typesByCategory'));
     }
 
     public function store(Request $request)
     {
         $this->authorize('create', Sparepart::class);
 
+        $typesByCategory = $this->categoryTypes();
+        $category = strtoupper((string) $request->input('category'));
+        $allowedTypes = $typesByCategory[$category] ?? [];
+
         $validated = $request->validate([
-            'category' => ['required', 'in:RAM,STORAGE'],
-            'sparepart_type' => ['required', 'in:DDR3,DDR4,DDR5,SSD,HDD,NVME'],
+            'category' => ['required', Rule::in(array_keys($typesByCategory))],
+            'sparepart_type' => ['required', Rule::in($allowedTypes)],
             'sparepart_name' => ['required', 'string', 'max:255'],
-            'size' => ['required', 'integer', 'min:0'],
+            'size' => [
+                Rule::requiredIf($this->requiresSize($category)),
+                'nullable',
+                'integer',
+                'min:0',
+            ],
             'price' => ['required', 'numeric', 'min:0'],
         ]);
+
+        // kalau BATERAI/CHARGER, size dipaksa null
+        if (!$this->requiresSize($category)) {
+            $validated['size'] = null;
+        }
 
         Sparepart::create($validated);
 
@@ -76,23 +103,36 @@ class SparepartController extends Controller
     {
         $this->authorize('update', $sparepart);
 
-        $categories = ['RAM', 'STORAGE'];
-        $types = ['DDR3', 'DDR4', 'DDR5', 'SSD', 'HDD', 'NVME'];
+        $categories = array_keys($this->categoryTypes());
+        $typesByCategory = $this->categoryTypes();
 
-        return view('admin.spareparts.edit', compact('sparepart', 'categories', 'types'));
+        return view('admin.spareparts.edit', compact('sparepart', 'categories', 'typesByCategory'));
     }
 
     public function update(Request $request, Sparepart $sparepart)
     {
         $this->authorize('update', $sparepart);
 
+        $typesByCategory = $this->categoryTypes();
+        $category = strtoupper((string) $request->input('category'));
+        $allowedTypes = $typesByCategory[$category] ?? [];
+
         $validated = $request->validate([
-            'category' => ['required', 'in:RAM,STORAGE'],
-            'sparepart_type' => ['required', 'in:DDR3,DDR4,DDR5,SSD,HDD,NVME'],
+            'category' => ['required', Rule::in(array_keys($typesByCategory))],
+            'sparepart_type' => ['required', Rule::in($allowedTypes)],
             'sparepart_name' => ['required', 'string', 'max:255'],
-            'size' => ['required', 'integer', 'min:0'],
+            'size' => [
+                Rule::requiredIf($this->requiresSize($category)),
+                'nullable',
+                'integer',
+                'min:0',
+            ],
             'price' => ['required', 'numeric', 'min:0'],
         ]);
+
+        if (!$this->requiresSize($category)) {
+            $validated['size'] = null;
+        }
 
         $sparepart->update($validated);
 

@@ -20,16 +20,21 @@
             @csrf
             @method('PUT')
 
+            @php
+                $oldCategory = old('category', $sparepart->category);
+                $oldType = old('sparepart_type', $sparepart->sparepart_type);
+                $oldSize = old('size', $sparepart->size);
+            @endphp
+
             {{-- Kategori --}}
             <div class="mb-3">
                 <label class="form-label">Kategori</label>
-                <select name="category"
+                <select id="category" name="category"
                         class="form-select @error('category') is-invalid @enderror"
                         required>
                     <option value="">-- Pilih Kategori --</option>
                     @foreach($categories as $category)
-                        <option value="{{ $category }}"
-                            {{ old('category', $sparepart->category) == $category ? 'selected' : '' }}>
+                        <option value="{{ $category }}" {{ $oldCategory == $category ? 'selected' : '' }}>
                             {{ $category }}
                         </option>
                     @endforeach
@@ -43,16 +48,10 @@
             {{-- Tipe --}}
             <div class="mb-3">
                 <label class="form-label">Tipe</label>
-                <select name="sparepart_type"
+                <select id="sparepart_type" name="sparepart_type"
                         class="form-select @error('sparepart_type') is-invalid @enderror"
                         required>
                     <option value="">-- Pilih Tipe --</option>
-                    @foreach($types as $type)
-                        <option value="{{ $type }}"
-                            {{ old('sparepart_type', $sparepart->sparepart_type) == $type ? 'selected' : '' }}>
-                            {{ $type }}
-                        </option>
-                    @endforeach
                 </select>
 
                 @error('sparepart_type')
@@ -75,14 +74,18 @@
             </div>
 
             {{-- Ukuran --}}
-            <div class="mb-3">
-                <label class="form-label">Ukuran</label>
+            <div class="mb-3" id="sizeWrap">
+                <label class="form-label" id="sizeLabel">Ukuran (GB)</label>
                 <input type="number"
+                       id="size"
                        name="size"
                        class="form-control @error('size') is-invalid @enderror"
-                       value="{{ old('size', $sparepart->size) }}"
-                       min="0"
-                       required>
+                       value="{{ $oldSize }}"
+                       min="0">
+
+                <div class="form-text text-muted" id="sizeHelp">
+                    Wajib untuk RAM / STORAGE. Tidak diperlukan untuk BATERAI / CHARGER.
+                </div>
 
                 @error('size')
                 <div class="invalid-feedback">{{ $message }}</div>
@@ -106,19 +109,68 @@
 
             {{-- Action --}}
             <div class="d-flex justify-content-end gap-2 mt-4">
-                <a href="{{ route('admin.spareparts.index') }}"
-                   class="btn btn-secondary">
+                <a href="{{ route('admin.spareparts.index') }}" class="btn btn-secondary">
                     Batal
                 </a>
 
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-save me-1"></i>
-                    Simpan Perubahan
+                    <i class="bi bi-save me-1"></i> Simpan Perubahan
                 </button>
             </div>
 
         </form>
     </div>
 </div>
+
+<script>
+    const TYPES_BY_CATEGORY = @json($typesByCategory);
+    const oldType = @json($oldType);
+    const oldCategory = @json($oldCategory);
+
+    const elCategory = document.getElementById('category');
+    const elType = document.getElementById('sparepart_type');
+
+    const sizeWrap = document.getElementById('sizeWrap');
+    const elSize = document.getElementById('size');
+
+    function fillTypes(category) {
+        elType.innerHTML = '<option value="">-- Pilih Tipe --</option>';
+
+        const types = TYPES_BY_CATEGORY[category] || [];
+        types.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t;
+            if (t === oldType) opt.selected = true;
+            elType.appendChild(opt);
+        });
+    }
+
+    function toggleSize(category) {
+        const cat = (category || '').toUpperCase();
+        const needSize = (cat === 'RAM' || cat === 'STORAGE');
+
+        if (needSize) {
+            sizeWrap.style.display = '';
+            elSize.disabled = false;
+            elSize.required = true;
+        } else {
+            sizeWrap.style.display = 'none';
+            elSize.disabled = true;
+            elSize.required = false;
+            elSize.value = '';
+        }
+    }
+
+    elCategory.addEventListener('change', function() {
+        // saat ganti kategori di edit, reset oldType supaya user pilih ulang yang sesuai
+        fillTypes(this.value);
+        toggleSize(this.value);
+    });
+
+    // init
+    fillTypes(oldCategory);
+    toggleSize(oldCategory);
+</script>
 
 @endsection

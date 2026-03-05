@@ -25,7 +25,7 @@ class IndicatorQuestionController extends Controller
     {
         $this->authorize('viewAny', IndicatorQuestion::class);
 
-        $categories = ['RAM', 'STORAGE', 'CPU'];
+        $categories = ['RAM', 'STORAGE', 'CPU', 'BATERAI', 'CHARGER'];
 
         $query = IndicatorQuestion::query()->with('options');
 
@@ -50,7 +50,7 @@ class IndicatorQuestionController extends Controller
     {
         $this->authorize('create', IndicatorQuestion::class);
 
-        $categories = ['RAM', 'STORAGE', 'CPU'];
+        $categories = ['RAM', 'STORAGE', 'CPU', 'BATERAI', 'CHARGER'];
         $labels = array_keys($this->starMap);
 
         return view('admin.indicators.create', compact('categories', 'labels'));
@@ -61,7 +61,7 @@ class IndicatorQuestionController extends Controller
         $this->authorize('create', IndicatorQuestion::class);
 
         $request->validate([
-            'category' => 'required|in:RAM,STORAGE,CPU',
+            'category' => 'required|in:RAM,STORAGE,CPU,BATERAI,CHARGER',
             'indicator_name' => 'required|string|max:255',
             'question' => 'required|string',
             'options' => 'required|array',
@@ -98,7 +98,7 @@ class IndicatorQuestionController extends Controller
     {
         $this->authorize('update', $indicator_question);
 
-        $categories = ['RAM', 'STORAGE', 'CPU'];
+        $categories = ['RAM', 'STORAGE', 'CPU', 'BATERAI', 'CHARGER'];
         $labels = array_keys($this->starMap);
 
         $indicator_question->load('options');
@@ -114,7 +114,7 @@ class IndicatorQuestionController extends Controller
         $this->authorize('update', $indicator_question);
 
         $request->validate([
-            'category' => 'required|in:RAM,STORAGE,CPU',
+            'category' => 'required|in:RAM,STORAGE,CPU,BATERAI,CHARGER',
             'indicator_name' => 'required|string|max:255',
             'question' => 'required|string',
             'options' => 'required|array',

@@ -145,7 +145,7 @@
                     Jawab semua pertanyaan. Setiap pilihan memiliki nilai bintang (A=5 … E=1).
                 </div>
 
-                @foreach(['RAM','STORAGE','CPU'] as $cat)
+                @foreach($categories as $cat)
                     <div class="mb-4">
                         <h6 class="fw-semibold mb-2">
                             {{ $cat }}

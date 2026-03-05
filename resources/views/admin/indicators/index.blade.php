@@ -47,6 +47,8 @@
     .badge-cat-ram{ background:#198754; color:#fff; }
     .badge-cat-storage{ background:#ffc107; color:#000; }
     .badge-cat-cpu{ background:#0d6efd; color:#fff; }
+    .badge-cat-baterai{ background: #6f42c1; color: #fff; }
+    .badge-cat-charger{ background: #20c997; color: #fff; }
 
     .badge-label{
         background:#f1f3f5;
@@ -121,6 +123,8 @@
                             'RAM' => 'badge-cat-ram',
                             'STORAGE' => 'badge-cat-storage',
                             'CPU' => 'badge-cat-cpu',
+                            'BATERAI' => 'badge-cat-baterai',
+                            'CHARGER' => 'badge-cat-charger',
                             default => 'text-bg-secondary',
                         };
                     @endphp
@@ -189,7 +193,7 @@
 
                                     {{-- INFO --}}
                                     <div class="d-flex flex-wrap gap-3 mb-4">
-                                        <span class="badge bg-primary-subtle text-primary px-3 py-2 fw-semibold">
+                                        <span class="badge rounded-pill badge-cat {{ $catClass }} px-3 py-2 fw-semibold">
                                             {{ $indicator->category }}
                                         </span>
 

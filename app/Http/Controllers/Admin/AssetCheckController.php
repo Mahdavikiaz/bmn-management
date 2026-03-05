@@ -40,8 +40,12 @@ class AssetCheckController extends Controller
         return null;
     }
 
-    private function buildSpecPayload(Request $request, Asset $asset, ?string $storageTypeOverride = null, ?string $issueImageUri = null): array
-    {
+    private function buildSpecPayload(
+        Request $request,
+        Asset $asset,
+        ?string $storageTypeOverride = null,
+        ?string $issueImageUri = null
+    ): array {
         $storageType = $storageTypeOverride ?: $request->input('category_storage');
 
         return [
@@ -64,14 +68,14 @@ class AssetCheckController extends Controller
         if (!$latest) return false;
 
         return (
-            $this->norm($latest->owner_asset)  === $payload['owner_asset'] &&
-            $this->norm($latest->processor)    === $payload['processor'] &&
-            (int) $latest->ram                 === (int) $payload['ram'] &&
-            (int) $latest->storage             === (int) $payload['storage'] &&
-            $this->norm($latest->os_version)   === $payload['os_version'] &&
-            (bool) $latest->is_hdd             === (bool) $payload['is_hdd'] &&
-            (bool) $latest->is_ssd             === (bool) $payload['is_ssd'] &&
-            (bool) $latest->is_nvme            === (bool) $payload['is_nvme']
+            $this->norm($latest->owner_asset) === $payload['owner_asset'] &&
+            $this->norm($latest->processor)   === $payload['processor'] &&
+            (int) $latest->ram                === (int) $payload['ram'] &&
+            (int) $latest->storage            === (int) $payload['storage'] &&
+            $this->norm($latest->os_version)  === $payload['os_version'] &&
+            (bool) $latest->is_hdd            === (bool) $payload['is_hdd'] &&
+            (bool) $latest->is_ssd            === (bool) $payload['is_ssd'] &&
+            (bool) $latest->is_nvme           === (bool) $payload['is_nvme']
         );
     }
 
@@ -264,6 +268,30 @@ class AssetCheckController extends Controller
         return $meta;
     }
 
+    // Menentukan kategori pertanyaan yang berlaku berdasarkan tipe asset
+    private function applicableCategories(Asset $asset): array
+    {
+        $base = ['RAM', 'STORAGE', 'CPU'];
+
+        $typeName = strtoupper(trim((string) ($asset->type?->type_name ?? '')));
+
+        if (str_contains($typeName, 'LAPTOP')) {
+            $base[] = 'BATERAI';
+            $base[] = 'CHARGER';
+        }
+
+        return $base;
+    }
+
+    private function findCheapestSparepartPrice(string $category): ?float
+    {
+        $price = Sparepart::where('category', $category)
+            ->orderBy('price')
+            ->value('price');
+
+        return $price === null ? null : (float) $price;
+    }
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', PerformanceReport::class);
@@ -276,7 +304,6 @@ class AssetCheckController extends Controller
             ->with(['latestPerformanceReport', 'type'])
             ->withCount('performanceReports');
 
-        // Filter berdasarkan hasil pencarian
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
@@ -284,12 +311,10 @@ class AssetCheckController extends Controller
             });
         }
 
-        // Filter berdasarkan tipe asset
         if (!empty($typeId)) {
             $assetsQuery->where('id_type', (int) $typeId);
         }
 
-        // FIlter berdasarkan status check
         if ($statusCheck === 'checked') {
             $assetsQuery->has('performanceReports');
         } elseif ($statusCheck === 'unchecked') {
@@ -314,15 +339,16 @@ class AssetCheckController extends Controller
             ->orderByDesc('datetime')
             ->first();
 
+        $categories = $this->applicableCategories($asset);
+
         $questions = IndicatorQuestion::with(['options' => function ($q) {
-            $q->orderBy('label');
-        }])
-            ->orderBy('category')
+                $q->orderBy('label');
+            }])
+            ->whereIn('category', $categories)
+            ->orderByRaw("FIELD(category,'RAM','STORAGE','CPU','BATERAI','CHARGER')")
             ->orderBy('id_question')
             ->get()
             ->groupBy('category');
-
-        $categories = ['RAM', 'STORAGE', 'CPU'];
 
         return view('admin.asset_checks.create', compact('asset', 'latestSpec', 'questions', 'categories'));
     }
@@ -345,7 +371,13 @@ class AssetCheckController extends Controller
             'issue_image'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
         ]);
 
-        $allQuestions = IndicatorQuestion::select('id_question', 'category')->get();
+        $categories = $this->applicableCategories($asset);
+
+        // wajib jawab semua pertanyaan yang berlaku untuk tipe asset ini
+        $allQuestions = IndicatorQuestion::whereIn('category', $categories)
+            ->select('id_question', 'category')
+            ->get();
+
         foreach ($allQuestions as $q) {
             if (!$request->filled("answers.{$q->id_question}")) {
                 return back()
@@ -375,10 +407,12 @@ class AssetCheckController extends Controller
             }
         }
 
+        // rata-rata star value per kategori
         $avgByCat = $selectedOptions
             ->groupBy(fn($o) => $o->question->category)
             ->map(fn($items) => round($items->avg('star_value'), 2));
 
+        // mapping avg -> priority (1-5)
         $prior = function (?float $avg): int {
             if ($avg === null) return 0;
             $p = (int) ceil((5 - $avg) + 1);
@@ -389,9 +423,17 @@ class AssetCheckController extends Controller
         $priorStorage = $prior($avgByCat['STORAGE'] ?? null);
         $priorCpu     = $prior($avgByCat['CPU'] ?? null);
 
+        // BATERAI/CHARGER hanya kalau kategori berlaku (Laptop)
+        $priorBaterai = in_array('BATERAI', $categories, true) ? $prior($avgByCat['BATERAI'] ?? null) : null;
+        $priorCharger = in_array('CHARGER', $categories, true) ? $prior($avgByCat['CHARGER'] ?? null) : null;
+
+        // rekomendasi raw
         $ramActionRaw         = $this->getRecommendationActionRaw('RAM', $priorRam);
         $cpuActionRaw         = $this->getRecommendationActionRaw('CPU', $priorCpu);
         $storageBaseActionRaw = $this->getRecommendationActionRaw('STORAGE', $priorStorage);
+
+        $bateraiActionRaw = ($priorBaterai !== null) ? $this->getRecommendationActionRaw('BATERAI', $priorBaterai) : '-';
+        $chargerActionRaw = ($priorCharger !== null) ? $this->getRecommendationActionRaw('CHARGER', $priorCharger) : '-';
 
         $latestSpec = AssetsSpecifications::where('id_asset', $asset->id_asset)
             ->orderByDesc('datetime')
@@ -402,7 +444,7 @@ class AssetCheckController extends Controller
             $storageTypeForPayload = $this->getStorageTypeFromSpec($latestSpec);
         }
 
-        // Upload foto (opsional)
+        // Upload foto keluhan (opsional)
         $issueImageUri = null;
         if ($request->hasFile('issue_image')) {
             $file = $request->file('issue_image');
@@ -410,17 +452,14 @@ class AssetCheckController extends Controller
             $dir = 'asset_issues/' . $asset->id_asset . '/' . now()->format('Y-m');
             $filename = Str::uuid()->toString() . '.' . $file->getClientOriginalExtension();
 
-            // simpan ke storage public (utk sementara)
             $path = $file->storeAs($dir, $filename, 'public');
-
-            // simpan sebagai URL agar bisa langsung dipakai
             $issueImageUri = Storage::disk('public')->url($path);
         }
 
         $specPayload = $this->buildSpecPayload($request, $asset, $storageTypeForPayload, $issueImageUri);
 
-        // Update atau Insert data GPU dan RAM Type ke dalam tabel Asset
-        $asset->update([ 
+        // Update data GPU & RAM type ke tabel assets
+        $asset->update([
             'gpu' => $this->norm($request->gpu),
             'ram_type' => $this->norm($request->ram_type),
         ]);
@@ -433,13 +472,16 @@ class AssetCheckController extends Controller
             $priorRam,
             $priorStorage,
             $priorCpu,
+            $priorBaterai,
+            $priorCharger,
             $ramActionRaw,
             $cpuActionRaw,
-            $storageBaseActionRaw
+            $storageBaseActionRaw,
+            $bateraiActionRaw,
+            $chargerActionRaw
         ) {
             $now = now();
 
-            // karena keluhan bersifat historis, buat row baru jika ada issue_note / issue_image_uri
             $hasIssue = !empty($specPayload['issue_note']) || !empty($specPayload['issue_image_uri']);
 
             if (!$hasIssue && $this->isSameSpec($latestSpec, $specPayload)) {
@@ -463,20 +505,28 @@ class AssetCheckController extends Controller
             $recCpuFinal     = $this->asBullets($cpuActionRaw);
             $recStorageFinal = $this->asBullets($storageActionRawFinal);
 
-            // RAM
+            $recBateraiFinal = ($priorBaterai !== null) ? $this->asBullets($bateraiActionRaw) : null;
+            $recChargerFinal = ($priorCharger !== null) ? $this->asBullets($chargerActionRaw) : null;
+
+            // RAM price
             $upgradeRamPrice = null;
             $ramMeta = $this->resolveRamUpgradeMeta($asset, $spec, $priorRam);
             if (!empty($ramMeta['type']) && !empty($ramMeta['size'])) {
                 $upgradeRamPrice = $this->findSparepartPrice('RAM', $ramMeta['type'], (int)$ramMeta['size']);
             }
 
-            // STORAGE hanya hitung kalau priority 4 atau 5
+            // STORAGE price (hanya prior 4/5)
             $upgradeStoragePrice = null;
             if (in_array($priorStorage, [4, 5], true)) {
                 $stoMeta = $this->resolveStorageUpgradeMeta($spec, $priorStorage);
                 if (!empty($stoMeta['type']) && !empty($stoMeta['size'])) {
                     $upgradeStoragePrice = $this->findSparepartPrice('STORAGE', $stoMeta['type'], (int)$stoMeta['size']);
                 }
+            }
+
+            $upgradeBateraiPrice = null;
+            if (!is_null($priorBaterai) && in_array($priorBaterai, [4, 5], true)) {
+                $upgradeBateraiPrice = $this->findCheapestSparepartPrice('BATERAI');
             }
 
             $report = PerformanceReport::create([
@@ -488,14 +538,24 @@ class AssetCheckController extends Controller
                 'prior_storage' => $priorStorage,
                 'prior_processor' => $priorCpu,
 
+                'prior_baterai' => $priorBaterai,
+                'prior_charger' => $priorCharger,
+
                 'recommendation_ram' => $recRamFinal,
                 'recommendation_storage' => $recStorageFinal,
                 'recommendation_processor' => $recCpuFinal,
+
+                'recommendation_baterai' => $recBateraiFinal,
+                'recommendation_charger' => $recChargerFinal,
 
                 'upgrade_ram_price' => $this->priceOrZero($upgradeRamPrice),
 
                 'upgrade_storage_price' => in_array($priorStorage, [4, 5], true)
                     ? $this->priceOrZero($upgradeStoragePrice)
+                    : null,
+                
+                'upgrade_baterai_price' => !is_null($priorBaterai) && in_array($priorBaterai, [4, 5], true)
+                    ? $this->priceOrZero($upgradeBateraiPrice)
                     : null,
 
                 'created_at' => $now,

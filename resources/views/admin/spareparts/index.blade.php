@@ -54,6 +54,9 @@
         color: #000;
     }
 
+    .badge-cat-baterai{ background: #6f42c1; color: #fff; }
+    .badge-cat-charger{ background: #20c997; color: #fff; }
+
     .badge-type{
         background: #f1f3f5;
         color: #343a40;
@@ -134,6 +137,8 @@
                         $catClass = match($sparepart->category) {
                             'RAM' => 'badge-cat-ram',
                             'STORAGE' => 'badge-cat-storage',
+                            'BATERAI' => 'badge-cat-baterai',
+                            'CHARGER' => 'badge-cat-charger',
                             default => 'text-bg-secondary',
                         };
                     @endphp
@@ -161,7 +166,7 @@
                         </td>
 
                         {{-- SIZE --}}
-                        <td>{{ $sparepart->size }} GB</td>
+                        <td>{{ $sparepart->size }}</td>
 
                         {{-- PRICE --}}
                         <td>

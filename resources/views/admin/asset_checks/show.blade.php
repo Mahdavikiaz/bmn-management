@@ -84,7 +84,7 @@
     .issue-img{
         display:block;
         max-width: 320px;
-        max-height: 220px; 
+        max-height: 220px;
         width:auto;
         height:auto;
         object-fit: contain;
@@ -189,23 +189,46 @@
     $pSto = (int)($report->prior_storage ?? 0);
     $pCpu = (int)($report->prior_processor ?? 0);
 
+    // ===== tambahan baterai/charger (aman walau kolomnya belum ada: pakai null-coalescing) =====
+    $pBat = (int)($report->prior_baterai ?? 0);
+    $pChg = (int)($report->prior_charger ?? 0);
+
     // ACTION UI
-    $ramActionUi = $valOrDash($report->recommendation_ram);
-    $stoActionUi = $valOrDash($report->recommendation_storage);
-    $cpuActionUi = $valOrDash($report->recommendation_processor);
+    $ramActionUi = $valOrDash($report->recommendation_ram ?? '-');
+    $stoActionUi = $valOrDash($report->recommendation_storage ?? '-');
+    $cpuActionUi = $valOrDash($report->recommendation_processor ?? '-');
+
+    $batActionUi = $valOrDash($report->recommendation_baterai ?? '-');
+    $chgActionUi = $valOrDash($report->recommendation_charger ?? '-');
 
     // EXPLANATION
     $ramExplain = $getOneExplanation('RAM', $pRam, $ramTargetType);
     $stoExplain = $getOneExplanation('STORAGE', $pSto, $storageTargetType);
     $cpuExplain = $getOneExplanation('CPU', $pCpu, $cpuTargetType);
 
+    $batExplain = $getOneExplanation('BATERAI', $pBat, null);
+    $chgExplain = $getOneExplanation('CHARGER', $pChg, null);
+
     // PRIORITY META
     $mRam = $prioMeta($pRam);
     $mSto = $prioMeta($pSto);
     $mCpu = $prioMeta($pCpu);
 
+    $mBat = $prioMeta($pBat);
+    $mChg = $prioMeta($pChg);
+
     // Storage hanya tampil kalau prior_storage >= 4
-    $stoUpgradeUi = ($pSto >= 4) ? $fmtPrice($report->upgrade_storage_price) : '-';
+    $stoUpgradeUi = ($pSto >= 4) ? $fmtPrice($report->upgrade_storage_price ?? null) : '-';
+
+    // Battery upgrade price (kalau ada kolom)
+    $batUpgradeUi = ($pBat >= 1) ? $fmtPrice($report->upgrade_baterai_price ?? null) : '-';
+
+    // Charger upgrade price (kalau kamu bikin kolomnya)
+    $chgUpgradeUi = ($pChg >= 1) ? $fmtPrice($report->upgrade_charger_price ?? null) : '-';
+
+    // Tampilkan section baterai/charger hanya kalau datanya memang ada
+    $showBattery = !is_null($report->prior_baterai ?? null) || trim((string)($report->recommendation_baterai ?? '')) !== '';
+    $showCharger = !is_null($report->prior_charger ?? null) || trim((string)($report->recommendation_charger ?? '')) !== '';
 
     // Keluhan & Foto (dari spec report)
     $issueNote = trim((string)($specReport->issue_note ?? ''));
@@ -371,7 +394,7 @@
 
                 <hr>
 
-                {{-- PRIORITIES --}}
+                {{-- PRIORITIES (RAM/STORAGE/CPU) --}}
                 <div class="row g-3">
                     <div class="col-md-4">
                         <div class="p-3 border rounded-4 h-100">
@@ -383,7 +406,7 @@
                             <div class="prio-desc">
                                 <span class="text-muted-sm">
                                     Estimasi Harga Upgrade :
-                                    <strong>{{ $fmtPrice($report->upgrade_ram_price) }}</strong>
+                                    <strong>{{ $fmtPrice($report->upgrade_ram_price ?? null) }}</strong>
                                 </span>
                             </div>
                         </div>
@@ -426,7 +449,48 @@
                     </div>
                 </div>
 
-                {{-- RECOMMENDATIONS --}}
+                {{-- PRIORITIES (BATERAI/CHARGER) -> di bawahnya --}}
+                @if($showBattery || $showCharger)
+                    <div class="row g-3 mt-1">
+                        @if($showBattery)
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-4 h-100">
+                                    <div class="text-muted-sm mb-4">Priority Level Baterai</div>
+                                    <div class="d-flex align-items-center justify-content mb-4">
+                                        <span class="{{ $mBat['badgeClass'] }} me-2">{{ $mBat['value'] }}</span>
+                                        <span class="text-muted-sm"><strong>{{ $mBat['label'] }}</strong> - {{ $mBat['desc'] }}</span>
+                                    </div>
+                                    <div class="prio-desc">
+                                        <span class="text-muted-sm">
+                                            Estimasi Harga Upgrade :
+                                            <strong>{{ $batUpgradeUi }}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($showCharger)
+                            <div class="col-md-6">
+                                <div class="p-3 border rounded-4 h-100">
+                                    <div class="text-muted-sm mb-4">Priority Level Charger</div>
+                                    <div class="d-flex align-items-center justify-content mb-4">
+                                        <span class="{{ $mChg['badgeClass'] }} me-2">{{ $mChg['value'] }}</span>
+                                        <span class="text-muted-sm"><strong>{{ $mChg['label'] }}</strong> - {{ $mChg['desc'] }}</span>
+                                    </div>
+                                    <div class="prio-desc">
+                                        <span class="text-muted-sm">
+                                            Estimasi Harga Upgrade :
+                                            <strong>{{ $chgUpgradeUi }}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                {{-- RECOMMENDATIONS (RAM/STORAGE/CPU) --}}
                 <div class="row g-3 mt-4">
                     <div class="col-md-4">
                         <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
@@ -486,6 +550,53 @@
                     </div>
                 </div>
 
+                {{-- RECOMMENDATIONS (BATERAI/CHARGER) -> di bawahnya --}}
+                @if($showBattery || $showCharger)
+                    <div class="row g-3 mt-1">
+                        @if($showBattery)
+                            <div class="col-md-6">
+                                <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
+                                    <i class="bi bi-battery-half"></i> Rekomendasi Baterai
+                                </div>
+                                <div class="rec-box">
+                                    <div class="rec-block-title mb-2">
+                                        <span class="badge text-bg-primary">Tindakan</span>
+                                    </div>
+                                    <div class="rec-block-content {{ $batActionUi === '-' ? 'text-muted' : '' }}">{{ $batActionUi }}</div>
+
+                                    <div class="rec-divider"></div>
+
+                                    <div class="rec-block-title mb-2">
+                                        <span class="badge text-bg-light border">Penjelasan</span>
+                                    </div>
+                                    <div class="rec-block-content {{ $batExplain === '-' ? 'text-muted' : '' }}">{{ $batExplain }}</div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($showCharger)
+                            <div class="col-md-6">
+                                <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
+                                    <i class="bi bi-plug"></i> Rekomendasi Charger
+                                </div>
+                                <div class="rec-box">
+                                    <div class="rec-block-title mb-2">
+                                        <span class="badge text-bg-primary">Tindakan</span>
+                                    </div>
+                                    <div class="rec-block-content {{ $chgActionUi === '-' ? 'text-muted' : '' }}">{{ $chgActionUi }}</div>
+
+                                    <div class="rec-divider"></div>
+
+                                    <div class="rec-block-title mb-2">
+                                        <span class="badge text-bg-light border">Penjelasan</span>
+                                    </div>
+                                    <div class="rec-block-content {{ $chgExplain === '-' ? 'text-muted' : '' }}">{{ $chgExplain }}</div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
                 {{-- KELUHAN & FOTO --}}
                 <div class="mt-4">
                     <div class="fw-semibold mb-2 d-flex align-items-center gap-2">
@@ -508,7 +619,8 @@
 
                             <div class="mt-3">
                                 <a href="{{ $issueImageUi }}" target="_blank" class="btn btn-sm btn-outline-primary mb-3">
-                                <i class="bi bi-box-arrow-up-right me-1"></i> Lihat foto</a>
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Lihat foto
+                                </a>
                             </div>
                         @else
                             <div class="text-muted">-</div>
@@ -540,7 +652,7 @@
                     <tr>
                         <th style="width:60px;">No</th>
                         <th style="width:180px;">Tanggal</th>
-                        <th style="width:220px;">Priority Level</th>
+                        <th style="width:260px;">Priority Level</th>
                         <th>Ringkasan</th>
                         <th style="width:170px;" class="text-center">Aksi</th>
                     </tr>
@@ -561,9 +673,11 @@
                         };
 
                         $parts = array_filter([
-                            $pickFirstBullet($row->recommendation_ram) ? 'RAM: '.$pickFirstBullet($row->recommendation_ram) : null,
-                            $pickFirstBullet($row->recommendation_storage) ? 'Storage: '.$pickFirstBullet($row->recommendation_storage) : null,
-                            $pickFirstBullet($row->recommendation_processor) ? 'CPU: '.$pickFirstBullet($row->recommendation_processor) : null,
+                            $pickFirstBullet($row->recommendation_ram ?? null) ? 'RAM: '.$pickFirstBullet($row->recommendation_ram) : null,
+                            $pickFirstBullet($row->recommendation_storage ?? null) ? 'Storage: '.$pickFirstBullet($row->recommendation_storage) : null,
+                            $pickFirstBullet($row->recommendation_processor ?? null) ? 'CPU: '.$pickFirstBullet($row->recommendation_processor) : null,
+                            $pickFirstBullet($row->recommendation_baterai ?? null) ? 'Baterai: '.$pickFirstBullet($row->recommendation_baterai) : null,
+                            $pickFirstBullet($row->recommendation_charger ?? null) ? 'Charger: '.$pickFirstBullet($row->recommendation_charger) : null,
                         ]);
 
                         $summary = count($parts) ? implode(' | ', $parts) : '-';
@@ -576,6 +690,13 @@
                             <span class="badge rounded-pill text-bg-light border">RAM : {{ $row->prior_ram ?? '-' }}</span>
                             <span class="badge rounded-pill text-bg-light border">STORAGE : {{ $row->prior_storage ?? '-' }}</span>
                             <span class="badge rounded-pill text-bg-light border">CPU : {{ $row->prior_processor ?? '-' }}</span>
+
+                            @if(!is_null($row->prior_baterai ?? null))
+                                <span class="badge rounded-pill text-bg-light border">BATERAI : {{ $row->prior_baterai }}</span>
+                            @endif
+                            @if(!is_null($row->prior_charger ?? null))
+                                <span class="badge rounded-pill text-bg-light border">CHARGER : {{ $row->prior_charger }}</span>
+                            @endif
                         </td>
                         <td class="text-muted-sm">
                             <span title="{{ $summary }}">{{ \Illuminate\Support\Str::limit($summary, 140) }}</span>
