@@ -134,21 +134,28 @@
                         {{-- SPESIFIKASI --}}
                         <td>
                             @if(!$latest)
-                                <span class="text-muted fst-italic">Belum diinput</span>
+                                <span class="text-muted fst-italic">Belum diinputkan</span>
                             @else
                                 <button type="button"
                                         class="btn btn-outline-primary btn-sm"
                                         data-bs-toggle="modal"
                                         data-bs-target="#{{ $modalId }}">
-                                    <i class="bi bi-eye"></i> Lihat
+                                    <i class="bi bi-eye"></i> Lihat Spesifikasi
                                 </button>
 
                                 {{-- MODAL --}}
-                                <div class="modal fade" id="{{ $modalId }}" tabindex="-1">
+                                <div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
                                     <div class="modal-dialog modal-lg modal-dialog-scrollable">
                                         <div class="modal-content">
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Spesifikasi Asset</h5>
+                                                <div>
+                                                    <h5 class="modal-title">Spesifikasi Asset</h5>
+                                                    <div class="text-muted small mt-2">
+                                                        {{ $asset->device_name }} ({{ $asset->type?->type_name ?? '-' }}) |
+                                                        Kode BMN: <strong>{{ $asset->bmn_code }}</strong> |
+                                                        Tahun Pengadaan: {{ $asset->procurement_year }}
+                                                    </div>
+                                                </div>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
 
@@ -161,17 +168,17 @@
                                                 @endphp
 
                                                 <div class="row g-3">
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="spec-kv">
                                                             <div class="spec-ic"><i class="bi bi-person"></i></div>
                                                             <div>
-                                                                <div class="spec-label">Pemegang</div>
+                                                                <div class="spec-label">Pemegang Asset</div>
                                                                 <div class="spec-value">{{ $latest->owner_asset ?: '-' }}</div>
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="spec-kv">
                                                             <div class="spec-ic"><i class="bi bi-cpu"></i></div>
                                                             <div>
@@ -181,7 +188,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="spec-kv">
                                                             <div class="spec-ic"><i class="bi bi-memory"></i></div>
                                                             <div>
@@ -191,7 +198,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="spec-kv">
                                                             <div class="spec-ic"><i class="bi bi-hdd-stack"></i></div>
                                                             <div>
@@ -201,7 +208,27 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
+                                                        <div class="spec-kv">
+                                                            <div class="spec-ic"><i class="bi bi-nvidia"></i></div>
+                                                            <div>
+                                                                <div class="spec-label">GPU</div>
+                                                                <div class="spec-value fw-semibold">{{ $asset->gpu ?: '-' }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-3">
+                                                        <div class="spec-kv">
+                                                            <div class="spec-ic"><i class="bi bi-device-hdd"></i></div>
+                                                            <div>
+                                                                <div class="spec-label">Tipe RAM</div>
+                                                                <div class="spec-value fw-semibold">{{ $asset->ram_type ?: '-' }}</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-3">
                                                         <div class="spec-kv">
                                                             <div class="spec-ic"><i class="bi bi-device-ssd"></i></div>
                                                             <div>
@@ -213,7 +240,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-3">
                                                         <div class="spec-kv">
                                                             <div class="spec-ic"><i class="bi bi-windows"></i></div>
                                                             <div>
@@ -223,10 +250,20 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <div class="text-muted small mt-3">
+                                                    <i class="bi bi-clock"></i>
+                                                    Terakhir diupdate: <strong>{{ $latest->datetime?->format('d/m/Y H:i') ?? '-' }}</strong>
+                                                </div>
                                             </div>
+                                            <div class="modal-footer d-flex justify-content-between">
+                                                <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
+                                                   class="btn btn-primary">
+                                                    <i class="bi bi-sliders me-1"></i> Kelola Spesifikasi
+                                                </a>
 
-                                            <div class="modal-footer">
-                                                <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                                    Tutup
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -237,8 +274,15 @@
                         {{-- AKSI --}}
                         <td class="text-center">
                             <div class="d-inline-flex gap-2">
+                                <a href="{{ route('admin.assets.specifications.index', $asset->id_asset) }}"
+                                   class="btn btn-info btn-icon text-white"
+                                   title="Kelola Spesifikasi">
+                                    <i class="bi bi-sliders"></i>
+                                </a>
+                                
                                 <a href="{{ route('admin.assets.edit', $asset->id_asset) }}"
-                                   class="btn btn-warning btn-icon">
+                                   class="btn btn-warning btn-icon"
+                                   title="Edit Asset">
                                     <i class="bi bi-pencil"></i>
                                 </a>
 
