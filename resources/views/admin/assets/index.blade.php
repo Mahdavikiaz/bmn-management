@@ -151,9 +151,9 @@
                                                 <div>
                                                     <h5 class="modal-title">Spesifikasi Asset</h5>
                                                     <div class="text-muted small mt-2">
-                                                        {{ $asset->device_name }} ({{ $asset->type?->type_name ?? '-' }}) |
+                                                        <strong>{{ $asset->device_name }} ({{ $asset->type?->type_name ?? '-' }})</strong> |
                                                         Kode BMN: <strong>{{ $asset->bmn_code }}</strong> |
-                                                        Tahun Pengadaan: {{ $asset->procurement_year }}
+                                                        Tahun Pengadaan: <strong>{{ $asset->procurement_year }}</strong>
                                                     </div>
                                                 </div>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
