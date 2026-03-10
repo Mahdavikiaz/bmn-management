@@ -88,6 +88,7 @@
                             $p = (float) $p;
                             return $p > 0 ? 'Rp ' . number_format($p,0,',','.') : '-';
                         };
+                        $totalUpgradePrice = ($r?->upgrade_ram_price + $r?->upgrade_storage_price + $r?->upgrade_baterai_price + $r?->upgrade_charger_price);
                     @endphp
 
                     <tr>
@@ -107,8 +108,9 @@
                         </td>
 
                         <td>
-                            <div class="text-muted small">RAM: <strong>{{ $fmtPrice($r?->upgrade_ram_price) }}</strong></div>
-                            <div class="text-muted small">Storage: <strong>{{ $fmtPrice($r?->upgrade_storage_price) }}</strong></div>
+                            {{-- <div class="text-muted small">RAM: <strong>{{ $fmtPrice($r?->upgrade_ram_price) }}</strong></div>
+                            <div class="text-muted small">Storage: <strong>{{ $fmtPrice($r?->upgrade_storage_price) }}</strong></div> --}}
+                            <div class="text-muted small">Total : <strong>{{ $fmtPrice($totalUpgradePrice) }}</strong></div>
                         </td>
 
                         <td class="text-center">
