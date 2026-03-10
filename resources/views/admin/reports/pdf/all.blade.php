@@ -121,6 +121,7 @@
             <th style="width: 85px;">Estimasi Upgrade RAM</th>
             <th style="width: 95px;">Estimasi Upgrade Storage</th>
             <th style="width: 95px;">Estimasi Upgrade Baterai</th>
+            <th style="width: 95px;">Estimasi Upgrade Charger</th>
             <th style="width: 95px;">Total Estimasi Upgrade</th>
 
             <th style="width: 90px;">Tanggal Pengecekan</th>
@@ -137,7 +138,8 @@
             $ramPrice = $safeFloat($r?->upgrade_ram_price);
             $stoPrice = $safeFloat($r?->upgrade_storage_price);
             $batPrice = $safeFloat($r?->upgrade_baterai_price);
-            $totalPrice = $ramPrice + $stoPrice + $batPrice ;
+            $charPrice = $safeFloat($r?->upgrade_charger_price);
+            $totalPrice = $ramPrice + $stoPrice + $batPrice + $charPrice;
         @endphp
 
         <tr>
@@ -157,6 +159,7 @@
             <td class="num">{{ $fmtMoney($ramPrice) }}</td>
             <td class="num">{{ $fmtMoney($stoPrice) }}</td>
             <td class="num">{{ $fmtMoney($batPrice) }}</td>
+            <td class="num">{{ $fmtMoney($charPrice) }}</td>
             <td class="num">{{ $fmtMoney($totalPrice) }}</td>
 
             <td>{{ optional($r?->created_at)->format('d/m/Y H:i') ?? '-' }}</td>

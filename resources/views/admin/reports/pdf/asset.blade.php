@@ -198,8 +198,9 @@
         @endif
     </div>
     <div>Baterai: {{ $fmt($report->upgrade_baterai_price) }}</div>
+    <div>Charger: {{ $fmt($report->upgrade_charger_price) }}</div>
     <br>
-    <div><strong>Total :</strong> {{ $fmt(((float)($report->upgrade_ram_price ?? 0)) + ((float)($report->upgrade_storage_price ?? 0)) + ((float)($report->upgrade_baterai_price ?? 0))) }}</div>
+    <div><strong>Total :</strong> {{ $fmt(((float)($report->upgrade_ram_price ?? 0)) + ((float)($report->upgrade_storage_price ?? 0)) + ((float)($report->upgrade_baterai_price ?? 0)) + ((float)($report->upgrade_charger_price ?? 0))) }}</div>
 </div>
 
 <div class="box">
