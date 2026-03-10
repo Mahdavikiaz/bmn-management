@@ -444,7 +444,7 @@ class AssetCheckController extends Controller
             $storageTypeForPayload = $this->getStorageTypeFromSpec($latestSpec);
         }
 
-        // Upload foto keluhan (opsional)
+        // Upload foto keluhan
         $issueImageUri = null;
         if ($request->hasFile('issue_image')) {
             $file = $request->file('issue_image');
@@ -529,6 +529,11 @@ class AssetCheckController extends Controller
                 $upgradeBateraiPrice = $this->findCheapestSparepartPrice('BATERAI');
             }
 
+            $upgradeChargerPrice = null;
+            if (!is_null($priorCharger) && in_array($priorCharger, [4, 5], true)) {
+                $upgradeChargerPrice = $this->findCheapestSparepartPrice('CHARGER');
+            }
+
             $report = PerformanceReport::create([
                 'id_user' => Auth::id(),
                 'id_asset' => $asset->id_asset,
@@ -553,9 +558,13 @@ class AssetCheckController extends Controller
                 'upgrade_storage_price' => in_array($priorStorage, [4, 5], true)
                     ? $this->priceOrZero($upgradeStoragePrice)
                     : null,
-                
+
                 'upgrade_baterai_price' => !is_null($priorBaterai) && in_array($priorBaterai, [4, 5], true)
                     ? $this->priceOrZero($upgradeBateraiPrice)
+                    : null,
+
+                'upgrade_charger_price' => !is_null($priorCharger) && in_array($priorCharger, [4, 5], true)
+                    ? $this->priceOrZero($upgradeChargerPrice)
                     : null,
 
                 'created_at' => $now,

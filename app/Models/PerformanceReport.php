@@ -27,6 +27,7 @@ class PerformanceReport extends Model
         'upgrade_ram_price',
         'upgrade_storage_price',
         'upgrade_baterai_price',
+        'upgrade_charger_price',
         'datetime',
     ];
 
@@ -35,6 +36,7 @@ class PerformanceReport extends Model
         'upgrade_ram_price' => 'decimal:0',
         'upgrade_storage_price' => 'decimal:0',
         'upgrade_baterai_price' => 'decimal:0',
+        'upgrade_charger_price' => 'decimal:0',
     ];
 
     public function asset()

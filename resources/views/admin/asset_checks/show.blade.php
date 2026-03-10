@@ -97,7 +97,7 @@
     use App\Models\Recommendation;
     use Illuminate\Support\Str;
 
-    // SPEC (untuk section "Spesifikasi Saat Ini")
+    // SPEC (untuk section Spesifikasi Saat Ini)
     $spec = $latestSpec ?? null;
 
     // SPEC yang dipakai report (untuk keluhan & foto)
@@ -189,7 +189,6 @@
     $pSto = (int)($report->prior_storage ?? 0);
     $pCpu = (int)($report->prior_processor ?? 0);
 
-    // ===== tambahan baterai/charger (aman walau kolomnya belum ada: pakai null-coalescing) =====
     $pBat = (int)($report->prior_baterai ?? 0);
     $pChg = (int)($report->prior_charger ?? 0);
 
@@ -220,17 +219,17 @@
     // Storage hanya tampil kalau prior_storage >= 4
     $stoUpgradeUi = ($pSto >= 4) ? $fmtPrice($report->upgrade_storage_price ?? null) : '-';
 
-    // Battery upgrade price (kalau ada kolom)
-    $batUpgradeUi = ($pBat >= 1) ? $fmtPrice($report->upgrade_baterai_price ?? null) : '-';
+    // Battery upgrade price
+    $batUpgradeUi = ($pBat >= 4) ? $fmtPrice($report->upgrade_baterai_price ?? null) : '-';
 
-    // Charger upgrade price (kalau kamu bikin kolomnya)
-    $chgUpgradeUi = ($pChg >= 1) ? $fmtPrice($report->upgrade_charger_price ?? null) : '-';
+    // Charger upgrade price
+    $chgUpgradeUi = ($pChg >= 4) ? $fmtPrice($report->upgrade_charger_price ?? null) : '-';
 
-    // Tampilkan section baterai/charger hanya kalau datanya memang ada
+    // section baterai/charger hanya kalau datanya memang ada
     $showBattery = !is_null($report->prior_baterai ?? null) || trim((string)($report->recommendation_baterai ?? '')) !== '';
     $showCharger = !is_null($report->prior_charger ?? null) || trim((string)($report->recommendation_charger ?? '')) !== '';
 
-    // Keluhan & Foto (dari spec report)
+    // Keluhan & Foto
     $issueNote = trim((string)($specReport->issue_note ?? ''));
     $issueNoteUi = $issueNote !== '' ? $issueNote : '-';
 
@@ -449,7 +448,7 @@
                     </div>
                 </div>
 
-                {{-- PRIORITIES (BATERAI/CHARGER) -> di bawahnya --}}
+                {{-- PRIORITIES (BATERAI/CHARGER) --}}
                 @if($showBattery || $showCharger)
                     <div class="row g-3 mt-1">
                         @if($showBattery)
@@ -550,7 +549,7 @@
                     </div>
                 </div>
 
-                {{-- RECOMMENDATIONS (BATERAI/CHARGER) -> di bawahnya --}}
+                {{-- RECOMMENDATIONS (BATERAI/CHARGER) --}}
                 @if($showBattery || $showCharger)
                     <div class="row g-3 mt-1">
                         @if($showBattery)
