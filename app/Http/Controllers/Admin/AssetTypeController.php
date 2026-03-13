@@ -14,7 +14,6 @@ class AssetTypeController extends Controller
 
     public function index(Request $request)
     {
-    // ambil daftar nama tipe (unik & dinamis)
         $typeNames = AssetType::orderBy('type_name')
             ->pluck('type_name')
             ->unique();

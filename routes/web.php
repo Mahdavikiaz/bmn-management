@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\SparepartController;
 use App\Http\Controllers\Admin\RecommendationController;
 use App\Http\Controllers\Admin\IndicatorQuestionController;
 use App\Http\Controllers\Admin\AssetCheckController;
+use App\Http\Controllers\Admin\AssetServiceController;
 use App\Http\Controllers\Admin\AssetTypeController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ReportController;
@@ -29,10 +30,6 @@ Route::middleware(['auth'])->group(function () {
         // ASSETS (Admin + User)
         Route::middleware('can:viewAny,App\Models\Asset')->group(function () {
 
-            /**
-             * EXPORT ALL ASSETS (Excel) - halaman data asset
-             * Penting: taruh sebelum resource('assets') agar tidak ketabrak assets/{asset}
-             */
             Route::get('assets/export/excel', [AssetController::class, 'exportAll'])
                 ->name('assets.export.all.excel');
 
@@ -115,6 +112,24 @@ Route::middleware(['auth'])->group(function () {
             Route::resource('indicator-questions', IndicatorQuestionController::class)->except(['show']);
         });
 
+        // ASSET SERVICES / PERBAIKAN ASSET (Admin + User)
+        Route::middleware('can:viewAny,App\Models\Asset')->group(function () {
+
+            Route::get('asset-services', [AssetServiceController::class, 'index'])
+                ->name('asset-services.index');
+
+            Route::get('asset-services/{asset}/create', [AssetServiceController::class, 'create'])
+                ->name('asset-services.create');
+
+            Route::post('asset-services/{asset}', [AssetServiceController::class, 'store'])
+                ->name('asset-services.store');
+
+            Route::get('asset-services/{asset}/history', [AssetServiceController::class, 'history'])
+                ->name('asset-services.history');
+
+            Route::delete('asset-services/{asset}/history/{service}', [AssetServiceController::class, 'destroy'])
+                ->name('asset-services.destroy');
+        });
     });
 
 });

@@ -47,4 +47,14 @@ class Asset extends Model
     {
         return $this->belongsTo(AssetType::class, 'id_type', 'id_type');
     }
+
+    public function services()
+    {
+        return $this->hasMany(AssetService::class, 'id_asset', 'id_asset');
+    }
+
+    public function latestService()
+    {
+        return $this->hasOne(AssetService::class, 'id_asset', 'id_asset')->latestOfMany('service_date');
+    }
 }

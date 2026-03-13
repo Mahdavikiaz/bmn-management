@@ -30,6 +30,14 @@
             </li>
 
             <li class="nav-item">
+                <a href="{{ route('admin.asset-services.index') }}"
+                class="nav-link {{ request()->is('admin/asset-services*') ? 'active' : 'text-dark' }}">
+                    <i class="bi bi-tools"></i>
+                    Perbaikan Asset
+                </a>
+            </li>
+
+            <li class="nav-item">
                 <a href="{{ route('admin.reports.index') }}"
                    class="nav-link {{ request()->is('admin/reports*') ? 'active' : 'text-dark' }}">
                     <i class="bi bi-file-earmark-text"></i>
