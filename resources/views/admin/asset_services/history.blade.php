@@ -58,16 +58,13 @@
                             <td style="white-space: pre-line;">{{ $service->service_description }}</td>
                             <td>{{ optional($service->created_at)->format('d/m/Y H:i') }}</td>
                             <td class="text-center">
-                                <form method="POST"
-                                      action="{{ route('admin.asset-services.destroy', [$asset->id_asset, $service->id_service]) }}"
-                                      onsubmit="return confirm('Yakin ingin menghapus record perbaikan ini?')">
-                                    @csrf
-                                    @method('DELETE')
-
-                                    <button class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger js-delete"
+                                        data-action="{{ route('admin.asset-services.destroy', [$asset->id_asset, $service->id_service]) }}"
+                                        data-title="Hapus Data Perbaikan Ini?"
+                                        data-message="Data history perbaikan ini akan terhapus permanen.">
+                                    <i class="bi bi-trash"></i>    
+                                </button>
                             </td>
                         </tr>
                     @empty
