@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
+use App\Models\AssetService;
 use App\Models\AssetType;
 use App\Models\AssetsSpecifications;
 use App\Models\IndicatorAnswer;
@@ -50,17 +51,24 @@ class AssetCheckController extends Controller
 
         return [
             'id_asset'        => $asset->id_asset,
-            'owner_asset'     => $this->norm($request->owner_asset),
-            'processor'       => $this->norm($request->processor),
+            'owner_asset'     => $this->normSafe($request->owner_asset),
+            'processor'       => $this->normSafe($request->processor),
             'ram'             => (int) $request->ram,
             'storage'         => (int) $request->storage,
-            'os_version'      => $this->norm($request->os_version),
+            'os_version'      => $this->normSafe($request->os_version),
             'is_hdd'          => $storageType === 'HDD',
             'is_ssd'          => $storageType === 'SSD',
             'is_nvme'         => $storageType === 'NVME',
-            'issue_note'      => $this->norm($request->input('issue_note')),
+            'issue_note'      => $this->normSafe($request->input('issue_note')),
             'issue_image_uri' => $issueImageUri,
         ];
+    }
+
+    private function normSafe(?string $v): ?string
+    {
+        if ($v === null) return null;
+        $v = trim($v);
+        return $v === '' ? null : $v;
     }
 
     private function isSameSpec(?AssetsSpecifications $latest, array $payload): bool
@@ -68,14 +76,14 @@ class AssetCheckController extends Controller
         if (!$latest) return false;
 
         return (
-            $this->norm($latest->owner_asset) === $payload['owner_asset'] &&
-            $this->norm($latest->processor)   === $payload['processor'] &&
-            (int) $latest->ram                === (int) $payload['ram'] &&
-            (int) $latest->storage            === (int) $payload['storage'] &&
-            $this->norm($latest->os_version)  === $payload['os_version'] &&
-            (bool) $latest->is_hdd            === (bool) $payload['is_hdd'] &&
-            (bool) $latest->is_ssd            === (bool) $payload['is_ssd'] &&
-            (bool) $latest->is_nvme           === (bool) $payload['is_nvme']
+            $this->normSafe($latest->owner_asset) === $payload['owner_asset'] &&
+            $this->normSafe($latest->processor)   === $payload['processor'] &&
+            (int) $latest->ram                    === (int) $payload['ram'] &&
+            (int) $latest->storage                === (int) $payload['storage'] &&
+            $this->normSafe($latest->os_version)  === $payload['os_version'] &&
+            (bool) $latest->is_hdd                === (bool) $payload['is_hdd'] &&
+            (bool) $latest->is_ssd                === (bool) $payload['is_ssd'] &&
+            (bool) $latest->is_nvme               === (bool) $payload['is_nvme']
         );
     }
 
@@ -339,6 +347,12 @@ class AssetCheckController extends Controller
             ->orderByDesc('datetime')
             ->first();
 
+        $latestReport = PerformanceReport::where('id_asset', $asset->id_asset)
+            ->latest()
+            ->first();
+
+        $hasPreviousReport = !is_null($latestReport);
+
         $categories = $this->applicableCategories($asset);
 
         $questions = IndicatorQuestion::with(['options' => function ($q) {
@@ -350,7 +364,60 @@ class AssetCheckController extends Controller
             ->get()
             ->groupBy('category');
 
-        return view('admin.asset_checks.create', compact('asset', 'latestSpec', 'questions', 'categories'));
+        return view('admin.asset_checks.create', compact(
+            'asset',
+            'latestSpec',
+            'latestReport',
+            'hasPreviousReport',
+            'questions',
+            'categories'
+        ));
+    }
+
+    public function storeServiceDirect(Request $request, Asset $asset)
+    {
+        $this->authorize('create', PerformanceReport::class);
+
+        $validated = $request->validate([
+            'service_id' => ['nullable', 'integer'],
+            'service_date' => ['required', 'date'],
+            'service_description' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $service = null;
+
+        if (!empty($validated['service_id'])) {
+            $service = AssetService::where('id_service', $validated['service_id'])
+                ->where('id_asset', $asset->id_asset)
+                ->first();
+
+            if (!$service) {
+                return response()->json([
+                    'message' => 'Data perbaikan tidak ditemukan atau tidak sesuai dengan asset ini.'
+                ], 404);
+            }
+
+            $service->update([
+                'service_date' => $validated['service_date'],
+                'service_description' => $this->normSafe($validated['service_description']),
+            ]);
+        } else {
+            $service = AssetService::create([
+                'id_asset' => $asset->id_asset,
+                'service_date' => $validated['service_date'],
+                'service_description' => $this->normSafe($validated['service_description']),
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data perbaikan berhasil disimpan.',
+            'service' => [
+                'id_service' => $service->id_service,
+                'service_date' => $service->service_date,
+                'service_description' => $service->service_description,
+            ],
+        ]);
     }
 
     public function store(Request $request, Asset $asset)
@@ -358,20 +425,49 @@ class AssetCheckController extends Controller
         $this->authorize('create', PerformanceReport::class);
 
         $request->validate([
-            'category_storage' => 'nullable|in:HDD,SSD,NVME',
-            'owner_asset'      => 'required|string|max:255',
-            'processor'        => 'required|string|max:255',
-            'ram'              => 'required|integer|min:0',
-            'storage'          => 'required|integer|min:0',
-            'os_version'       => 'nullable|string|max:255',
-            'gpu'              => 'nullable|string|max:255',
-            'ram_type'         => 'nullable|in:DDR3,DDR4,DDR5',
-            'answers'          => 'required|array|min:1',
-            'issue_note'       => 'nullable|string|max:5000',
-            'issue_image'      => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'category_storage'       => 'nullable|in:HDD,SSD,NVME',
+            'owner_asset'            => 'required|string|max:255',
+            'processor'              => 'required|string|max:255',
+            'ram'                    => 'required|integer|min:0',
+            'storage'                => 'required|integer|min:0',
+            'os_version'             => 'nullable|string|max:255',
+            'gpu'                    => 'nullable|string|max:255',
+            'ram_type'               => 'nullable|in:DDR3,DDR4,DDR5',
+            'answers'                => 'required|array|min:1',
+            'issue_note'             => 'nullable|string|max:5000',
+            'issue_image'            => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+
+            'service_confirmation'   => 'nullable|in:0,1',
+            'service_modal_answered' => 'nullable|in:0,1',
+            'service_saved_directly' => 'nullable|in:0,1',
+            'service_id'             => 'nullable|integer',
+            'service_date'           => 'nullable|date',
+            'service_description'    => 'nullable|string|max:5000',
         ]);
 
         $categories = $this->applicableCategories($asset);
+
+        $hasPreviousReport = PerformanceReport::where('id_asset', $asset->id_asset)->exists();
+        $serviceConfirmation = $request->input('service_confirmation') === '1';
+        $serviceSavedDirectly = $request->input('service_saved_directly') === '1';
+
+        if ($hasPreviousReport && $serviceConfirmation && !$serviceSavedDirectly) {
+            return back()
+                ->withErrors(['service_confirmation' => 'Data perbaikan harus disimpan terlebih dahulu sebelum melanjutkan pengecekan.'])
+                ->withInput();
+        }
+
+        if ($serviceSavedDirectly) {
+            $savedService = AssetService::where('id_service', $request->input('service_id'))
+                ->where('id_asset', $asset->id_asset)
+                ->first();
+
+            if (!$savedService) {
+                return back()
+                    ->withErrors(['service_id' => 'Data perbaikan tidak ditemukan. Silakan simpan ulang data perbaikan.'])
+                    ->withInput();
+            }
+        }
 
         // wajib jawab semua pertanyaan yang berlaku untuk tipe asset ini
         $allQuestions = IndicatorQuestion::whereIn('category', $categories)
@@ -460,8 +556,8 @@ class AssetCheckController extends Controller
 
         // Update data GPU & RAM type ke tabel assets
         $asset->update([
-            'gpu' => $this->norm($request->gpu),
-            'ram_type' => $this->norm($request->ram_type),
+            'gpu' => $this->normSafe($request->gpu),
+            'ram_type' => $this->normSafe($request->ram_type),
         ]);
 
         $report = DB::transaction(function () use (

@@ -69,6 +69,10 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('asset-checks/{asset}/reports/{report}', [AssetCheckController::class, 'destroyReport'])
                 ->middleware('can:delete,report')
                 ->name('asset-checks.reports.destroy');
+
+            Route::post('asset-checks/{asset}/service-direct', [AssetCheckController::class, 'storeServiceDirect'])
+                ->middleware('can:create,App\Models\PerformanceReport')
+                ->name('asset-checks.service-direct.store');
         });
 
         // REPORTS
