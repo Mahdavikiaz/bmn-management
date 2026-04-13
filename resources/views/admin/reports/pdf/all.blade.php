@@ -6,17 +6,26 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 12px 14px;
+            margin: 10px 12px;
         }
 
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 9.5px;
+            font-size: 8.8px;
             color: #111;
         }
 
-        .title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-        .muted { color: #666; margin-bottom: 8px; font-size: 9px; }
+        .title {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .muted {
+            color: #666;
+            margin-top: 8px;
+            font-size: 8.5px;
+        }
 
         table {
             width: 100%;
@@ -25,29 +34,65 @@
         }
 
         th, td {
-            border: 1px solid #ddd;
-            padding: 4px 5px;
+            border: 1px solid #d9d9d9;
+            padding: 5px 6px;
             vertical-align: top;
-            overflow-wrap: anywhere;
-            word-wrap: break-word;
-            word-break: break-word;
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: normal;
         }
 
-        th {
+        thead th {
             background: #f3f4f6;
-            text-align: left;
             font-weight: 700;
-        }
-
-        .small { font-size: 9px; color:#333; }
-        .pre { white-space: pre-line; }
-
-        .summary {
+            text-align: center;
             line-height: 1.25;
         }
 
-        .device {
-            line-height: 1.2;
+        .group-head {
+            background: #e5e7eb;
+        }
+
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .small { font-size: 8px; color: #555; }
+        .device { line-height: 1.3; }
+        .code { line-height: 1.25; }
+        .date-cell { line-height: 1.25; }
+        .nowrap { white-space: nowrap; }
+
+        .indicator-cell {
+            padding: 0;
+        }
+
+        .indicator-box {
+            padding: 5px 6px;
+            line-height: 1.3;
+            min-height: 54px;
+        }
+
+        .indicator-label {
+            font-size: 7.8px;
+            font-weight: 700;
+            color: #4b5563;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .indicator-value {
+            margin-bottom: 5px;
+        }
+
+        .indicator-value.money {
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .empty-indicator {
+            padding: 18px 6px;
+            text-align: center;
+            color: #777;
         }
     </style>
 </head>
@@ -56,6 +101,7 @@
 @php
     $summarizeRec = function (?string $text): string {
         if (!$text) return '-';
+
         $t = trim($text);
         if ($t === '' || $t === '-') return '-';
 
@@ -63,28 +109,13 @@
 
         if (str_contains($t, '•')) {
             $parts = array_values(array_filter(array_map('trim', explode('•', $t))));
-            return $parts[0] ?? '-';
+            $t = $parts[0] ?? '-';
+        } else {
+            $lines = array_values(array_filter(array_map('trim', explode("\n", $t))));
+            $t = $lines[0] ?? '-';
         }
 
-        $lines = array_values(array_filter(array_map('trim', explode("\n", $t))));
-        return $lines[0] ?? '-';
-    };
-
-    $combineSummary = function (?string $ramRec, ?string $stoRec, ?string $procRec, ?string $batRec, ?string $chaRec) use ($summarizeRec): string {
-        $ram = $summarizeRec($ramRec);
-        $sto = $summarizeRec($stoRec);
-        $pro = $summarizeRec($procRec);
-        $bat = $summarizeRec($batRec);
-        $cha = $summarizeRec($chaRec);
-
-        $parts = [];
-        if ($ram !== '-') $parts[] = "RAM: {$ram}";
-        if ($sto !== '-') $parts[] = "Storage: {$sto}";
-        if ($pro !== '-') $parts[] = "CPU: {$pro}";
-        if ($bat !== '-') $parts[] = "Baterai: {$bat}";
-        if ($cha !== '-') $parts[] = "Charger: {$cha}";
-
-        return count($parts) ? implode("\n", $parts) : '-';
+        return $t ?: '-';
     };
 
     $fmtMoney = function ($v): string {
@@ -98,33 +129,67 @@
         if (!is_numeric($v)) return 0.0;
         return (float) $v;
     };
+
+    $formatRecHtml = function (string $text): string {
+        if ($text === '-') {
+            return '-';
+        }
+
+        $safe = e($text);
+
+        // kasih enter otomatis supaya lebih enak dibaca
+        $safe = preg_replace('/\s+(dan|serta|atau)\s+/iu', '<br>$1 ', $safe, 1);
+
+        return $safe;
+    };
+
+    $renderIndicator = function (?string $recommendation, $price) use ($summarizeRec, $fmtMoney, $safeFloat, $formatRecHtml): string {
+        $rec = $summarizeRec($recommendation);
+        $formattedPrice = $fmtMoney($safeFloat($price));
+
+        if ($rec === '-' && $formattedPrice === '-') {
+            return '<div class="empty-indicator">-</div>';
+        }
+
+        return '
+            <div class="indicator-box">
+                <div class="indicator-label">Rekomendasi</div>
+                <div class="indicator-value">' . $formatRecHtml($rec) . '</div>
+                <div class="indicator-label">Estimasi</div>
+                <div class="indicator-value money">' . e($formattedPrice) . '</div>
+            </div>
+        ';
+    };
 @endphp
 
 <div class="title">Rekap Report Pengecekan Asset</div>
-<br>
+
 <table>
     <thead>
         <tr>
-            <th style="width: 22px;">No</th>
-            <th style="width: 90px;">Kode BMN</th>
-            <th style="width: 120px;">Nama Device</th>
-            <th style="width: 70px;">Kategori</th>
+            <th rowspan="2" style="width:24px;">No</th>
+            <th rowspan="2" style="width:78px;">Kode BMN</th>
+            <th rowspan="2" style="width:110px;">Nama Device</th>
+            <th rowspan="2" style="width:70px;">Kategori</th>
 
-            <th style="width: 38px;">Priority Level<br>RAM</th>
-            <th style="width: 48px;">Priority Level<br>Storage</th>
-            <th style="width: 38px;">Priority Level<br>CPU</th>
-            <th style="width: 38px;">Priority Level<br>Baterai</th>
-            <th style="width: 38px;">Priority Level<br>Charger</th>
+            <th colspan="5" class="group-head">Priority Level</th>
+            <th colspan="5" class="group-head">Rekomendasi & Estimasi Upgrade</th>
 
-            <th style="width: 230px;">Ringkasan Rekomendasi</th>
+            <th rowspan="2" style="width:82px;">Total Estimasi</th>
+            <th rowspan="2" style="width:74px;">Tanggal Cek</th>
+        </tr>
+        <tr>
+            <th style="width:34px;">RAM</th>
+            <th style="width:34px;">Storage</th>
+            <th style="width:34px;">CPU</th>
+            <th style="width:34px;">Baterai</th>
+            <th style="width:34px;">Charger</th>
 
-            <th style="width: 85px;">Estimasi Upgrade RAM</th>
-            <th style="width: 95px;">Estimasi Upgrade Storage</th>
-            <th style="width: 95px;">Estimasi Upgrade Baterai</th>
-            <th style="width: 95px;">Estimasi Upgrade Charger</th>
-            <th style="width: 95px;">Total Estimasi Upgrade</th>
-
-            <th style="width: 90px;">Tanggal Pengecekan</th>
+            <th style="width:118px;">RAM</th>
+            <th style="width:118px;">Storage</th>
+            <th style="width:118px;">CPU</th>
+            <th style="width:118px;">Baterai</th>
+            <th style="width:118px;">Charger</th>
         </tr>
     </thead>
 
@@ -133,42 +198,60 @@
         @php
             $r = $asset->latestPerformanceReport;
 
-            $summary = $combineSummary($r?->recommendation_ram, $r?->recommendation_storage, $r?->recommendation_processor, $r?->recommendation_baterai, $r?->recommendation_charger);
-
             $ramPrice = $safeFloat($r?->upgrade_ram_price);
             $stoPrice = $safeFloat($r?->upgrade_storage_price);
+
+            $cpuRawPrice = $r?->upgrade_processor_price ?? $r?->upgrade_cpu_price ?? 0;
+            $cpuPrice = $safeFloat($cpuRawPrice);
+
             $batPrice = $safeFloat($r?->upgrade_baterai_price);
             $charPrice = $safeFloat($r?->upgrade_charger_price);
-            $totalPrice = $ramPrice + $stoPrice + $batPrice + $charPrice;
+
+            $ramSummary = $renderIndicator($r?->recommendation_ram, $ramPrice);
+            $stoSummary = $renderIndicator($r?->recommendation_storage, $stoPrice);
+            $cpuSummary = $renderIndicator($r?->recommendation_processor, $cpuPrice);
+            $batSummary = $renderIndicator($r?->recommendation_baterai, $batPrice);
+            $charSummary = $renderIndicator($r?->recommendation_charger, $charPrice);
+
+            $totalPrice = $ramPrice + $stoPrice + $cpuPrice + $batPrice + $charPrice;
+            $checkedAt = $r?->created_at;
         @endphp
 
         <tr>
-            <td>{{ $i+1 }}</td>
-            <td>{{ $asset->bmn_code ?? '-' }}</td>
+            <td class="text-center">{{ $i + 1 }}</td>
+            <td class="code">{{ $asset->bmn_code ?? '-' }}</td>
             <td class="device">{{ $asset->device_name ?? '-' }}</td>
             <td>{{ $asset->type?->type_name ?? '-' }}</td>
 
-            <td>{{ $r?->prior_ram ?? '-' }}</td>
-            <td>{{ $r?->prior_storage ?? '-' }}</td>
-            <td>{{ $r?->prior_processor ?? '-' }}</td>
-            <td>{{ $r?->prior_baterai ?? '-' }}</td>
-            <td>{{ $r?->prior_charger ?? '-' }}</td>
+            <td class="text-center">{{ $r?->prior_ram ?? '-' }}</td>
+            <td class="text-center">{{ $r?->prior_storage ?? '-' }}</td>
+            <td class="text-center">{{ $r?->prior_processor ?? '-' }}</td>
+            <td class="text-center">{{ $r?->prior_baterai ?? '-' }}</td>
+            <td class="text-center">{{ $r?->prior_charger ?? '-' }}</td>
 
-            <td class="small pre summary">{{ $summary }}</td>
+            <td class="indicator-cell">{!! $ramSummary !!}</td>
+            <td class="indicator-cell">{!! $stoSummary !!}</td>
+            <td class="indicator-cell">{!! $cpuSummary !!}</td>
+            <td class="indicator-cell">{!! $batSummary !!}</td>
+            <td class="indicator-cell">{!! $charSummary !!}</td>
 
-            <td class="num">{{ $fmtMoney($ramPrice) }}</td>
-            <td class="num">{{ $fmtMoney($stoPrice) }}</td>
-            <td class="num">{{ $fmtMoney($batPrice) }}</td>
-            <td class="num">{{ $fmtMoney($charPrice) }}</td>
-            <td class="num">{{ $fmtMoney($totalPrice) }}</td>
-
-            <td>{{ optional($r?->created_at)->format('d/m/Y H:i') ?? '-' }}</td>
+            <td class="text-right nowrap">{{ $fmtMoney($totalPrice) }}</td>
+            <td class="date-cell">
+                @if($checkedAt)
+                    {{ $checkedAt->format('d/m/Y') }}<br>
+                    <span class="small">{{ $checkedAt->format('H:i') }}</span>
+                @else
+                    -
+                @endif
+            </td>
         </tr>
     @endforeach
     </tbody>
 </table>
-<br>
-<div class="muted">Dibuat oleh Tim Prakom BPS DKI Jakarta pada : {{ now()->format('d/m/Y H:i') }}</div>
+
+<div class="muted">
+    Dibuat oleh Tim Prakom BPS DKI Jakarta pada : {{ now()->format('d/m/Y H:i') }}
+</div>
 
 </body>
 </html>
