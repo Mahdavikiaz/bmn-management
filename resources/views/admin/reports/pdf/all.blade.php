@@ -30,7 +30,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: auto;
         }
 
         th, td {
@@ -105,12 +105,16 @@
             color: #777;
         }
 
-        .bmn-col { width: 78px; }
-        .device-col { width: 78px; }
-        .category-col { width: 54px; }
-        .recommend-col { width: 70px; }
-        .total-col { width: 70px; }
-        .date-col { width: 58px; }
+        .bmn-col { width: 65px; }
+        .device-col { width: 70px; }
+        .category-col { width: 50px; }
+        .total-col { width: 60px; }
+        .date-col { width: 55px; }
+
+        .priority-head,
+        .priority-cell {
+            width: 20px;
+        }
     </style>
 </head>
 <body>
@@ -171,12 +175,12 @@
 <table>
     <thead>
         <tr>
-            <th rowspan="2" class="no-col">No</th>
+            <th rowspan="2" style="width:14px; font-size:6.5px; padding:1px;">No</th>
             <th rowspan="2">Kode BMN</th>
             <th rowspan="2">Nama Device</th>
             <th rowspan="2">Kategori</th>
 
-            <th colspan="5" class="group-head">Priority Level</th>
+            <th colspan="5" class="group-head" style="width:100px;">Priority Level</th>
             <th colspan="5" class="group-head">Rekomendasi & Estimasi Upgrade</th>
 
             <th rowspan="2">Total Estimasi</th>
@@ -222,7 +226,9 @@
         @endphp
 
         <tr>
-            <td class="no-col">{{ $i + 1 }}</td>
+            <td style="width:14px; font-size:6.5px; padding:1px; text-align:center;">
+                {{ $i + 1 }}
+            </td>
             <td>{{ $asset->bmn_code ?? '-' }}</td>
             <td class="device">{{ $asset->device_name ?? '-' }}</td>
             <td>{{ $asset->type?->type_name ?? '-' }}</td>
