@@ -11,7 +11,7 @@
 
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 7.8px;
+            font-size: 7px;
             color: #111;
         }
 
@@ -24,7 +24,7 @@
         .muted {
             color: #666;
             margin-top: 8px;
-            font-size: 8.5px;
+            font-size: 8px;
         }
 
         table {
@@ -35,7 +35,7 @@
 
         th, td {
             border: 1px solid #d9d9d9;
-            padding: 4px 4px;
+            padding: 2px 3px;
             vertical-align: top;
             white-space: normal;
             overflow-wrap: break-word;
@@ -46,43 +46,52 @@
             background: #f3f4f6;
             font-weight: 700;
             text-align: center;
-            line-height: 1.25;
+            line-height: 1.2;
         }
 
         .group-head {
             background: #e5e7eb;
-            width: 120px;
         }
 
-        .text-left { text-align: left; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .small { font-size: 8px; color: #555; }
-        .device { line-height: 1.3; }
-        .code { line-height: 1.25; }
-        .date-cell { line-height: 1.25; }
-        .nowrap { white-space: nowrap; }
+        .no-col {
+            width: 18px;
+            text-align: center;
+            padding: 1px 2px;
+            font-size: 6.8px;
+        }
+
+        .priority-head {
+            font-size: 6.8px;
+            padding: 1px 3px;
+            letter-spacing: 0.1px;
+        }
+
+        .priority-cell {
+            font-size: 6.5px;
+            padding: 2px 2px;
+            text-align: center;
+        }
 
         .indicator-cell {
             padding: 0;
         }
 
         .indicator-box {
-            padding: 5px 6px;
-            line-height: 1.3;
-            min-height: 54px;
+            padding: 3px 4px;
+            line-height: 1.2;
+            min-height: 40px;
         }
 
         .indicator-label {
-            font-size: 7.8px;
+            font-size: 6.5px;
             font-weight: 700;
             color: #4b5563;
             text-transform: uppercase;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .indicator-value {
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
 
         .indicator-value.money {
@@ -91,22 +100,17 @@
         }
 
         .empty-indicator {
-            padding: 18px 6px;
+            padding: 14px 4px;
             text-align: center;
             color: #777;
         }
 
-        .priority-col {
-            width: 24px;
-            font-size: 7.5px;
-            padding: 3px 2px;
-        }
-
-        .priority-cell {
-            font-size: 7.5px;
-            padding: 3px 2px;
-            text-align: center;
-        }
+        .bmn-col { width: 78px; }
+        .device-col { width: 78px; }
+        .category-col { width: 54px; }
+        .recommend-col { width: 70px; }
+        .total-col { width: 70px; }
+        .date-col { width: 58px; }
     </style>
 </head>
 <body>
@@ -143,20 +147,7 @@
         return (float) $v;
     };
 
-    $formatRecHtml = function (string $text): string {
-        if ($text === '-') {
-            return '-';
-        }
-
-        $safe = e($text);
-
-        // kasih enter otomatis supaya lebih enak dibaca
-        $safe = preg_replace('/\s+(dan|serta|atau)\s+/iu', '<br>$1 ', $safe, 1);
-
-        return $safe;
-    };
-
-    $renderIndicator = function (?string $recommendation, $price) use ($summarizeRec, $fmtMoney, $safeFloat, $formatRecHtml): string {
+    $renderIndicator = function (?string $recommendation, $price) use ($summarizeRec, $fmtMoney, $safeFloat): string {
         $rec = $summarizeRec($recommendation);
         $formattedPrice = $fmtMoney($safeFloat($price));
 
@@ -166,10 +157,7 @@
 
         return '
             <div class="indicator-box">
-                <div class="indicator-label"></div>
-                <div class="indicator-value">' . $formatRecHtml($rec) . '</div>
-                <br>
-                <br>
+                <div class="indicator-value">' . e($rec) . '</div>
                 <div class="indicator-label">Estimasi</div>
                 <div class="indicator-value money">' . e($formattedPrice) . '</div>
             </div>
@@ -182,29 +170,29 @@
 <table>
     <thead>
         <tr>
-            <th rowspan="2">No</th>
-            <th rowspan="2" style="width:78px;">Kode BMN</th>
-            <th rowspan="2" style="width:90px;">Nama Device</th>
-            <th rowspan="2" style="width:70px;">Kategori</th>
+            <th rowspan="2" class="no-col">No</th>
+            <th rowspan="2">Kode BMN</th>
+            <th rowspan="2">Nama Device</th>
+            <th rowspan="2">Kategori</th>
 
-            <th colspan="5" class="group-head" style="width:120px;">Priority Level</th>
-            <th colspan="5" class="group-head" style="width:480px;">Rekomendasi & Estimasi Upgrade</th>
+            <th colspan="5" class="group-head">Priority Level</th>
+            <th colspan="5" class="group-head">Rekomendasi & Estimasi Upgrade</th>
 
-            <th rowspan="2" style="width:82px;">Total Estimasi</th>
-            <th rowspan="2" style="width:74px;">Tanggal Cek</th>
+            <th rowspan="2">Total Estimasi</th>
+            <th rowspan="2">Tanggal Cek</th>
         </tr>
         <tr>
-            <th class="priority-col">RAM</th>
-            <th class="priority-col">Storage</th>
-            <th class="priority-col">CPU</th>
-            <th class="priority-col">Baterai</th>
-            <th class="priority-col">Charger</th>
+            <th class="priority-head">RAM</th>
+            <th class="priority-head">STO</th>
+            <th class="priority-head">CPU</th>
+            <th class="priority-head">BAT</th>
+            <th class="priority-head">CHG</th>
 
-            <th style="width:95px;">RAM</th>
-            <th style="width:95px;">Storage</th>
-            <th style="width:95px;">CPU</th>
-            <th style="width:95px;">Baterai</th>
-            <th style="width:95px;">Charger</th>
+            <th>RAM</th>
+            <th>Storage</th>
+            <th>CPU</th>
+            <th>Baterai</th>
+            <th>Charger</th>
         </tr>
     </thead>
 
@@ -233,8 +221,8 @@
         @endphp
 
         <tr>
-            <td class="text-center">{{ $i + 1 }}</td>
-            <td class="code">{{ $asset->bmn_code ?? '-' }}</td>
+            <td class="no-col">{{ $i + 1 }}</td>
+            <td>{{ $asset->bmn_code ?? '-' }}</td>
             <td class="device">{{ $asset->device_name ?? '-' }}</td>
             <td>{{ $asset->type?->type_name ?? '-' }}</td>
 
