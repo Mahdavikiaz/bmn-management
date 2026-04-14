@@ -108,6 +108,7 @@
                         <th style="width:60px;">No</th>
                         <th>Kode BMN</th>
                         <th>Nama Device</th>
+                        <th style="width:180px;">Pemegang Asset</th>
                         <th style="width:160px;">Kategori</th>
                         <th style="width:260px;">Hasil Terakhir</th>
                         <th style="width:60px;" class="text-center col-aksi">Aksi</th>
@@ -133,6 +134,10 @@
 
                             <td>
                                 <div class="fw-normal">{{ $asset->device_name }}</div>
+                            </td>
+
+                            <td>
+                                <div class="fw-normal">{{ $asset->latestPerformanceReport?->spec?->owner_asset ?? '-' }}</div>
                             </td>
 
                             <td class="fw-normal">
