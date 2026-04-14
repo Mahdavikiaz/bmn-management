@@ -103,6 +103,7 @@
                         <th style="width:60px;">No</th>
                         <th style="width:160px;">Kode BMN</th>
                         <th>Nama Device</th>
+                        <th style="width:180px;">Pemegang Asset</th>
                         <th style="width:140px;">Kategori</th>
                         <th>GPU</th>
                         <th>Tipe RAM</th>
@@ -126,6 +127,7 @@
 
                         <td class="fw-normal">{{ $asset->bmn_code }}</td>
                         <td>{{ $asset->device_name }}</td>
+                        <td>{{ $latest->owner_asset ?? '-' }}</td>
                         <td>{{ $asset->type?->type_name ?? '-' }}</td>
                         <td>{{ $asset->gpu ?: '-' }}</td>
                         <td>{{ $asset->ram_type ?: '-' }}</td>
@@ -279,7 +281,7 @@
                                    title="Kelola Spesifikasi">
                                     <i class="bi bi-sliders"></i>
                                 </a>
-                                
+
                                 <a href="{{ route('admin.assets.edit', $asset->id_asset) }}"
                                    class="btn btn-warning btn-icon"
                                    title="Edit Asset">
@@ -297,7 +299,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted p-4">
+                        <td colspan="10" class="text-center text-muted p-4">
                             Belum ada data asset.
                         </td>
                     </tr>

@@ -11,7 +11,7 @@
 
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 8.8px;
+            font-size: 7.8px;
             color: #111;
         }
 
@@ -35,7 +35,7 @@
 
         th, td {
             border: 1px solid #d9d9d9;
-            padding: 5px 6px;
+            padding: 4px 4px;
             vertical-align: top;
             white-space: normal;
             overflow-wrap: break-word;
@@ -51,6 +51,7 @@
 
         .group-head {
             background: #e5e7eb;
+            width: 120px;
         }
 
         .text-left { text-align: left; }
@@ -93,6 +94,18 @@
             padding: 18px 6px;
             text-align: center;
             color: #777;
+        }
+
+        .priority-col {
+            width: 24px;
+            font-size: 7.5px;
+            padding: 3px 2px;
+        }
+
+        .priority-cell {
+            font-size: 7.5px;
+            padding: 3px 2px;
+            text-align: center;
         }
     </style>
 </head>
@@ -153,8 +166,10 @@
 
         return '
             <div class="indicator-box">
-                <div class="indicator-label">Rekomendasi</div>
+                <div class="indicator-label"></div>
                 <div class="indicator-value">' . $formatRecHtml($rec) . '</div>
+                <br>
+                <br>
                 <div class="indicator-label">Estimasi</div>
                 <div class="indicator-value money">' . e($formattedPrice) . '</div>
             </div>
@@ -167,29 +182,29 @@
 <table>
     <thead>
         <tr>
-            <th rowspan="2" style="width:24px;">No</th>
+            <th rowspan="2">No</th>
             <th rowspan="2" style="width:78px;">Kode BMN</th>
-            <th rowspan="2" style="width:110px;">Nama Device</th>
+            <th rowspan="2" style="width:90px;">Nama Device</th>
             <th rowspan="2" style="width:70px;">Kategori</th>
 
-            <th colspan="5" class="group-head">Priority Level</th>
-            <th colspan="5" class="group-head">Rekomendasi & Estimasi Upgrade</th>
+            <th colspan="5" class="group-head" style="width:120px;">Priority Level</th>
+            <th colspan="5" class="group-head" style="width:480px;">Rekomendasi & Estimasi Upgrade</th>
 
             <th rowspan="2" style="width:82px;">Total Estimasi</th>
             <th rowspan="2" style="width:74px;">Tanggal Cek</th>
         </tr>
         <tr>
-            <th style="width:34px;">RAM</th>
-            <th style="width:34px;">Storage</th>
-            <th style="width:34px;">CPU</th>
-            <th style="width:34px;">Baterai</th>
-            <th style="width:34px;">Charger</th>
+            <th class="priority-col">RAM</th>
+            <th class="priority-col">Storage</th>
+            <th class="priority-col">CPU</th>
+            <th class="priority-col">Baterai</th>
+            <th class="priority-col">Charger</th>
 
-            <th style="width:118px;">RAM</th>
-            <th style="width:118px;">Storage</th>
-            <th style="width:118px;">CPU</th>
-            <th style="width:118px;">Baterai</th>
-            <th style="width:118px;">Charger</th>
+            <th style="width:95px;">RAM</th>
+            <th style="width:95px;">Storage</th>
+            <th style="width:95px;">CPU</th>
+            <th style="width:95px;">Baterai</th>
+            <th style="width:95px;">Charger</th>
         </tr>
     </thead>
 
@@ -223,11 +238,11 @@
             <td class="device">{{ $asset->device_name ?? '-' }}</td>
             <td>{{ $asset->type?->type_name ?? '-' }}</td>
 
-            <td class="text-center">{{ $r?->prior_ram ?? '-' }}</td>
-            <td class="text-center">{{ $r?->prior_storage ?? '-' }}</td>
-            <td class="text-center">{{ $r?->prior_processor ?? '-' }}</td>
-            <td class="text-center">{{ $r?->prior_baterai ?? '-' }}</td>
-            <td class="text-center">{{ $r?->prior_charger ?? '-' }}</td>
+            <td class="priority-cell">{{ $r?->prior_ram ?? '-' }}</td>
+            <td class="priority-cell">{{ $r?->prior_storage ?? '-' }}</td>
+            <td class="priority-cell">{{ $r?->prior_processor ?? '-' }}</td>
+            <td class="priority-cell">{{ $r?->prior_baterai ?? '-' }}</td>
+            <td class="priority-cell">{{ $r?->prior_charger ?? '-' }}</td>
 
             <td class="indicator-cell">{!! $ramSummary !!}</td>
             <td class="indicator-cell">{!! $stoSummary !!}</td>
