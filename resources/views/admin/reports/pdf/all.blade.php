@@ -158,6 +158,7 @@
         return '
             <div class="indicator-box">
                 <div class="indicator-value">' . e($rec) . '</div>
+                <br>
                 <div class="indicator-label">Estimasi</div>
                 <div class="indicator-value money">' . e($formattedPrice) . '</div>
             </div>
@@ -166,7 +167,7 @@
 @endphp
 
 <div class="title">Rekap Report Pengecekan Asset</div>
-
+<br>
 <table>
     <thead>
         <tr>
@@ -183,10 +184,10 @@
         </tr>
         <tr>
             <th class="priority-head">RAM</th>
-            <th class="priority-head">STO</th>
+            <th class="priority-head">Storage</th>
             <th class="priority-head">CPU</th>
-            <th class="priority-head">BAT</th>
-            <th class="priority-head">CHG</th>
+            <th class="priority-head">Baterai</th>
+            <th class="priority-head">Charger</th>
 
             <th>RAM</th>
             <th>Storage</th>
