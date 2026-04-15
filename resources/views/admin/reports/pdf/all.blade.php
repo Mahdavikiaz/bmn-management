@@ -260,7 +260,7 @@
 </table>
 
 <div class="muted">
-    Dibuat oleh Tim Prakom BPS DKI Jakarta pada : {{ now()->format('d/m/Y H:i') }}
+    Dibuat oleh Tim IT BPS DKI Jakarta pada : {{ now()->format('d/m/Y H:i') }}
 </div>
 
 </body>

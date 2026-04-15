@@ -266,21 +266,6 @@
     </div>
 </div>
 
-<!-- Spacer supaya signature “turun” ke kanan bawah halaman terakhir -->
-{{-- <div class="signature-spacer"></div>
-
-<div class="footer-signature">
-    <div class="sign-box">
-        <div class="printed">
-            Dibuat pada tanggal {{ now()->format('d/m/Y') }}
-        </div>
-
-        <div class="signature-name">
-            Oleh Tim Prakom BPS DKI Jakarta
-        </div>
-    </div>
-</div> --}}
-
 <br>
 <br>
 <div class="muted">Dibuat pada : {{ now()->format('d/m/Y H:i') }},</div>
