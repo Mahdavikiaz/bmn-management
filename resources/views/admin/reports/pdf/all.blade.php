@@ -60,18 +60,6 @@
             font-size: 6.8px;
         }
 
-        .priority-head {
-            font-size: 6.8px;
-            padding: 1px 3px;
-            letter-spacing: 0.1px;
-        }
-
-        .priority-cell {
-            font-size: 6.5px;
-            padding: 2px 2px;
-            text-align: center;
-        }
-
         .indicator-cell {
             padding: 0;
         }
@@ -111,10 +99,6 @@
         .total-col { width: 60px; }
         .date-col { width: 55px; }
 
-        .priority-head,
-        .priority-cell {
-            width: 20px;
-        }
     </style>
 </head>
 <body>
@@ -180,19 +164,12 @@
             <th rowspan="2">Nama Device</th>
             <th rowspan="2">Kategori</th>
 
-            <th colspan="5" class="group-head" style="width:100px;">Priority Level</th>
             <th colspan="5" class="group-head">Rekomendasi & Estimasi Upgrade</th>
 
             <th rowspan="2">Total Estimasi</th>
             <th rowspan="2">Tanggal Cek</th>
         </tr>
         <tr>
-            <th class="priority-head">RAM</th>
-            <th class="priority-head">Storage</th>
-            <th class="priority-head">CPU</th>
-            <th class="priority-head">Baterai</th>
-            <th class="priority-head">Charger</th>
-
             <th>RAM</th>
             <th>Storage</th>
             <th>CPU</th>
@@ -232,12 +209,6 @@
             <td>{{ $asset->bmn_code ?? '-' }}</td>
             <td class="device">{{ $asset->device_name ?? '-' }}</td>
             <td>{{ $asset->type?->type_name ?? '-' }}</td>
-
-            <td class="priority-cell">{{ $r?->prior_ram ?? '-' }}</td>
-            <td class="priority-cell">{{ $r?->prior_storage ?? '-' }}</td>
-            <td class="priority-cell">{{ $r?->prior_processor ?? '-' }}</td>
-            <td class="priority-cell">{{ $r?->prior_baterai ?? '-' }}</td>
-            <td class="priority-cell">{{ $r?->prior_charger ?? '-' }}</td>
 
             <td class="indicator-cell">{!! $ramSummary !!}</td>
             <td class="indicator-cell">{!! $stoSummary !!}</td>
