@@ -309,13 +309,16 @@ class AssetCheckController extends Controller
         $statusCheck = $request->get('status_check');
 
         $assetsQuery = Asset::query()
-            ->with(['latestPerformanceReport', 'type'])
+            ->with(['latestPerformanceReport', 'type', 'latestSpecification'])
             ->withCount('performanceReports');
 
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
-                    ->orWhere('device_name', 'like', "%{$q}%");
+                    ->orWhere('device_name', 'like', "%{$q}%")
+                    ->orWhereHas('latestSpecification', function ($s) use ($q) {
+                        $s->where('owner_asset', 'like', "%{$q}%");
+                    });
             });
         }
 

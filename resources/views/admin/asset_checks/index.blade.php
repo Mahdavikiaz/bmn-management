@@ -71,7 +71,7 @@
            name="q"
            class="form-control"
            style="max-width: 360px;"
-           placeholder="Cari Kode BMN / Nama Device..."
+           placeholder="Cari Kode BMN / Nama Device / Pemegang Asset..."
            value="{{ request('q') }}">
 
     <select name="id_type" class="form-select" style="max-width: 280px;">
@@ -137,7 +137,7 @@
                             </td>
 
                             <td>
-                                <div class="fw-normal">{{ $asset->latestPerformanceReport?->spec?->owner_asset ?? '-' }}</div>
+                                <div class="fw-normal">{{ $asset->latestSpecification?->owner_asset ?? '-' }}</div>
                             </td>
 
                             <td class="fw-normal">
@@ -200,7 +200,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted p-4">
+                            <td colspan="7" class="text-center text-muted p-4">
                                 Belum ada data asset.
                             </td>
                         </tr>
