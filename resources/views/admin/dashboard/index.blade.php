@@ -278,8 +278,22 @@
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
             <div>
-                <div class="fw-bold mb-1">Daftar Asset</div>
-                <div class="text-muted-sm">List asset dan filter untuk pengecekan / tindak lanjut.</div>
+                @if(auth()->user()->isViewer())
+                    <div class="fw-bold mb-1">Daftar Asset yang sudah dicek</div>
+                @else
+                    <div class="fw-bold mb-1">Daftar Asset</div>
+                @endif
+
+                @if(auth()->user()->isViewer())
+                    <div class="text-muted-sm">
+                        List asset dan filter untuk melihat hasil pengecekan asset yang sudah dicek.
+                    </div>
+                @else
+                    <div class="text-muted-sm">
+                        List asset dan filter untuk pengecekan / tindak lanjut.
+                    </div>
+                @endif
+
             </div>
         </div>
 
@@ -299,6 +313,8 @@
                 </select>
             </div>
 
+            {{-- Status Cek hanya untuk Admin dan User --}}
+            @if(!auth()->user()->isViewer())
             <div class="col-lg-2">
                 <label class="form-label text-muted-sm mb-1">Status Cek</label>
                 <select name="checked" class="form-select">
@@ -307,16 +323,22 @@
                     <option value="unchecked" {{ $checked === 'unchecked' ? 'selected' : '' }}>Belum dicek</option>
                 </select>
             </div>
+            @endif
 
+            {{-- Min Avg Priority hanya untuk Admin dan User --}}
+            @if(!auth()->user()->isViewer())
             <div class="col-lg-2">
                 <label class="form-label text-muted-sm mb-1">Min Avg Priority</label>
                 <select name="min_priority" class="form-select">
                     <option value="" {{ $minAvgInt === null ? 'selected' : '' }}>Semua</option>
                     @for($i=1; $i<=5; $i++)
-                        <option value="{{ $i }}" {{ (int)$minAvgInt === $i ? 'selected' : '' }}>{{ $i }}</option>
+                        <option value="{{ $i }}" {{ (int)$minAvgInt === $i ? 'selected' : '' }}>
+                            {{ $i }}
+                        </option>
                     @endfor
                 </select>
             </div>
+            @endif
 
             <div class="col-lg-3">
                 <label class="form-label text-muted-sm mb-1">Search</label>
@@ -342,8 +364,10 @@
                         <th style="width:140px;">Kode BMN</th>
                         <th style="min-width:260px;">Nama Device</th>
                         <th style="width:130px;">Kategori</th>
+                      @if(!auth()->user()->isViewer())
                         <th style="width:120px;">Status</th>
                         <th style="width:120px;">Priority (Avg)</th>
+                      @endif
                         <th style="width:180px;">Estimasi Upgrade</th>
                         <th style="width:150px;" class="text-center">Aksi</th>
                     </tr>
@@ -377,11 +401,15 @@
 
                         <td>{{ $a->type_name ?? '-' }}</td>
 
-                        <td>{!! $checkedBadge($a->checked_at ?? null) !!}</td>
+                        @if(!auth()->user()->isViewer())
+                            <td>{!! $checkedBadge($a->checked_at ?? null) !!}</td>
 
-                        <td class="text-center">
-                            <span class="{{ $prioClassAvg($avg) }}">{{ number_format($avg, 0) }}</span>
-                        </td>
+                            <td class="text-center">
+                                <span class="{{ $prioClassAvg($avg) }}">
+                                    {{ number_format($avg, 0) }}
+                                </span>
+                            </td>
+                        @endif
 
                         <td class="est-mini text-muted-sm">
                             <span>RAM: {{ $fmtPrice($estRam) }}</span><br>
@@ -389,21 +417,27 @@
                             Total: <b>{{ $fmtPrice($estTotal) }}</b>
                         </td>
 
-                        <td class="text-center">
-                            <div class="d-inline-flex gap-2">
-                                @if($a->latest_report_id)
-                                    <a class="btn btn-sm btn-outline-primary"
-                                       href="{{ route('admin.asset-checks.show', [$a->id_asset, $a->latest_report_id]) }}">
-                                        Lihat
-                                    </a>
-                                @endif
+                    <td class="text-center">
+                        <div class="d-inline-flex gap-2">
 
+                            {{-- Jika sudah dicek tampilkan tombol Lihat --}}
+                            @if($a->latest_report_id)
+                                <a class="btn btn-sm btn-outline-primary"
+                                href="{{ route('admin.asset-checks.show', [$a->id_asset, $a->latest_report_id]) }}">
+                                    Lihat
+                                </a>
+                            @endif
+
+                            {{-- Viewer tidak boleh melakukan pengecekan --}}
+                            @if(!auth()->user()->isViewer())
                                 <a class="btn btn-sm btn-primary"
-                                   href="{{ route('admin.asset-checks.create', $a->id_asset) }}">
+                                href="{{ route('admin.asset-checks.create', $a->id_asset) }}">
                                     Cek
                                 </a>
-                            </div>
-                        </td>
+                            @endif
+
+                        </div>
+                    </td>
                     </tr>
                 @empty
                     <tr>

@@ -18,10 +18,6 @@ class DashboardController extends Controller
     {
         $this->authorize('viewAny', PerformanceReport::class);
 
-        if ($request->user()?->isViewer()) {
-            return redirect()->route('admin.asset-checks.index');
-        }
-
         // Filters
         $q         = trim((string) $request->get('q', ''));
         $typeId    = $request->get('id_type');
@@ -65,6 +61,11 @@ class DashboardController extends Controller
                 // Average priority (0 -> 5). Kalo belum ada report -> avg = 0
                 DB::raw('ROUND( (COALESCE(pr.prior_ram,0) + COALESCE(pr.prior_storage,0) + COALESCE(pr.prior_processor,0)) / 3, 2) as avg_priority'),
             ]);
+
+            // Viewer hanya melihat asset yang sudah dicek
+            if ($request->user()?->isViewer()) {
+                $assetsQuery->whereNotNull('lr.id_report');
+            }
 
         // Apply filters
         if ($q !== '') {

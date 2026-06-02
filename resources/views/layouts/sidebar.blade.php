@@ -26,8 +26,7 @@
         <ul class="nav flex-column gap-1">
 
             {{-- DASHBOARD --}}
-            {{-- Viewer tidak perlu melihat dashboard. Kalau viewer login, bisa diarahkan ke Report lewat DashboardController --}}
-            @if(!$authUser?->isViewer())
+            @if($authUser)
                 <li class="nav-item">
                     <a href="{{ route('admin.dashboard.index') }}"
                        class="nav-link {{ request()->is('admin/dashboard*') ? 'active' : 'text-dark' }}">
