@@ -46,7 +46,7 @@
     </div>
 
     {{-- CARD RECAP --}}
-    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-2">
+    <div class="row g-3 mb-4 row-cols-1 row-cols-sm-3">
         <div class="col">
             <div class="card shadow-sm h-100">
                 <div class="card-body text-center">
@@ -66,6 +66,16 @@
                 </div>
             </div>
         </div>
+
+        <div class="col">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <i class="bi bi-eye fs-3 text-info"></i>
+                    <h6 class="mt-2">Total Viewer</h6>
+                    <h4>{{ $totalViewer }}</h4>
+                </div>
+            </div>
+        </div>
     </div>
 
 
@@ -76,8 +86,18 @@
         <form method="GET" class="d-flex align-items-center gap-2">
             <select name="role" class="form-select filter-select">
                 <option value="">Pilih peran...</option>
-                <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Administrator</option>
-                <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
+
+                <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>
+                    Administrator
+                </option>
+
+                <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>
+                    User
+                </option>
+
+                <option value="viewer" {{ request('role') == 'viewer' ? 'selected' : '' }}>
+                    Viewer
+                </option>
             </select>
 
             <button class="btn btn-primary">Cari</button>
@@ -125,9 +145,21 @@
 
                                 <td>
                                     @if($user->role === 'admin')
-                                        <span class="badge rounded-pill text-bg-primary fw-semibold">Admin</span>
+                                        <span class="badge rounded-pill text-bg-primary fw-semibold">
+                                            Admin
+                                        </span>
+                                    @elseif($user->role === 'user')
+                                        <span class="badge rounded-pill text-bg-success fw-semibold">
+                                            User
+                                        </span>
+                                    @elseif($user->role === 'viewer')
+                                        <span class="badge rounded-pill text-bg-info fw-semibold">
+                                            Viewer
+                                        </span>
                                     @else
-                                        <span class="badge rounded-pill text-bg-success fw-semibold">User</span>
+                                        <span class="badge rounded-pill text-bg-secondary fw-semibold">
+                                            Tidak diketahui
+                                        </span>
                                     @endif
                                 </td>
 

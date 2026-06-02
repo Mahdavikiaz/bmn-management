@@ -13,7 +13,7 @@ class PerformanceReportPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin() || $user->isUser();
+        return $user->isAdmin() || $user->isUser() || $user->isViewer();
     }
 
     /**
@@ -21,7 +21,7 @@ class PerformanceReportPolicy
      */
     public function view(User $user, PerformanceReport $performanceReport): bool
     {
-        return $user->isAdmin() || $user->isUser();
+        return $user->isAdmin() || $user->isUser() || $user->isViewer();
     }
 
     /**

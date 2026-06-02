@@ -10,42 +10,80 @@
         </span>
     </div>
 
+    @php
+        $authUser = auth()->user();
+
+        $canMaster =
+            $authUser?->can('viewAny', \App\Models\AssetType::class) ||
+            $authUser?->can('viewAny', \App\Models\IndicatorQuestion::class) ||
+            $authUser?->can('viewAny', \App\Models\Recommendation::class) ||
+            $authUser?->can('viewAny', \App\Models\Sparepart::class) ||
+            $authUser?->can('viewAny', \App\Models\User::class);
+    @endphp
+
     {{-- MENU --}}
     <div class="flex-grow-1 p-3 sidebar-menu">
         <ul class="nav flex-column gap-1">
 
-            <li class="nav-item">
-                <a href="{{ route('admin.dashboard.index') }}"
-                   class="nav-link {{ request()->is('admin/dashboard*') ? 'active' : 'text-dark' }}">
-                    <i class="bi bi-speedometer2"></i>
-                    <span class="sidebar-label">Dashboard</span>
-                </a>
-            </li>
+            {{-- DASHBOARD --}}
+            {{-- Viewer tidak perlu melihat dashboard. Kalau viewer login, bisa diarahkan ke Report lewat DashboardController --}}
+            @if(!$authUser?->isViewer())
+                <li class="nav-item">
+                    <a href="{{ route('admin.dashboard.index') }}"
+                       class="nav-link {{ request()->is('admin/dashboard*') ? 'active' : 'text-dark' }}">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="sidebar-label">Dashboard</span>
+                    </a>
+                </li>
+            @endif
 
-            <li class="nav-item">
-                <a href="{{ route('admin.asset-checks.index') }}"
-                   class="nav-link {{ request()->is('admin/asset-checks*') ? 'active' : 'text-dark' }}">
-                    <i class="bi bi-clipboard-check"></i>
-                    <span class="sidebar-label">Pengecekan Asset</span>
-                </a>
-            </li>
 
-            <li class="nav-item">
-                <a href="{{ route('admin.asset-services.index') }}"
-                   class="nav-link {{ request()->is('admin/asset-services*') ? 'active' : 'text-dark' }}">
-                    <i class="bi bi-tools"></i>
-                    <span class="sidebar-label">Perbaikan Asset</span>
-                </a>
-            </li>
+            {{-- HASIL PENGECEKAN ASSET --}}
+            {{-- Admin, User, dan Viewer boleh melihat hasil pengecekan --}}
+            @can('viewAny', \App\Models\PerformanceReport::class)
+                <li class="nav-item">
+                    <a href="{{ route('admin.asset-checks.index') }}"
+                       class="nav-link {{ request()->is('admin/asset-checks*') ? 'active' : 'text-dark' }}">
+                        <i class="bi bi-clipboard-check"></i>
 
-            <li class="nav-item">
-                <a href="{{ route('admin.reports.index') }}"
-                   class="nav-link {{ request()->is('admin/reports*') ? 'active' : 'text-dark' }}">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span class="sidebar-label">Report</span>
-                </a>
-            </li>
+                        @if($authUser?->isViewer())
+                            <span class="sidebar-label">Hasil Pengecekan Asset</span>
+                        @else
+                            <span class="sidebar-label">Pengecekan Asset</span>
+                        @endif
+                    </a>
+                </li>
+            @endcan
 
+
+            {{-- PERBAIKAN ASSET --}}
+            {{-- Viewer tidak boleh melihat menu ini --}}
+            @can('viewAny', \App\Models\Asset::class)
+                <li class="nav-item">
+                    <a href="{{ route('admin.asset-services.index') }}"
+                       class="nav-link {{ request()->is('admin/asset-services*') ? 'active' : 'text-dark' }}">
+                        <i class="bi bi-tools"></i>
+                        <span class="sidebar-label">Perbaikan Asset</span>
+                    </a>
+                </li>
+            @endcan
+
+
+            {{-- REPORT --}}
+            {{-- Admin, User, dan Viewer boleh melihat dan export report --}}
+            @can('viewAny', \App\Models\PerformanceReport::class)
+                <li class="nav-item">
+                    <a href="{{ route('admin.reports.index') }}"
+                       class="nav-link {{ request()->is('admin/reports*') ? 'active' : 'text-dark' }}">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span class="sidebar-label">Report</span>
+                    </a>
+                </li>
+            @endcan
+
+
+            {{-- DATA ASSET --}}
+            {{-- Viewer tidak boleh melihat menu ini jika AssetPolicy::viewAny tidak mengizinkan viewer --}}
             @can('viewAny', \App\Models\Asset::class)
                 <li class="nav-item">
                     <a href="{{ route('admin.assets.index') }}"
@@ -56,15 +94,9 @@
                 </li>
             @endcan
 
-            @php
-                $canMaster =
-                    auth()->user()?->can('viewAny', \App\Models\AssetType::class) ||
-                    auth()->user()?->can('viewAny', \App\Models\IndicatorQuestion::class) ||
-                    auth()->user()?->can('viewAny', \App\Models\Recommendation::class) ||
-                    auth()->user()?->can('viewAny', \App\Models\Sparepart::class) ||
-                    auth()->user()?->can('viewAny', \App\Models\User::class);
-            @endphp
 
+            {{-- DATA MASTER --}}
+            {{-- Hanya tampil kalau user punya akses minimal salah satu data master --}}
             @if($canMaster)
                 <div class="sidebar-section sidebar-label">DATA MASTER</div>
 

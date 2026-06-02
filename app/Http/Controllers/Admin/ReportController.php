@@ -30,6 +30,11 @@ class ReportController extends Controller
                 'type',
             ])
             ->withCount('performanceReports');
+        
+        // Khusus Role Viewer hanya boleh lihat asset yang sudah dicek (memiliki report)
+        if ($request->user()?->isViewer()) {
+            $assetsQuery->whereHas('performanceReports');
+        }
 
         // Filter berdasarkan hasil pencarian
         if ($q !== '') {
@@ -48,7 +53,9 @@ class ReportController extends Controller
         if ($statusCheck === 'checked') {
             $assetsQuery->has('performanceReports');
         } elseif ($statusCheck === 'unchecked') {
-            $assetsQuery->doesntHave('performanceReports');
+            if (!$request->user()?->isViewer()) {
+                $assetsQuery->doesntHave('performanceReports');
+            }
         }
 
         $assets = $assetsQuery

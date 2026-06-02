@@ -29,11 +29,13 @@ class UserController extends Controller
         // RECAP TOTAL (GLOBAL, BUKAN HASIL FILTER)
         $totalAdmin = User::where('role', 'admin')->count();
         $totalUser  = User::where('role', 'user')->count();
+        $totalViewer = User::where('role', 'viewer')->count();
 
         return view('admin.users.index', compact(
             'users',
             'totalAdmin',
-            'totalUser'
+            'totalUser',
+            'totalViewer'
         ));
     }
 
@@ -53,7 +55,7 @@ class UserController extends Controller
             'nip' => 'required|unique:users,nip',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
-            'role' => 'required|in:admin,user'
+            'role' => 'required|in:admin,user,viewer'
         ]);
 
         User::create([
@@ -81,7 +83,7 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required',
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:admin,user,viewer',
             'password' => 'nullable|min:6'
         ]);
 

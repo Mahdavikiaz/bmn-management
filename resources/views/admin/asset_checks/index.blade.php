@@ -4,6 +4,10 @@
 
 @section('content')
 
+@php
+    $authUser = auth()->user();
+@endphp
+
 <style>
     .table-modern thead th{
         background:#f8f9fa;
@@ -58,10 +62,17 @@
 </style>
 
 <div class="mb-3">
-    <h4 class="mb-3">Pengecekan Asset</h4>
-    <div class="text-muted small">
-        Halaman untuk melakukan pengecekan pada asset
-    </div>
+    @if($authUser?->isViewer())
+        <h4 class="mb-3">Hasil Pengecekan Asset</h4>
+        <div class="text-muted small">
+            Halaman untuk melihat hasil pengecekan asset
+        </div>
+    @else
+        <h4 class="mb-3">Pengecekan Asset</h4>
+        <div class="text-muted small">
+            Halaman untuk melakukan pengecekan pada asset
+        </div>
+    @endif
 </div>
 
 {{-- FILTER BAR --}}
@@ -85,8 +96,16 @@
 
     <select name="status_check" class="form-select" style="max-width: 240px;">
         <option value="">Semua Status Pengecekan</option>
-        <option value="checked" {{ request('status_check') == 'checked' ? 'selected' : '' }}>Sudah Dicek</option>
-        <option value="unchecked" {{ request('status_check') == 'unchecked' ? 'selected' : '' }}>Belum Dicek</option>
+
+        <option value="checked" {{ request('status_check') == 'checked' ? 'selected' : '' }}>
+            Sudah Dicek
+        </option>
+
+        @if(!$authUser?->isViewer())
+            <option value="unchecked" {{ request('status_check') == 'unchecked' ? 'selected' : '' }}>
+                Belum Dicek
+            </option>
+        @endif
     </select>
 
     <button class="btn btn-primary">
@@ -97,7 +116,6 @@
         Reset
     </a>
 </form>
-
 
 <div class="card shadow-sm">
     <div class="card-body p-0">
@@ -165,14 +183,17 @@
                             <td class="text-center">
                                 <div class="aksi-wrap">
 
-                                    {{-- pengecekan --}}
-                                    <a href="{{ route('admin.asset-checks.create', $asset->id_asset) }}"
-                                       class="btn btn-primary btn-action"
-                                       title="Lakukan pengecekan asset">
-                                        <i class="bi bi-clipboard-check"></i>
-                                    </a>
+                                    {{-- Pengecekan --}}
+                                    {{-- Hanya admin dan user yang boleh melakukan pengecekan --}}
+                                    @can('create', \App\Models\PerformanceReport::class)
+                                        <a href="{{ route('admin.asset-checks.create', $asset->id_asset) }}"
+                                           class="btn btn-primary btn-action"
+                                           title="Lakukan pengecekan asset">
+                                            <i class="bi bi-clipboard-check"></i>
+                                        </a>
+                                    @endcan
 
-                                    {{-- hasil terakhir --}}
+                                    {{-- Hasil terakhir --}}
                                     @if($lastReport)
                                         <a href="{{ route('admin.asset-checks.show', [$asset->id_asset, $lastReport->id_report]) }}"
                                            class="btn btn-info btn-icon text-white"
@@ -187,12 +208,15 @@
                                             <i class="bi bi-clock-history"></i>
                                         </a>
                                     @else
-                                        <button class="btn btn-outline-secondary btn-icon" disabled title="Belum ada hasil">
-                                            <i class="bi bi-eye"></i>
-                                        </button>
-                                        <button class="btn btn-outline-secondary btn-icon" disabled title="Belum ada history">
-                                            <i class="bi bi-clock-history"></i>
-                                        </button>
+                                        @if(!$authUser?->isViewer())
+                                            <button class="btn btn-outline-secondary btn-icon" disabled title="Belum ada hasil">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+
+                                            <button class="btn btn-outline-secondary btn-icon" disabled title="Belum ada history">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        @endif
                                     @endif
 
                                 </div>
@@ -201,7 +225,11 @@
                     @empty
                         <tr>
                             <td colspan="7" class="text-center text-muted p-4">
-                                Belum ada data asset.
+                                @if($authUser?->isViewer())
+                                    Belum ada hasil pengecekan asset.
+                                @else
+                                    Belum ada data asset.
+                                @endif
                             </td>
                         </tr>
                     @endforelse
@@ -211,21 +239,21 @@
     </div>
 
     @if(method_exists($assets, 'links'))
-    {{-- PAGINATION --}}
-<div class="d-flex flex-column align-items-center mt-4 gap-2">
+        {{-- PAGINATION --}}
+        <div class="d-flex flex-column align-items-center mt-4 gap-2">
 
-    <div class="text-muted small">
-        Showing {{ $assets->firstItem() }}
-        to {{ $assets->lastItem() }}
-        of {{ $assets->total() }} results
-    </div>
+            <div class="text-muted small">
+                Showing {{ $assets->firstItem() }}
+                to {{ $assets->lastItem() }}
+                of {{ $assets->total() }} results
+            </div>
 
-    {{-- Pagination --}}
-    <div class="mt-2">
-        {{ $assets->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
-    </div>
+            {{-- Pagination --}}
+            <div class="mt-2">
+                {{ $assets->onEachSide(1)->links('vendor.pagination.bootstrap-5-no-info') }}
+            </div>
 
-</div>
+        </div>
     @endif
 </div>
 

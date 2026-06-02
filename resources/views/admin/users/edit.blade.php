@@ -82,6 +82,9 @@
                     <option value="user" {{ $user->role == 'user' ? 'selected' : '' }}>
                         User
                     </option>
+                    <option value="viewer" {{ $user->role == 'viewer' ? 'selected' : '' }}>
+                        Viewer
+                    </option>
                 </select>
 
                 @error('role')

@@ -87,6 +87,9 @@
                     <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>
                         User
                     </option>
+                    <option value="viewer" {{ old('role') == 'viewer' ? 'selected' : '' }}>
+                        Viewer
+                    </option>
                 </select>
 
                 @error('role')

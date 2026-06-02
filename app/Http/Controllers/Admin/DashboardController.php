@@ -18,6 +18,10 @@ class DashboardController extends Controller
     {
         $this->authorize('viewAny', PerformanceReport::class);
 
+        if ($request->user()?->isViewer()) {
+            return redirect()->route('admin.asset-checks.index');
+        }
+
         // Filters
         $q         = trim((string) $request->get('q', ''));
         $typeId    = $request->get('id_type');

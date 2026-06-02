@@ -45,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
                 ->name('assets.specifications.destroy');
         });
 
-        // ASSET CHECKS / PERFORMANCE REPORT (Admin + User)
+        // ASSET CHECKS / PERFORMANCE REPORT (Admin + User + Viewer)
         Route::middleware('can:viewAny,App\Models\PerformanceReport')->group(function () {
 
             Route::get('asset-checks', [AssetCheckController::class, 'index'])
@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
                 ->name('asset-checks.store');
 
             Route::get('asset-checks/{asset}/reports/{report}', [AssetCheckController::class, 'show'])
+                ->middleware('can:view,report')
                 ->name('asset-checks.show');
 
             Route::get('asset-checks/{asset}/history', [AssetCheckController::class, 'history'])
@@ -76,20 +77,23 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // REPORTS
-        Route::get('/reports', [ReportController::class, 'index'])
-            ->name('reports.index');
+        Route::middleware('can:viewAny,App\Models\PerformanceReport')->group(function () {
 
-        Route::get('/reports/{asset}/pdf', [ReportController::class, 'exportAssetPdf'])
-            ->name('reports.export.asset.pdf');
+            Route::get('/reports', [ReportController::class, 'index'])
+                ->name('reports.index');
 
-        Route::get('/reports/{asset}/excel', [ReportController::class, 'exportAssetExcel'])
-            ->name('reports.export.asset.excel');
+            Route::get('/reports/{asset}/pdf', [ReportController::class, 'exportAssetPdf'])
+                ->name('reports.export.asset.pdf');
 
-        Route::get('/reports/export/all/pdf', [ReportController::class, 'exportAllPdf'])
-            ->name('reports.export.all.pdf');
+            Route::get('/reports/{asset}/excel', [ReportController::class, 'exportAssetExcel'])
+                ->name('reports.export.asset.excel');
 
-        Route::get('/reports/export/all/excel', [ReportController::class, 'exportAllExcel'])
-            ->name('reports.export.all.excel');
+            Route::get('/reports/export/all/pdf', [ReportController::class, 'exportAllPdf'])
+                ->name('reports.export.all.pdf');
+
+            Route::get('/reports/export/all/excel', [ReportController::class, 'exportAllExcel'])
+                ->name('reports.export.all.excel');
+        });
 
         // USERS (Admin-only)
         Route::middleware('can:viewAny,App\Models\User')->group(function () {
