@@ -70,7 +70,7 @@
         <div class="col">
             <div class="card shadow-sm h-100">
                 <div class="card-body text-center">
-                    <i class="bi bi-eye fs-3 text-info"></i>
+                    <i class="bi bi-people fs-3 text-danger"></i>
                     <h6 class="mt-2">Total Viewer</h6>
                     <h4>{{ $totalViewer }}</h4>
                 </div>
@@ -153,7 +153,7 @@
                                             User
                                         </span>
                                     @elseif($user->role === 'viewer')
-                                        <span class="badge rounded-pill text-bg-info fw-semibold">
+                                        <span class="badge rounded-pill text-bg-danger fw-semibold">
                                             Viewer
                                         </span>
                                     @else
