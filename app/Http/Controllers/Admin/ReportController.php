@@ -40,7 +40,10 @@ class ReportController extends Controller
         if ($q !== '') {
             $assetsQuery->where(function ($w) use ($q) {
                 $w->where('bmn_code', 'like', "%{$q}%")
-                  ->orWhere('device_name', 'like', "%{$q}%");
+                  ->orWhere('device_name', 'like', "%{$q}%")
+                  ->orWhereHas('latestSpecification', function ($s) use ($q) {
+                        $s->where('owner_asset', 'like', "%{$q}%");
+                    });;
             });
         }
 

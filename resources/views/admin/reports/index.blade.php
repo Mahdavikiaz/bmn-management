@@ -7,6 +7,7 @@
 <style>
     .table-modern thead th{ background:#f8f9fa; font-weight:500; white-space: nowrap; border-bottom:2px solid #d0d7e2; }
     .table-modern tbody td{ font-size:.90rem; border-top:1px solid #eef2f7; vertical-align:middle; }
+    .text-muted-sm{ color:#6c757d; font-size:.85rem; }
 </style>
 
 <div class="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-3">
@@ -74,8 +75,8 @@
                         <th style="width: 160px">Kode BMN</th>
                         <th style="width: 200px">Nama Device</th>
                         <th style="width:160px;">Kategori</th>
-                        <th style="width:220px;">Report Terakhir</th>
                         <th style="width:220px;">Priority</th>
+                        <th style="width:220px;">Report Terakhir</th>
                         <th style="width:200px;">Estimasi Upgrade</th>
                         <th style="width:210px;" class="text-center">Aksi</th>
                     </tr>
@@ -98,13 +99,22 @@
                         <td>{{ $asset->type?->type_name ?? '-' }}</td>
 
                         <td>
-                            <div class="fw-semibold">{{ optional($r?->created_at)->format('d/m/Y H:i') ?? '-' }}</div>
+                            <div class="fw-normal">{{ $asset->latestSpecification?->owner_asset ?? '-' }}</div>
                         </td>
 
-                        <td>
+                        {{-- <td>
                             <span class="badge text-bg-light border">RAM: {{ $r?->prior_ram ?? '-' }}</span>
                             <span class="badge text-bg-light border">STORAGE: {{ $r?->prior_storage ?? '-' }}</span>
                             <span class="badge text-bg-light border">CPU: {{ $r?->prior_processor ?? '-' }}</span>
+                        </td> --}}
+
+                        <td>
+                            <div class="fw-semibold">{{ optional($r?->created_at)->format('d/m/Y H:i') ?? '-' }}</div>
+                            <div class="text-muted-sm">
+                                Priority Level : RAM {{ $r?->prior_ram ?? '-' }},
+                                Storage {{ $r?->prior_storage ?? '-' }},
+                                CPU {{ $r?->prior_processor ?? '-' }}
+                            </div>
                         </td>
 
                         <td>
