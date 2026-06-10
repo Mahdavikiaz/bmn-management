@@ -120,8 +120,8 @@ class AssetsReportExport extends StringValueBinder implements
         }
 
         return [
-            ($asset->bmn_code !== null && $asset->bmn_code !== '') ? (string) $asset->bmn_code : '-',
-
+            ($asset->bmn_code !== null && trim($asset->bmn_code) !== '') ? trim((string) $asset->bmn_code) : '-',
+            
             $asset->type?->type_name ?? '-',
             $asset->device_name ?? '-',
             $asset->gpu ?? '-',
